@@ -3,20 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  ChevronDown,
   Inbox,
   LayoutGrid,
   List,
   MoreHorizontal,
-  PenSquare,
-  Search,
   User,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { PROJECT_KEY } from "@/lib/task-utils";
+import { WorkspaceMenu } from "@/components/workspace-menu";
 import { cn } from "@/lib/utils";
-
-const WORKSPACE_NAME = "Mini Linear";
 
 function NavLink({
   href,
@@ -58,31 +52,7 @@ export function AppSidebar() {
 
   return (
     <aside className="flex w-[220px] shrink-0 flex-col bg-black">
-      <div className="flex items-center gap-1 px-2 py-2.5">
-        <button
-          type="button"
-          className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1.5 py-1 hover:bg-white/[0.04]"
-        >
-          <span className="flex size-5 shrink-0 items-center justify-center rounded bg-red-600 text-[9px] font-bold text-white">
-            {PROJECT_KEY.toLowerCase()}
-          </span>
-          <span className="truncate text-[13px] font-medium">{WORKSPACE_NAME}</span>
-          <ChevronDown className="size-3 shrink-0 text-muted-foreground/60" />
-        </button>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className="size-7 shrink-0 text-muted-foreground/60"
-        >
-          <Search className="size-3.5" />
-        </Button>
-        <Link
-          href="/list"
-          className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground/60 hover:bg-white/[0.04] hover:text-foreground"
-        >
-          <PenSquare className="size-3.5" />
-        </Link>
-      </div>
+      <WorkspaceMenu />
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2">
         <NavLink
@@ -126,24 +96,6 @@ export function AppSidebar() {
           More
         </button>
       </nav>
-
-      <div className="space-y-0.5 px-2 py-3">
-        <p className="px-2 pb-1 text-[11px] font-medium text-muted-foreground/60">
-          Try
-        </p>
-        <button
-          type="button"
-          className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-[13px] text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
-        >
-          Import issues
-        </button>
-        <button
-          type="button"
-          className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-[13px] text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
-        >
-          + Invite people
-        </button>
-      </div>
     </aside>
   );
 }

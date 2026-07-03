@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mini Linear
 
-## Getting Started
+A lightweight task board inspired by Linear. Phase 1 includes task CRUD and a kanban board — no auth yet.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router)
+- **PostgreSQL** via Docker
+- **Drizzle ORM** + **drizzle-kit**
+- **shadcn/ui** (dark mode only)
+- **@dnd-kit** for drag-and-drop
+
+## Getting started
+
+### 1. Start the database
+
+```bash
+npm run db:up
+```
+
+Postgres runs on port **5433** (5432 is often taken locally).
+
+### 2. Run migrations
+
+```bash
+npm run db:migrate
+```
+
+### 3. Start the dev server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Features (Phase 1)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Create, edit, and delete tasks
+- Kanban board with 4 columns: Backlog, Todo, In Progress, Done
+- Drag-and-drop to reorder tasks and move between columns
+- Priority levels: None, Low, Medium, High, Urgent
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start Next.js dev server |
+| `npm run build` | Production build |
+| `npm run db:up` | Start Postgres container |
+| `npm run db:down` | Stop Postgres container |
+| `npm run db:generate` | Generate Drizzle migrations |
+| `npm run db:migrate` | Run Drizzle migrations |
+| `npm run db:push` | Push schema to database |
+| `npm run db:studio` | Open Drizzle Studio |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Environment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Copy `.env.example` to `.env`:
 
-## Deploy on Vercel
+```
+DATABASE_URL="postgresql://linear:linear@localhost:5433/mini_linear?schema=public"
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Roadmap
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [ ] Authentication
+- [ ] Teams & projects
+- [ ] Issue identifiers (LIN-123)
+- [ ] Comments & activity

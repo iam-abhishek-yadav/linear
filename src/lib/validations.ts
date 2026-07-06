@@ -24,13 +24,19 @@ export const reorderTaskSchema = z.object({
   position: z.number().int().min(0),
 });
 
-export const registerSchema = z.object({
-  token: z.string().min(1, "Invite token is required"),
+const workspaceRegistrationFields = {
   orgName: z.string().min(1, "Organization name is required").max(100),
   name: z.string().min(1, "Name is required").max(100),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
+};
+
+export const registerSchema = z.object({
+  token: z.string().min(1, "Invite token is required"),
+  ...workspaceRegistrationFields,
 });
+
+export const bootstrapRegisterSchema = z.object(workspaceRegistrationFields);
 
 export const loginSchema = z.object({
   email: z.string().email("Invalid email address"),

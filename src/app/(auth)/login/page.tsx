@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -52,8 +53,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-full items-center justify-center p-6">
-      <Card className="w-full max-w-md border-border/60 bg-panel shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+    <Card className="w-full border-border/60 bg-panel shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
         <CardHeader>
           <CardTitle>Sign in</CardTitle>
           <CardDescription>
@@ -97,10 +97,12 @@ export default function LoginPage() {
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            Need a workspace? Contact your administrator for an invite.
+            New here?{" "}
+            <Link href="/register" className="text-primary hover:underline">
+              Create workspace
+            </Link>
           </p>
         </CardContent>
       </Card>
-    </div>
   );
 }

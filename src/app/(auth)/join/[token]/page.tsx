@@ -86,35 +86,32 @@ export default function JoinWorkspacePage() {
 
   if (validating) {
     return (
-      <div className="flex min-h-full items-center justify-center p-6">
-        <p className="text-sm text-muted-foreground">Validating invite...</p>
-      </div>
+      <p className="text-center text-sm text-muted-foreground">
+        Validating invite...
+      </p>
     );
   }
 
   if (inviteError) {
     return (
-      <div className="flex min-h-full items-center justify-center p-6">
-        <Card className="w-full max-w-md border-border/60 bg-panel shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
-          <CardHeader>
-            <CardTitle>Invalid invite</CardTitle>
-            <CardDescription>{inviteError}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-center text-sm text-muted-foreground">
-              <Link href="/login" className="text-primary hover:underline">
-                Back to sign in
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="w-full border-border/60 bg-panel shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+        <CardHeader>
+          <CardTitle>Invalid invite</CardTitle>
+          <CardDescription>{inviteError}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-center text-sm text-muted-foreground">
+            <Link href="/login" className="text-primary hover:underline">
+              Back to sign in
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="flex min-h-full items-center justify-center p-6">
-      <Card className="w-full max-w-md border-border/60 bg-panel shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+    <Card className="w-full border-border/60 bg-panel shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
         <CardHeader>
           <CardTitle>Join {invite?.organization.name}</CardTitle>
           <CardDescription>
@@ -180,6 +177,5 @@ export default function JoinWorkspacePage() {
           </p>
         </CardContent>
       </Card>
-    </div>
   );
 }

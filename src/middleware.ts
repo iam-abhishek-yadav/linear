@@ -3,10 +3,17 @@ import type { NextRequest } from "next/server";
 import { SESSION_COOKIE } from "@/lib/auth-constants";
 
 const authRoutes = ["/login", "/register", "/join"];
+const publicRoutes = ["/", ...authRoutes];
 const publicApiPrefixes = ["/api/auth", "/api/invites", "/api/members/invites", "/api/health"];
 
 function isAuthRoute(pathname: string) {
   return authRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+}
+
+function isPublicRoute(pathname: string) {
+  return publicRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
 }
@@ -40,6 +47,10 @@ export function middleware(request: NextRequest) {
   }
 
   if (!isAuthenticated) {
+    if (isPublicRoute(pathname)) {
+      return NextResponse.next();
+    }
+
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);

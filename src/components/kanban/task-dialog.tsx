@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronRight, Loader2, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { ChevronRight, Loader2, Maximize2, Plus, Trash2 } from "lucide-react";
 import { PriorityPill, StatusPill } from "@/components/tasks/property-pills";
 import { Button } from "@/components/ui/button";
 import {
@@ -132,8 +133,8 @@ export function TaskDialog({
           {isEditing ? "Update issue details" : "Create a new issue"}
         </DialogDescription>
 
-        <div className="flex items-center border-b border-border/50 px-4 py-3">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <div className="flex items-center border-b border-border/50 py-3 pl-4 pr-12">
+          <div className="flex min-w-0 flex-1 items-center gap-1.5 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1.5 rounded bg-muted/40 px-1.5 py-0.5 font-medium text-foreground/80">
               <span className="size-2.5 rounded-sm bg-emerald-500/90" />
               {PROJECT_KEY}
@@ -141,6 +142,16 @@ export function TaskDialog({
             <ChevronRight className="size-3" />
             <span>{isEditing ? "Edit issue" : "New issue"}</span>
           </div>
+          {isEditing && task && (
+            <Link
+              href={`/issues/${task.id}`}
+              onClick={() => onOpenChange(false)}
+              className="mr-1 flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+            >
+              <Maximize2 className="size-3" />
+              Open
+            </Link>
+          )}
         </div>
 
         <div className="px-4 pt-4 pb-3" onKeyDown={handleKeyDown}>

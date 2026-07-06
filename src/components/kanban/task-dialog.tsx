@@ -8,8 +8,11 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useSession } from "@/components/session-provider";
 import { Switch } from "@/components/ui/switch";
 import { PROJECT_KEY } from "@/lib/task-utils";
 import type { Task } from "@/lib/types";
@@ -47,11 +50,19 @@ export function TaskDialog({
   const [createMore, setCreateMore] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState<
+    "confirm" | "admin-required" | null
+  >(null);
+  const { user } = useSession();
 
   const isEditing = Boolean(task);
+  const isAdmin = user.role === "ADMIN";
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setDeleteDialog(null);
+      return;
+    }
     setTitle(task?.title ?? "");
     setDescription(task?.description ?? "");
     setStatus(task?.status ?? defaultStatus);
@@ -84,11 +95,17 @@ export function TaskDialog({
     }
   }
 
-  async function handleDelete() {
+  function handleDeleteClick() {
+    if (!onDelete) return;
+    setDeleteDialog(isAdmin ? "confirm" : "admin-required");
+  }
+
+  async function handleConfirmDelete() {
     if (!onDelete) return;
     setDeleting(true);
     try {
       await onDelete();
+      setDeleteDialog(null);
       onOpenChange(false);
     } finally {
       setDeleting(false);
@@ -115,7 +132,7 @@ export function TaskDialog({
           {isEditing ? "Update issue details" : "Create a new issue"}
         </DialogDescription>
 
-        <div className="flex items-center justify-between border-b border-border/50 px-4 py-3">
+        <div className="flex items-center border-b border-border/50 px-4 py-3">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1.5 rounded bg-muted/40 px-1.5 py-0.5 font-medium text-foreground/80">
               <span className="size-2.5 rounded-sm bg-emerald-500/90" />
@@ -124,22 +141,6 @@ export function TaskDialog({
             <ChevronRight className="size-3" />
             <span>{isEditing ? "Edit issue" : "New issue"}</span>
           </div>
-          {isEditing && onDelete && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              className="text-muted-foreground hover:text-destructive"
-              onClick={handleDelete}
-              disabled={deleting || saving}
-            >
-              {deleting ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : (
-                <Trash2 className="size-3.5" />
-              )}
-            </Button>
-          )}
         </div>
 
         <div className="px-4 pt-4 pb-3" onKeyDown={handleKeyDown}>
@@ -164,9 +165,25 @@ export function TaskDialog({
           <PriorityPill value={priority} onChange={setPriority} />
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-border/50 px-4 py-3">
-          {!isEditing && (
-            <label className="mr-auto flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-3 border-t border-border/50 px-4 py-3">
+          {isEditing && onDelete ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-destructive"
+              onClick={handleDeleteClick}
+              disabled={deleting || saving}
+            >
+              {deleting ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Trash2 className="size-3.5" />
+              )}
+              Delete issue
+            </Button>
+          ) : !isEditing ? (
+            <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
               <Switch
                 checked={createMore}
                 onCheckedChange={setCreateMore}
@@ -174,14 +191,14 @@ export function TaskDialog({
               />
               Create more
             </label>
-          )}
+          ) : null}
           <Button
             type="button"
             size="sm"
             disabled={!title.trim() || saving || deleting}
             onClick={submit}
             className={cn(
-              "rounded-md bg-violet-600 px-3 text-white hover:bg-violet-600/90",
+              "ml-auto rounded-md bg-violet-600 px-3 text-white hover:bg-violet-600/90",
             )}
           >
             {saving && <Loader2 className="size-3.5 animate-spin" />}
@@ -189,6 +206,58 @@ export function TaskDialog({
           </Button>
         </div>
       </DialogContent>
+
+      <Dialog
+        open={deleteDialog === "confirm"}
+        onOpenChange={(open) => {
+          if (!open) setDeleteDialog(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md" showCloseButton>
+          <DialogHeader>
+            <DialogTitle>Delete issue</DialogTitle>
+            <DialogDescription>
+              This will permanently delete{" "}
+              <span className="text-foreground">
+                {title.trim() || "this issue"}
+              </span>
+              . This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="border-0 bg-transparent p-0">
+            <Button variant="outline" onClick={() => setDeleteDialog(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={deleting}
+              onClick={handleConfirmDelete}
+            >
+              {deleting ? "Deleting..." : "Delete issue"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={deleteDialog === "admin-required"}
+        onOpenChange={(open) => {
+          if (!open) setDeleteDialog(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md" showCloseButton>
+          <DialogHeader>
+            <DialogTitle>Admin required</DialogTitle>
+            <DialogDescription>
+              Only workspace admins can delete issues. Ask an admin to delete
+              this issue for you.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="border-0 bg-transparent p-0">
+            <Button onClick={() => setDeleteDialog(null)}>Got it</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }

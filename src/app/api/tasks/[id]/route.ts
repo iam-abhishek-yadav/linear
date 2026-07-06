@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { tasks } from "@/db/schema";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { updateTaskSchema } from "@/lib/validations";
 
@@ -48,6 +49,11 @@ export async function PATCH(request: Request, context: RouteContext) {
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
+  const session = await requireAdmin();
+  if (!session) {
+    return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+  }
+
   const { id } = await context.params;
 
   const [existing] = await db.select().from(tasks).where(eq(tasks.id, id));

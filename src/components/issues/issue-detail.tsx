@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { useSession } from "@/components/session-provider";
 import { useTasks } from "@/hooks/use-tasks";
+import { TaskActivityFeed } from "@/components/issues/task-activity-feed";
 import { formatTaskDate, formatTaskIdentifier, PROJECT_KEY } from "@/lib/task-utils";
 import type { Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,7 @@ export function IssueDetail() {
   const [deleteDialog, setDeleteDialog] = useState<
     "confirm" | "admin-required" | null
   >(null);
+  const [activityRefreshKey, setActivityRefreshKey] = useState(0);
 
   const isAdmin = user.role === "ADMIN";
   const identifier = task ? formatTaskIdentifier(task, tasks) : null;
@@ -61,6 +63,7 @@ export function IssueDetail() {
         status,
         priority,
       });
+      setActivityRefreshKey((key) => key + 1);
     } finally {
       setSaving(false);
     }
@@ -157,6 +160,11 @@ export function IssueDetail() {
           <div className="mt-8 flex items-center gap-4 border-t border-border/50 pt-6 text-xs text-muted-foreground">
             <span>Created {formatTaskDate(task.createdAt)}</span>
             <span>Updated {formatTaskDate(task.updatedAt)}</span>
+          </div>
+
+          <div className="mt-8 border-t border-border/50 pt-6">
+            <h2 className="mb-4 text-sm font-medium text-foreground">Activity</h2>
+            <TaskActivityFeed taskId={task.id} refreshKey={activityRefreshKey} />
           </div>
         </div>
       </div>

@@ -1,10 +1,17 @@
 import { and, eq, gt, gte, lt, lte, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { tasks } from "@/db/schema";
+import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { recordTaskStatusChange } from "@/lib/task-activity";
 import { reorderTaskSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
+  const session = await requireUser();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await request.json();
   const parsed = reorderTaskSchema.safeParse(body);
 
@@ -71,6 +78,15 @@ export async function POST(request: Request) {
       .update(tasks)
       .set({ status, position })
       .where(eq(tasks.id, taskId));
+
+    if (oldStatus !== status) {
+      await recordTaskStatusChange(tx, {
+        taskId,
+        userId: session.user.id,
+        fromStatus: oldStatus,
+        toStatus: status,
+      });
+    }
   });
 
   const [updated] = await db.select().from(tasks).where(eq(tasks.id, taskId));

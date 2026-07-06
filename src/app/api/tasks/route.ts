@@ -2,7 +2,9 @@ import { asc, eq, max } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
 import { NextResponse } from "next/server";
 import { tasks } from "@/db/schema";
+import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { recordTaskCreated } from "@/lib/task-activity";
 import { createTaskSchema } from "@/lib/validations";
 
 export async function GET() {
@@ -15,6 +17,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const session = await requireUser();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await request.json();
   const parsed = createTaskSchema.safeParse(body);
 
@@ -33,20 +40,32 @@ export async function POST(request: Request) {
     .where(eq(tasks.status, status));
 
   const now = new Date();
+  const taskId = createId();
 
-  const [task] = await db
-    .insert(tasks)
-    .values({
-      id: createId(),
-      title: parsed.data.title,
-      description: parsed.data.description,
+  const [task] = await db.transaction(async (tx) => {
+    const [created] = await tx
+      .insert(tasks)
+      .values({
+        id: taskId,
+        title: parsed.data.title,
+        description: parsed.data.description,
+        status,
+        priority: parsed.data.priority ?? "NONE",
+        position: (maxPos?.value ?? -1) + 1,
+        createdById: session.user.id,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning();
+
+    await recordTaskCreated(tx, {
+      taskId,
+      userId: session.user.id,
       status,
-      priority: parsed.data.priority ?? "NONE",
-      position: (maxPos?.value ?? -1) + 1,
-      createdAt: now,
-      updatedAt: now,
-    })
-    .returning();
+    });
+
+    return [created];
+  });
 
   return NextResponse.json(task, { status: 201 });
 }

@@ -33,6 +33,9 @@ export const tasks = pgTable(
     status: taskStatusEnum("status").notNull().default("BACKLOG"),
     priority: taskPriorityEnum("priority").notNull().default("NONE"),
     position: integer("position").notNull().default(0),
+    createdById: text("createdById").references(() => users.id, {
+      onDelete: "set null",
+    }),
     createdAt: timestamp("createdAt", { precision: 3, mode: "date" })
       .notNull()
       .defaultNow(),
@@ -42,6 +45,33 @@ export const tasks = pgTable(
       .$onUpdate(() => new Date()),
   },
   (table) => [index("Task_status_position_idx").on(table.status, table.position)],
+);
+
+export const taskActivityTypeEnum = pgEnum("TaskActivityType", [
+  "CREATED",
+  "STATUS_CHANGED",
+]);
+
+export const taskActivities = pgTable(
+  "TaskActivity",
+  {
+    id: text("id").primaryKey(),
+    taskId: text("taskId")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: taskActivityTypeEnum("type").notNull(),
+    fromStatus: taskStatusEnum("fromStatus"),
+    toStatus: taskStatusEnum("toStatus"),
+    createdAt: timestamp("createdAt", { precision: 3, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("TaskActivity_taskId_createdAt_idx").on(table.taskId, table.createdAt),
+  ],
 );
 
 export type Task = typeof tasks.$inferSelect;
@@ -151,6 +181,8 @@ export const memberInvites = pgTable(
   ],
 );
 
+export type TaskActivity = typeof taskActivities.$inferSelect;
+export type TaskActivityType = (typeof taskActivityTypeEnum.enumValues)[number];
 export type Organization = typeof organizations.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;

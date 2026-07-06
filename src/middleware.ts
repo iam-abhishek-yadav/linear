@@ -6,12 +6,6 @@ const authRoutes = ["/login", "/register", "/join"];
 const publicRoutes = ["/", ...authRoutes];
 const publicApiPrefixes = ["/api/auth", "/api/invites", "/api/members/invites", "/api/health"];
 
-function isAuthRoute(pathname: string) {
-  return authRoutes.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
-  );
-}
-
 function isPublicRoute(pathname: string) {
   return publicRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
@@ -26,13 +20,6 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const sessionId = request.cookies.get(SESSION_COOKIE)?.value;
   const isAuthenticated = Boolean(sessionId);
-
-  if (isAuthRoute(pathname)) {
-    if (isAuthenticated) {
-      return NextResponse.redirect(new URL("/board", request.url));
-    }
-    return NextResponse.next();
-  }
 
   if (pathname.startsWith("/api")) {
     if (isPublicApi(pathname)) {

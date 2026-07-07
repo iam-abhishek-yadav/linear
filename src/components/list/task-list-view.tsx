@@ -243,16 +243,6 @@ export function TaskListView({
             </div>
           )}
         </main>
-
-        <div className="pointer-events-none absolute right-5 bottom-4">
-          <button
-            type="button"
-            className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-white/[0.07] bg-[#141414]/95 px-3 py-1.5 text-[12px] text-muted-foreground/70 backdrop-blur-sm hover:bg-white/[0.05] hover:text-muted-foreground"
-          >
-            <Sparkles className="size-3.5 opacity-70" />
-            Ask Linear
-          </button>
-        </div>
       </div>
 
       <TaskDialog

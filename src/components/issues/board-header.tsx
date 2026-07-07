@@ -42,21 +42,6 @@ export function BoardPageChrome({ onNewIssue }: BoardPageChromeProps) {
           </Button>
         )}
       </div>
-      <div className="flex h-10 items-center gap-1 border-b border-white/[0.06] px-4">
-        <span className="flex items-center gap-1.5 rounded-md bg-white/[0.08] px-2.5 py-1 text-[13px] text-foreground">
-          <LayoutGrid className="size-3.5" />
-          Board
-        </span>
-        <Link
-          href="/list"
-          className={cn(
-            "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[13px] text-muted-foreground hover:text-foreground/80",
-          )}
-        >
-          <List className="size-3.5" />
-          Issues
-        </Link>
-      </div>
     </header>
   );
 }

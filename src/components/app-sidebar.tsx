@@ -85,26 +85,6 @@ export function AppSidebar() {
           label="Board"
           active={pathname === "/board"}
         />
-        <NavLink
-          href="/backlog"
-          icon={List}
-          label="Backlog"
-          active={pathname === "/backlog"}
-        />
-        <button
-          type="button"
-          className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-[13px] text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
-        >
-          <List className="size-3.5 opacity-70" />
-          Views
-        </button>
-        <button
-          type="button"
-          className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-[13px] text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
-        >
-          <MoreHorizontal className="size-3.5 opacity-70" />
-          More
-        </button>
       </nav>
     </aside>
   );

@@ -32,3 +32,42 @@ export function formatTaskDate(date: Date | string): string {
     day: "numeric",
   });
 }
+
+/** Normalize a task's due date into a `yyyy-mm-dd` value for a native date input. */
+export function toDateInputValue(
+  date: Date | string | null | undefined,
+): string | null {
+  if (!date) return null;
+  if (typeof date === "string") {
+    // Stored as an ISO string at UTC midnight; keep the calendar day intact.
+    return date.slice(0, 10);
+  }
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/** Human-friendly ETA label (e.g. "Jul 10") from a due date, timezone-safe. */
+export function formatDueDate(
+  date: Date | string | null | undefined,
+): string | null {
+  const input = toDateInputValue(date);
+  if (!input) return null;
+  const [y, m, d] = input.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+/** Whether a due date is in the past (before today). */
+export function isOverdue(date: Date | string | null | undefined): boolean {
+  const input = toDateInputValue(date);
+  if (!input) return false;
+  const [y, m, d] = input.split("-").map(Number);
+  const due = new Date(y, m - 1, d);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return due.getTime() < today.getTime();
+}

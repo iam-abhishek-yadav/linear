@@ -8,6 +8,8 @@ import {
 import { KanbanCard } from "@/components/kanban/kanban-card";
 import { NewTaskButton } from "@/components/kanban/task-dialog";
 import { StatusIcon } from "@/components/tasks/status-icon";
+import type { Member } from "@/hooks/use-members";
+import type { TaskInput } from "@/hooks/use-tasks";
 import type { Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -16,13 +18,9 @@ type KanbanColumnProps = {
   label: string;
   tasks: Task[];
   allTasks: Task[];
+  members: Member[];
   onTaskClick: (task: Task) => void;
-  onCreate: (data: {
-    title: string;
-    description?: string;
-    status: Task["status"];
-    priority: Task["priority"];
-  }) => Promise<void>;
+  onCreate: (data: TaskInput) => Promise<void>;
 };
 
 export function KanbanColumn({
@@ -30,6 +28,7 @@ export function KanbanColumn({
   label,
   tasks,
   allTasks,
+  members,
   onTaskClick,
   onCreate,
 }: KanbanColumnProps) {
@@ -61,6 +60,7 @@ export function KanbanColumn({
                   key={task.id}
                   task={task}
                   allTasks={allTasks}
+                  members={members}
                   onClick={() => onTaskClick(task)}
                 />
               ))}

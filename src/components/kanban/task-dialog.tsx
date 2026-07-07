@@ -3,7 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Loader2, Maximize2, Plus, Trash2 } from "lucide-react";
-import { PriorityPill, StatusPill } from "@/components/tasks/property-pills";
+import {
+  AssigneePill,
+  DueDatePill,
+  PriorityPill,
+  StatusPill,
+} from "@/components/tasks/property-pills";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,7 +20,8 @@ import {
 } from "@/components/ui/dialog";
 import { useSession } from "@/components/session-provider";
 import { Switch } from "@/components/ui/switch";
-import { getProjectKey } from "@/lib/task-utils";
+import { useMembers } from "@/hooks/use-members";
+import { getProjectKey, toDateInputValue } from "@/lib/task-utils";
 import type { Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +30,8 @@ type TaskFormData = {
   description?: string;
   status: Task["status"];
   priority: Task["priority"];
+  assigneeId: string | null;
+  dueDate: string | null;
 };
 
 type TaskDialogProps = {
@@ -48,7 +56,10 @@ export function TaskDialog({
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<Task["status"]>(defaultStatus);
   const [priority, setPriority] = useState<Task["priority"]>("NONE");
+  const [assigneeId, setAssigneeId] = useState<string | null>(null);
+  const [dueDate, setDueDate] = useState<string | null>(null);
   const [createMore, setCreateMore] = useState(false);
+  const members = useMembers();
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<
@@ -69,6 +80,8 @@ export function TaskDialog({
     setDescription(task?.description ?? "");
     setStatus(task?.status ?? defaultStatus);
     setPriority(task?.priority ?? "NONE");
+    setAssigneeId(task?.assigneeId ?? null);
+    setDueDate(toDateInputValue(task?.dueDate));
     setCreateMore(false);
     requestAnimationFrame(() => titleRef.current?.focus());
   }, [open, task, defaultStatus]);
@@ -83,6 +96,8 @@ export function TaskDialog({
         description: description.trim() || undefined,
         status,
         priority,
+        assigneeId,
+        dueDate,
       });
 
       if (isEditing || !createMore) {
@@ -90,6 +105,8 @@ export function TaskDialog({
       } else {
         setTitle("");
         setDescription("");
+        setAssigneeId(null);
+        setDueDate(null);
         titleRef.current?.focus();
       }
     } finally {
@@ -175,6 +192,12 @@ export function TaskDialog({
         <div className="flex flex-wrap items-center gap-1.5 px-4 pb-4">
           <StatusPill value={status} onChange={setStatus} />
           <PriorityPill value={priority} onChange={setPriority} />
+          <AssigneePill
+            value={assigneeId}
+            members={members}
+            onChange={setAssigneeId}
+          />
+          <DueDatePill value={dueDate} onChange={setDueDate} />
         </div>
 
         <div className="flex items-center gap-3 border-t border-border/50 px-4 py-3">

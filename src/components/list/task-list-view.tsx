@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  CalendarClock,
   ChevronDown,
   Loader2,
   MoreHorizontal,
@@ -12,13 +13,18 @@ import { TaskDialog } from "@/components/kanban/task-dialog";
 import { IssuesPageChrome } from "@/components/issues/issues-header";
 import { useSession } from "@/components/session-provider";
 import { StatusIcon } from "@/components/tasks/status-icon";
+import { useMembers, type Member } from "@/hooks/use-members";
+import type { TaskInput } from "@/hooks/use-tasks";
 import { getStatusMeta, LIST_STATUS_ORDER } from "@/lib/constants";
 import {
+  formatDueDate,
   formatTaskDate,
   formatTaskIdentifier,
   getProjectKey,
+  isOverdue,
 } from "@/lib/task-utils";
 import type { Task, TaskStatus } from "@/lib/types";
+import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
 
 type TaskListViewProps = {
@@ -27,37 +33,29 @@ type TaskListViewProps = {
   loading: boolean;
   filterStatus?: TaskStatus[];
   emptyMessage?: string;
-  onCreate: (data: {
-    title: string;
-    description?: string;
-    status: Task["status"];
-    priority: Task["priority"];
-  }) => Promise<void>;
-  onUpdate: (
-    id: string,
-    data: {
-      title: string;
-      description?: string;
-      status: Task["status"];
-      priority: Task["priority"];
-    },
-  ) => Promise<void>;
+  onCreate: (data: TaskInput) => Promise<void>;
+  onUpdate: (id: string, data: TaskInput) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 };
 
 function IssueRow({
   task,
   allTasks,
+  members,
   selected,
   onClick,
 }: {
   task: Task;
   allTasks: Task[];
+  members: Member[];
   selected: boolean;
   onClick: () => void;
 }) {
   const { organization } = useSession();
   const projectKey = getProjectKey(organization.name);
+  const assignee = members.find((m) => m.id === task.assigneeId) ?? null;
+  const dueLabel = formatDueDate(task.dueDate);
+  const overdue = isOverdue(task.dueDate);
 
   return (
     <button
@@ -76,7 +74,30 @@ function IssueRow({
       <span className="min-w-0 flex-1 truncate text-[13px] font-normal text-foreground/95">
         {task.title}
       </span>
-      <span className="size-4 shrink-0 rounded-full bg-white/[0.06] ring-1 ring-white/[0.08]" />
+      {dueLabel && (
+        <span
+          className={cn(
+            "flex shrink-0 items-center gap-1 text-[11px] tabular-nums",
+            overdue ? "text-red-400" : "text-white/40",
+          )}
+        >
+          <CalendarClock className="size-3" />
+          {dueLabel}
+        </span>
+      )}
+      {assignee ? (
+        <span
+          className={cn(
+            "flex size-4 shrink-0 items-center justify-center rounded-full text-[8px] font-semibold text-white",
+            getAvatarColor(assignee.name),
+          )}
+          title={assignee.name}
+        >
+          {getInitials(assignee.name)}
+        </span>
+      ) : (
+        <span className="size-4 shrink-0 rounded-full bg-white/[0.06] ring-1 ring-white/[0.08]" />
+      )}
       <span className="w-[42px] shrink-0 text-right text-[12px] tabular-nums text-white/30">
         {formatTaskDate(task.updatedAt)}
       </span>
@@ -88,6 +109,7 @@ function StatusGroup({
   status,
   tasks,
   allTasks,
+  members,
   selectedTaskId,
   onTaskClick,
   onAddIssue,
@@ -95,6 +117,7 @@ function StatusGroup({
   status: TaskStatus;
   tasks: Task[];
   allTasks: Task[];
+  members: Member[];
   selectedTaskId: string | null;
   onTaskClick: (task: Task) => void;
   onAddIssue: (status: TaskStatus) => void;
@@ -124,6 +147,7 @@ function StatusGroup({
             key={task.id}
             task={task}
             allTasks={allTasks}
+            members={members}
             selected={selectedTaskId === task.id}
             onClick={() => onTaskClick(task)}
           />
@@ -147,6 +171,7 @@ export function TaskListView({
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [defaultStatus, setDefaultStatus] = useState<TaskStatus>("TODO");
+  const members = useMembers();
 
   const visible = filterStatus
     ? tasks.filter((t) => filterStatus.includes(t.status))
@@ -209,6 +234,7 @@ export function TaskListView({
                   status={status}
                   tasks={sorted.filter((t) => t.status === status)}
                   allTasks={allTasks}
+                  members={members}
                   selectedTaskId={selectedTaskId}
                   onTaskClick={openTask}
                   onAddIssue={openCreate}

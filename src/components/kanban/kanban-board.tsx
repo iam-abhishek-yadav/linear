@@ -20,6 +20,7 @@ import { KanbanColumn } from "@/components/kanban/kanban-column";
 import { KanbanCardContent } from "@/components/kanban/kanban-card";
 import { TaskDialog } from "@/components/kanban/task-dialog";
 import { BoardPageChrome } from "@/components/issues/board-header";
+import { useMembers } from "@/hooks/use-members";
 import { useTasks } from "@/hooks/use-tasks";
 import { COLUMNS } from "@/lib/constants";
 import type { Task, TaskStatus } from "@/lib/types";
@@ -103,6 +104,7 @@ export function KanbanBoard() {
     deleteTask,
     persistReorder,
   } = useTasks();
+  const members = useMembers();
 
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -220,6 +222,7 @@ export function KanbanBoard() {
                 label={col.label}
                 tasks={grouped[col.id]}
                 allTasks={tasks}
+                members={members}
                 onTaskClick={(task) => {
                   setEditingTask(task);
                   setDialogOpen(true);
@@ -233,7 +236,11 @@ export function KanbanBoard() {
         <DragOverlay dropAnimation={dropAnimation}>
           {activeTask ? (
             <div className="w-72 rotate-1 shadow-lg">
-              <KanbanCardContent task={activeTask} allTasks={tasks} />
+              <KanbanCardContent
+                task={activeTask}
+                allTasks={tasks}
+                members={members}
+              />
             </div>
           ) : null}
         </DragOverlay>

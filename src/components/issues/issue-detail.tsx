@@ -4,7 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ChevronRight, Loader2, Trash2 } from "lucide-react";
-import { PriorityPill, StatusPill } from "@/components/tasks/property-pills";
+import {
+  AssigneePill,
+  DueDatePill,
+  PriorityPill,
+  StatusPill,
+} from "@/components/tasks/property-pills";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,12 +20,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useSession } from "@/components/session-provider";
+import { useMembers } from "@/hooks/use-members";
 import { useTasks } from "@/hooks/use-tasks";
 import { TaskActivityFeed } from "@/components/issues/task-activity-feed";
 import {
   formatTaskDate,
   formatTaskIdentifier,
   getProjectKey,
+  toDateInputValue,
 } from "@/lib/task-utils";
 import type { Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -30,6 +37,7 @@ export function IssueDetail() {
   const router = useRouter();
   const { user, organization } = useSession();
   const { tasks, loading, updateTask, deleteTask } = useTasks();
+  const members = useMembers();
 
   const projectKey = getProjectKey(organization.name);
   const task = tasks.find((t) => t.id === id);
@@ -39,6 +47,8 @@ export function IssueDetail() {
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<Task["status"]>("BACKLOG");
   const [priority, setPriority] = useState<Task["priority"]>("NONE");
+  const [assigneeId, setAssigneeId] = useState<string | null>(null);
+  const [dueDate, setDueDate] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<
@@ -55,6 +65,8 @@ export function IssueDetail() {
     setDescription(task.description ?? "");
     setStatus(task.status);
     setPriority(task.priority);
+    setAssigneeId(task.assigneeId ?? null);
+    setDueDate(toDateInputValue(task.dueDate));
   }, [task]);
 
   async function submit() {
@@ -67,6 +79,8 @@ export function IssueDetail() {
         description: description.trim() || undefined,
         status,
         priority,
+        assigneeId,
+        dueDate,
       });
       setActivityRefreshKey((key) => key + 1);
     } finally {
@@ -152,6 +166,12 @@ export function IssueDetail() {
           <div className="mt-4 flex flex-wrap items-center gap-1.5">
             <StatusPill value={status} onChange={setStatus} />
             <PriorityPill value={priority} onChange={setPriority} />
+            <AssigneePill
+              value={assigneeId}
+              members={members}
+              onChange={setAssigneeId}
+            />
+            <DueDatePill value={dueDate} onChange={setDueDate} />
           </div>
 
           <textarea

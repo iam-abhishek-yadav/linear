@@ -33,6 +33,10 @@ export const tasks = pgTable(
     status: taskStatusEnum("status").notNull().default("BACKLOG"),
     priority: taskPriorityEnum("priority").notNull().default("NONE"),
     position: integer("position").notNull().default(0),
+    assigneeId: text("assigneeId").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    dueDate: timestamp("dueDate", { precision: 3, mode: "date" }),
     createdById: text("createdById").references(() => users.id, {
       onDelete: "set null",
     }),
@@ -44,7 +48,10 @@ export const tasks = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  (table) => [index("Task_status_position_idx").on(table.status, table.position)],
+  (table) => [
+    index("Task_status_position_idx").on(table.status, table.position),
+    index("Task_assigneeId_idx").on(table.assigneeId),
+  ],
 );
 
 export const taskActivityTypeEnum = pgEnum("TaskActivityType", [

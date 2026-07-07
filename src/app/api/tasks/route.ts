@@ -52,6 +52,8 @@ export async function POST(request: Request) {
         status,
         priority: parsed.data.priority ?? "NONE",
         position: (maxPos?.value ?? -1) + 1,
+        assigneeId: parsed.data.assigneeId ?? null,
+        dueDate: parsed.data.dueDate ?? null,
         createdById: session.user.id,
         createdAt: now,
         updatedAt: now,

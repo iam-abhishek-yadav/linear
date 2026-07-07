@@ -8,6 +8,8 @@ export type TaskInput = {
   description?: string;
   status: Task["status"];
   priority: Task["priority"];
+  assigneeId?: string | null;
+  dueDate?: string | null;
 };
 
 export function useTasks() {
@@ -31,7 +33,9 @@ export function useTasks() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
+    if (!res.ok) throw new Error("Failed to create task");
     const task = await res.json();
+    if (!task?.id) throw new Error("Malformed task response");
     setTasks((prev) => [...prev, task]);
     return task;
   }, []);
@@ -42,7 +46,9 @@ export function useTasks() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
+    if (!res.ok) throw new Error("Failed to update task");
     const updated = await res.json();
+    if (!updated?.id) throw new Error("Malformed task response");
     setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)));
     return updated;
   }, []);

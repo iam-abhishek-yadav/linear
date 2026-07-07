@@ -8,6 +8,8 @@ export const createTaskSchema = z.object({
   description: z.string().max(5000).optional(),
   status: taskStatusSchema.optional(),
   priority: z.enum(["NONE", "LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
+  assigneeId: z.string().min(1).nullish(),
+  dueDate: z.coerce.date().nullish(),
 });
 
 export const updateTaskSchema = z.object({
@@ -16,6 +18,8 @@ export const updateTaskSchema = z.object({
   status: taskStatusSchema.optional(),
   priority: z.enum(["NONE", "LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
   position: z.number().int().min(0).optional(),
+  assigneeId: z.string().min(1).nullish(),
+  dueDate: z.coerce.date().nullish(),
 });
 
 export const reorderTaskSchema = z.object({

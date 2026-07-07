@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { tasks } from "@/db/schema";
 import { requireAdmin, requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { createAssignmentNotification } from "@/lib/notifications";
 import { recordTaskStatusChange } from "@/lib/task-activity";
 import { updateTaskSchema } from "@/lib/validations";
 
@@ -60,6 +61,18 @@ export async function PATCH(request: Request, context: RouteContext) {
         userId: session.user.id,
         fromStatus: existing.status,
         toStatus: nextStatus,
+      });
+    }
+
+    const assigneeChanged =
+      parsed.data.assigneeId !== undefined &&
+      parsed.data.assigneeId !== existing.assigneeId;
+
+    if (assigneeChanged && parsed.data.assigneeId) {
+      await createAssignmentNotification(tx, {
+        recipientId: parsed.data.assigneeId,
+        actorId: session.user.id,
+        taskId: id,
       });
     }
 

@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { tasks } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { createAssignmentNotification } from "@/lib/notifications";
 import { recordTaskCreated } from "@/lib/task-activity";
 import { createTaskSchema } from "@/lib/validations";
 
@@ -65,6 +66,14 @@ export async function POST(request: Request) {
       userId: session.user.id,
       status,
     });
+
+    if (created.assigneeId) {
+      await createAssignmentNotification(tx, {
+        recipientId: created.assigneeId,
+        actorId: session.user.id,
+        taskId,
+      });
+    }
 
     return [created];
   });

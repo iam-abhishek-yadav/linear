@@ -105,9 +105,40 @@ export const taskComments = pgTable(
   ],
 );
 
+export const notificationTypeEnum = pgEnum("NotificationType", ["ASSIGNED"]);
+
+export const notifications = pgTable(
+  "Notification",
+  {
+    id: text("id").primaryKey(),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    actorId: text("actorId").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    taskId: text("taskId")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    type: notificationTypeEnum("type").notNull(),
+    readAt: timestamp("readAt", { precision: 3, mode: "date" }),
+    createdAt: timestamp("createdAt", { precision: 3, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("Notification_userId_createdAt_idx").on(
+      table.userId,
+      table.createdAt,
+    ),
+  ],
+);
+
 export type Task = typeof tasks.$inferSelect;
 export type NewTask = typeof tasks.$inferInsert;
 export type TaskComment = typeof taskComments.$inferSelect;
+export type Notification = typeof notifications.$inferSelect;
+export type NotificationType = (typeof notificationTypeEnum.enumValues)[number];
 export type TaskStatus = (typeof taskStatusEnum.enumValues)[number];
 export type TaskPriority = (typeof taskPriorityEnum.enumValues)[number];
 

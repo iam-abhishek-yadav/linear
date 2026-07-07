@@ -7,6 +7,8 @@ export type {
   TaskActivity,
   TaskActivityType,
   TaskComment,
+  Notification,
+  NotificationType,
   NewTask,
 } from "@/db/schema";
 

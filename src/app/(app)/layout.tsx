@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { NotificationsProvider } from "@/components/notifications-provider";
 import { SessionProvider } from "@/components/session-provider";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -16,7 +17,9 @@ export default async function AppLayout({
 
   return (
     <SessionProvider value={session}>
-      <AppShell>{children}</AppShell>
+      <NotificationsProvider>
+        <AppShell>{children}</AppShell>
+      </NotificationsProvider>
     </SessionProvider>
   );
 }

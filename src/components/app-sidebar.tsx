@@ -9,6 +9,7 @@ import {
   MoreHorizontal,
   User,
 } from "lucide-react";
+import { useNotifications } from "@/components/notifications-provider";
 import { WorkspaceMenu } from "@/components/workspace-menu";
 import { cn } from "@/lib/utils";
 
@@ -17,11 +18,13 @@ function NavLink({
   icon: Icon,
   label,
   active,
+  badge,
 }: {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   active?: boolean;
+  badge?: number;
 }) {
   return (
     <Link
@@ -34,7 +37,12 @@ function NavLink({
       )}
     >
       <Icon className="size-3.5 shrink-0 opacity-70" />
-      {label}
+      <span className="flex-1">{label}</span>
+      {badge !== undefined && badge > 0 && (
+        <span className="min-w-[18px] rounded-full bg-violet-500/20 px-1.5 text-center text-[11px] font-medium text-violet-300">
+          {badge > 99 ? "99+" : badge}
+        </span>
+      )}
     </Link>
   );
 }
@@ -49,6 +57,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { unreadCount } = useNotifications();
 
   return (
     <aside className="flex w-[220px] shrink-0 flex-col bg-black">
@@ -56,10 +65,11 @@ export function AppSidebar() {
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2">
         <NavLink
-          href="/list"
+          href="/inbox"
           icon={Inbox}
           label="Inbox"
-          active={pathname === "/list"}
+          active={pathname === "/inbox"}
+          badge={unreadCount}
         />
         <NavLink
           href="/active"

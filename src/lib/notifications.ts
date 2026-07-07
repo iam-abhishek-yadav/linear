@@ -2,6 +2,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { aliasedTable, and, desc, eq, isNull } from "drizzle-orm";
 import { notifications, tasks, users } from "@/db/schema";
 import { db } from "@/lib/db";
+import type { NotificationItem } from "@/lib/notification-types";
 
 type DbExecutor = Pick<typeof db, "insert">;
 
@@ -58,6 +59,19 @@ export async function getNotifications(userId: string) {
     .orderBy(desc(notifications.createdAt));
 
   return rows;
+}
+
+export function serializeNotification(
+  row: Awaited<ReturnType<typeof getNotifications>>[number],
+): NotificationItem {
+  return {
+    id: row.id,
+    type: row.type,
+    read: row.readAt !== null,
+    createdAt: row.createdAt.toISOString(),
+    actor: row.actor?.id ? row.actor : null,
+    task: row.task,
+  };
 }
 
 export async function markNotificationRead(

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCheck, ChevronRight, Inbox, Loader2 } from "lucide-react";
 import {
@@ -9,19 +10,13 @@ import {
 import { useSession } from "@/components/session-provider";
 import { StatusIcon } from "@/components/tasks/status-icon";
 import { useTasks } from "@/hooks/use-tasks";
+import {
+  formatNotificationMessage,
+  getActorDisplayName,
+} from "@/lib/notification-types";
 import { formatTaskIdentifier, getProjectKey } from "@/lib/task-utils";
 import { formatRelativeDate, getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
-
-function notificationText(notification: NotificationItem) {
-  const actor = notification.actor?.name ?? "Someone";
-  switch (notification.type) {
-    case "ASSIGNED":
-      return `${actor} assigned this issue to you`;
-    default:
-      return `${actor} updated this issue`;
-  }
-}
 
 function NotificationRow({
   notification,
@@ -32,7 +27,7 @@ function NotificationRow({
   identifier: string | null;
   onOpen: () => void;
 }) {
-  const actorName = notification.actor?.name ?? "System";
+  const actorName = getActorDisplayName(notification.actor);
 
   return (
     <button
@@ -80,7 +75,7 @@ function NotificationRow({
           </span>
         </div>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          {notificationText(notification)}
+          {formatNotificationMessage(notification.type, notification.actor)}
         </p>
       </div>
 
@@ -100,13 +95,15 @@ export function InboxView() {
 
   const projectKey = getProjectKey(organization.name);
 
-  function identifierFor(taskId: string): string | null {
-    const task = tasks.find((t) => t.id === taskId);
-    if (!task) return null;
-    return formatTaskIdentifier(task, tasks, projectKey);
-  }
+  const taskIdentifiers = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const task of tasks) {
+      map.set(task.id, formatTaskIdentifier(task, tasks, projectKey));
+    }
+    return map;
+  }, [tasks, projectKey]);
 
-  function open(notification: NotificationItem) {
+  function openNotification(notification: NotificationItem) {
     if (!notification.read) markRead(notification.id);
     router.push(`/issues/${notification.task.id}`);
   }
@@ -171,8 +168,8 @@ export function InboxView() {
               <NotificationRow
                 key={notification.id}
                 notification={notification}
-                identifier={identifierFor(notification.task.id)}
-                onOpen={() => open(notification)}
+                identifier={taskIdentifiers.get(notification.task.id) ?? null}
+                onOpen={() => openNotification(notification)}
               />
             ))}
           </div>

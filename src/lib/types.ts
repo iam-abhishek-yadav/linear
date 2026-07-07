@@ -13,3 +13,8 @@ export type {
 } from "@/db/schema";
 
 export type TasksByStatus = Record<Task["status"], Task[]>;
+
+export type {
+  NotificationActor,
+  NotificationItem,
+} from "@/lib/notification-types";

@@ -7,16 +7,9 @@ import {
   useEffect,
   useState,
 } from "react";
-import type { NotificationType, TaskStatus } from "@/lib/types";
+import type { NotificationItem } from "@/lib/notification-types";
 
-export type NotificationItem = {
-  id: string;
-  type: NotificationType;
-  read: boolean;
-  createdAt: string;
-  actor: { id: string; name: string } | null;
-  task: { id: string; title: string; status: TaskStatus };
-};
+export type { NotificationItem };
 
 type NotificationsContextValue = {
   notifications: NotificationItem[];
@@ -32,6 +25,15 @@ const NotificationsContext = createContext<NotificationsContextValue | null>(
 );
 
 const POLL_INTERVAL_MS = 30_000;
+
+function markNotificationsRead(
+  notifications: NotificationItem[],
+  id?: string,
+) {
+  return notifications.map((n) =>
+    !id || n.id === id ? { ...n, read: true } : n,
+  );
+}
 
 export function NotificationsProvider({
   children,
@@ -61,9 +63,7 @@ export function NotificationsProvider({
   }, [refresh]);
 
   const markRead = useCallback(async (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
-    );
+    setNotifications((prev) => markNotificationsRead(prev, id));
     try {
       await fetch(`/api/notifications/${id}`, { method: "PATCH" });
     } catch {
@@ -72,7 +72,7 @@ export function NotificationsProvider({
   }, []);
 
   const markAllRead = useCallback(async () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    setNotifications((prev) => markNotificationsRead(prev));
     try {
       await fetch("/api/notifications/read-all", { method: "POST" });
     } catch {
@@ -80,10 +80,7 @@ export function NotificationsProvider({
     }
   }, []);
 
-  const unreadCount = notifications.reduce(
-    (count, n) => (n.read ? count : count + 1),
-    0,
-  );
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <NotificationsContext.Provider

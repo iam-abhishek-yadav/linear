@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChevronRight, LayoutGrid, List, Plus } from "lucide-react";
 import { useSession } from "@/components/session-provider";
+import { SidebarTrigger } from "@/components/sidebar-provider";
 import { Button } from "@/components/ui/button";
 import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,7 @@ export function BoardPageChrome({ onNewIssue }: BoardPageChromeProps) {
     <header className="shrink-0">
       <div className="flex h-12 items-center justify-between px-4">
         <div className="flex items-center gap-1.5 text-[13px]">
+          <SidebarTrigger />
           <span
             className={cn(
               "flex size-[18px] items-center justify-center rounded-[4px] text-[8px] font-bold text-white",

@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useSession } from "@/components/session-provider";
+import { SidebarTrigger } from "@/components/sidebar-provider";
 import { useMembers } from "@/hooks/use-members";
 import { useTasks } from "@/hooks/use-tasks";
 import { TaskActivityFeed } from "@/components/issues/task-activity-feed";
@@ -138,6 +139,7 @@ export function IssueDetail() {
       <header className="shrink-0 border-b border-white/[0.06]">
         <div className="flex h-11 items-center px-5">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <SidebarTrigger />
             <Link
               href="/board"
               className="inline-flex items-center gap-1.5 rounded bg-muted/40 px-1.5 py-0.5 font-medium text-foreground/80 transition-colors hover:bg-muted/60"

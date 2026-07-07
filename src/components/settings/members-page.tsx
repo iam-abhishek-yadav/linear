@@ -5,6 +5,7 @@ import { MoreHorizontal, Search } from "lucide-react";
 import { InviteMemberDialog } from "@/components/settings/invite-member-dialog";
 import { InviteLinkCopy } from "@/components/settings/invite-link-copy";
 import { useSession } from "@/components/session-provider";
+import { SidebarTrigger } from "@/components/sidebar-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -173,7 +174,10 @@ export function MembersPage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-center justify-between gap-4 border-b border-border/40 px-8 py-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Members</h1>
+        <div className="flex items-center gap-2">
+          <SidebarTrigger />
+          <h1 className="text-2xl font-semibold tracking-tight">Members</h1>
+        </div>
         <div className="flex items-center gap-2">
           <div className="relative">
             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground/60" />

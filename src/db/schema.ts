@@ -81,8 +81,33 @@ export const taskActivities = pgTable(
   ],
 );
 
+export const taskComments = pgTable(
+  "TaskComment",
+  {
+    id: text("id").primaryKey(),
+    taskId: text("taskId")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    createdAt: timestamp("createdAt", { precision: 3, mode: "date" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updatedAt", { precision: 3, mode: "date" })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index("TaskComment_taskId_createdAt_idx").on(table.taskId, table.createdAt),
+  ],
+);
+
 export type Task = typeof tasks.$inferSelect;
 export type NewTask = typeof tasks.$inferInsert;
+export type TaskComment = typeof taskComments.$inferSelect;
 export type TaskStatus = (typeof taskStatusEnum.enumValues)[number];
 export type TaskPriority = (typeof taskPriorityEnum.enumValues)[number];
 

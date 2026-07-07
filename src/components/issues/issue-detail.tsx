@@ -23,6 +23,7 @@ import { useSession } from "@/components/session-provider";
 import { useMembers } from "@/hooks/use-members";
 import { useTasks } from "@/hooks/use-tasks";
 import { TaskActivityFeed } from "@/components/issues/task-activity-feed";
+import { TaskComments } from "@/components/issues/task-comments";
 import {
   formatTaskDate,
   formatTaskIdentifier,
@@ -185,6 +186,11 @@ export function IssueDetail() {
           <div className="mt-8 flex items-center gap-4 border-t border-border/50 pt-6 text-xs text-muted-foreground">
             <span>Created {formatTaskDate(task.createdAt)}</span>
             <span>Updated {formatTaskDate(task.updatedAt)}</span>
+          </div>
+
+          <div className="mt-8 border-t border-border/50 pt-6">
+            <h2 className="mb-4 text-sm font-medium text-foreground">Comments</h2>
+            <TaskComments taskId={task.id} />
           </div>
 
           <div className="mt-8 border-t border-border/50 pt-6">

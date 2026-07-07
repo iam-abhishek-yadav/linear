@@ -22,6 +22,10 @@ export const updateTaskSchema = z.object({
   dueDate: z.coerce.date().nullish(),
 });
 
+export const createCommentSchema = z.object({
+  body: z.string().min(1, "Comment cannot be empty").max(5000),
+});
+
 export const reorderTaskSchema = z.object({
   taskId: z.string(),
   status: taskStatusSchema,

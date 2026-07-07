@@ -6,6 +6,7 @@ export type {
   TaskPriority,
   TaskActivity,
   TaskActivityType,
+  TaskComment,
   NewTask,
 } from "@/db/schema";
 

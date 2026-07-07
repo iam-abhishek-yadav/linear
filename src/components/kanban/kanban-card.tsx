@@ -2,8 +2,13 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useSession } from "@/components/session-provider";
 import { PriorityIcon } from "@/components/tasks/priority-icon";
-import { formatTaskDate, formatTaskIdentifier } from "@/lib/task-utils";
+import {
+  formatTaskDate,
+  formatTaskIdentifier,
+  getProjectKey,
+} from "@/lib/task-utils";
 import type { Task } from "@/lib/types";
 
 type KanbanCardContentProps = {
@@ -17,6 +22,9 @@ export function KanbanCardContent({
   allTasks = [],
   onClick,
 }: KanbanCardContentProps) {
+  const { organization } = useSession();
+  const projectKey = getProjectKey(organization.name);
+
   return (
     <div className="rounded-lg border border-white/[0.08] bg-[#1a1a1a] px-3 py-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-colors hover:border-white/[0.14] hover:bg-[#1f1f1f]">
       <button
@@ -28,8 +36,8 @@ export function KanbanCardContent({
         <div className="mb-2 flex items-center justify-between gap-2">
           <span className="text-[11px] font-medium text-muted-foreground/80">
             {allTasks.length > 0
-              ? formatTaskIdentifier(task, allTasks)
-              : "ML"}
+              ? formatTaskIdentifier(task, allTasks, projectKey)
+              : projectKey}
           </span>
           <PriorityIcon priority={task.priority} />
         </div>

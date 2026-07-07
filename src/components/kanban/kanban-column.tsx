@@ -36,7 +36,7 @@ export function KanbanColumn({
   const { setNodeRef, isOver } = useDroppable({ id, data: { type: "column" } });
 
   return (
-    <div className="flex w-64 shrink-0 flex-col">
+    <div className="flex w-72 shrink-0 flex-col">
       <div className="mb-2 flex items-center gap-2 px-1">
         <StatusIcon status={id} />
         <h2 className="text-xs font-medium text-muted-foreground">{label}</h2>
@@ -50,7 +50,7 @@ export function KanbanColumn({
           isOver && "border-white/[0.1] bg-black/30",
         )}
       >
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto scrollbar-hidden">
           <SortableContext
             items={tasks.map((t) => t.id)}
             strategy={verticalListSortingStrategy}

@@ -17,16 +17,21 @@ import {
 import { useSession } from "@/components/session-provider";
 import { useTasks } from "@/hooks/use-tasks";
 import { TaskActivityFeed } from "@/components/issues/task-activity-feed";
-import { formatTaskDate, formatTaskIdentifier, PROJECT_KEY } from "@/lib/task-utils";
+import {
+  formatTaskDate,
+  formatTaskIdentifier,
+  getProjectKey,
+} from "@/lib/task-utils";
 import type { Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export function IssueDetail() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { user } = useSession();
+  const { user, organization } = useSession();
   const { tasks, loading, updateTask, deleteTask } = useTasks();
 
+  const projectKey = getProjectKey(organization.name);
   const task = tasks.find((t) => t.id === id);
   const titleRef = useRef<HTMLInputElement>(null);
 
@@ -42,7 +47,7 @@ export function IssueDetail() {
   const [activityRefreshKey, setActivityRefreshKey] = useState(0);
 
   const isAdmin = user.role === "ADMIN";
-  const identifier = task ? formatTaskIdentifier(task, tasks) : null;
+  const identifier = task ? formatTaskIdentifier(task, tasks, projectKey) : null;
 
   useEffect(() => {
     if (!task) return;
@@ -123,7 +128,7 @@ export function IssueDetail() {
               className="inline-flex items-center gap-1.5 rounded bg-muted/40 px-1.5 py-0.5 font-medium text-foreground/80 transition-colors hover:bg-muted/60"
             >
               <span className="size-2.5 rounded-sm bg-emerald-500/90" />
-              {PROJECT_KEY}
+              {projectKey}
             </Link>
             <ChevronRight className="size-3" />
             <span className="font-mono text-foreground/70">{identifier}</span>

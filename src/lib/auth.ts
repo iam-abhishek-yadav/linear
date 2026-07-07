@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { organizations, sessions, users } from "@/db/schema";
 import { SESSION_COOKIE } from "@/lib/auth-constants";
-import { db } from "@/lib/db";
+import { db, withDbRetry } from "@/lib/db";
 
 const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -60,17 +60,19 @@ export async function getCurrentUser() {
     return null;
   }
 
-  const [result] = await db
-    .select({
-      user: users,
-      organization: organizations,
-      session: sessions,
-    })
-    .from(sessions)
-    .innerJoin(users, eq(sessions.userId, users.id))
-    .innerJoin(organizations, eq(users.organizationId, organizations.id))
-    .where(eq(sessions.id, sessionId))
-    .limit(1);
+  const [result] = await withDbRetry(() =>
+    db
+      .select({
+        user: users,
+        organization: organizations,
+        session: sessions,
+      })
+      .from(sessions)
+      .innerJoin(users, eq(sessions.userId, users.id))
+      .innerJoin(organizations, eq(users.organizationId, organizations.id))
+      .where(eq(sessions.id, sessionId))
+      .limit(1),
+  );
 
   if (!result) {
     return null;

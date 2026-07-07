@@ -10,9 +10,14 @@ import {
 } from "lucide-react";
 import { TaskDialog } from "@/components/kanban/task-dialog";
 import { IssuesPageChrome } from "@/components/issues/issues-header";
+import { useSession } from "@/components/session-provider";
 import { StatusIcon } from "@/components/tasks/status-icon";
 import { getStatusMeta, LIST_STATUS_ORDER } from "@/lib/constants";
-import { formatTaskDate, formatTaskIdentifier } from "@/lib/task-utils";
+import {
+  formatTaskDate,
+  formatTaskIdentifier,
+  getProjectKey,
+} from "@/lib/task-utils";
 import type { Task, TaskStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -51,6 +56,9 @@ function IssueRow({
   selected: boolean;
   onClick: () => void;
 }) {
+  const { organization } = useSession();
+  const projectKey = getProjectKey(organization.name);
+
   return (
     <button
       type="button"
@@ -62,7 +70,7 @@ function IssueRow({
     >
       <MoreHorizontal className="absolute left-3 size-3.5 text-muted-foreground/0 transition-colors group-hover:text-muted-foreground/40" />
       <span className="w-[46px] shrink-0 font-mono text-[12px] tracking-tight text-white/30">
-        {formatTaskIdentifier(task, allTasks)}
+        {formatTaskIdentifier(task, allTasks, projectKey)}
       </span>
       <StatusIcon status={task.status} />
       <span className="min-w-0 flex-1 truncate text-[13px] font-normal text-foreground/95">

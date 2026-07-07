@@ -10,10 +10,10 @@ import {
   SlidersHorizontal,
   Star,
 } from "lucide-react";
+import { useSession } from "@/components/session-provider";
 import { Button } from "@/components/ui/button";
+import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
-
-const WORKSPACE_NAME = "Mini Linear";
 
 const VIEW_TABS = [
   { href: "/list", label: "All issues" },
@@ -23,15 +23,21 @@ const VIEW_TABS = [
 
 export function IssuesPageChrome() {
   const pathname = usePathname();
+  const { organization } = useSession();
 
   return (
     <header className="shrink-0">
       <div className="flex h-11 items-center justify-between px-5">
         <div className="flex items-center gap-1.5 text-[13px]">
-          <span className="flex size-[18px] items-center justify-center rounded-[5px] bg-emerald-600 text-[9px] font-semibold text-white">
-            M
+          <span
+            className={cn(
+              "flex size-[18px] items-center justify-center rounded-[5px] text-[9px] font-semibold text-white",
+              getAvatarColor(organization.name),
+            )}
+          >
+            {getInitials(organization.name)}
           </span>
-          <span className="text-foreground/75">{WORKSPACE_NAME}</span>
+          <span className="text-foreground/75">{organization.name}</span>
           <ChevronRight className="size-3 text-muted-foreground/35" />
           <span className="text-muted-foreground/75">Issues</span>
           <button

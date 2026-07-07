@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { useSession } from "@/components/session-provider";
 import { Switch } from "@/components/ui/switch";
-import { PROJECT_KEY } from "@/lib/task-utils";
+import { getProjectKey } from "@/lib/task-utils";
 import type { Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -54,7 +54,8 @@ export function TaskDialog({
   const [deleteDialog, setDeleteDialog] = useState<
     "confirm" | "admin-required" | null
   >(null);
-  const { user } = useSession();
+  const { user, organization } = useSession();
+  const projectKey = getProjectKey(organization.name);
 
   const isEditing = Boolean(task);
   const isAdmin = user.role === "ADMIN";
@@ -137,7 +138,7 @@ export function TaskDialog({
           <div className="flex min-w-0 flex-1 items-center gap-1.5 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1.5 rounded bg-muted/40 px-1.5 py-0.5 font-medium text-foreground/80">
               <span className="size-2.5 rounded-sm bg-emerald-500/90" />
-              {PROJECT_KEY}
+              {projectKey}
             </span>
             <ChevronRight className="size-3" />
             <span>{isEditing ? "Edit issue" : "New issue"}</span>

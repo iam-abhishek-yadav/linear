@@ -6,7 +6,6 @@ import {
   Inbox,
   LayoutGrid,
   List,
-  MoreHorizontal,
   User,
 } from "lucide-react";
 import { useNotifications } from "@/components/notifications-provider";
@@ -72,13 +71,23 @@ export function AppSidebar() {
           badge={unreadCount}
         />
         <NavLink
-          href="/active"
+          href="/my-issues"
           icon={User}
           label="My issues"
-          active={pathname === "/active"}
+          active={pathname === "/my-issues"}
         />
 
         <SectionLabel>Workspace</SectionLabel>
+        <NavLink
+          href="/active"
+          icon={List}
+          label="Issues"
+          active={
+            pathname === "/active" ||
+            pathname === "/list" ||
+            pathname === "/backlog"
+          }
+        />
         <NavLink
           href="/board"
           icon={LayoutGrid}

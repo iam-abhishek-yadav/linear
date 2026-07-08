@@ -16,15 +16,61 @@ import { Button } from "@/components/ui/button";
 import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
 
-const VIEW_TABS = [
-  { href: "/list", label: "All issues" },
-  { href: "/active", label: "Active" },
-  { href: "/backlog", label: "Backlog" },
-] as const;
+export type IssuesTabScope = "workspace" | "assigned";
+export type AssignedView = "all" | "active" | "backlog";
 
-export function IssuesPageChrome() {
+type ViewTab = {
+  href: string;
+  label: string;
+  key: string;
+};
+
+function getViewTabs(
+  scope: IssuesTabScope,
+  assignedView: AssignedView,
+): ViewTab[] {
+  if (scope === "assigned") {
+    return [
+      { href: "/my-issues", label: "All issues", key: "all" },
+      { href: "/my-issues?view=active", label: "Active", key: "active" },
+      { href: "/my-issues?view=backlog", label: "Backlog", key: "backlog" },
+    ].map((tab) => ({
+      ...tab,
+      // keep key for active matching against assignedView
+    }));
+  }
+
+  return [
+    { href: "/list", label: "All issues", key: "all" },
+    { href: "/active", label: "Active", key: "active" },
+    { href: "/backlog", label: "Backlog", key: "backlog" },
+  ];
+}
+
+function isTabActive(
+  scope: IssuesTabScope,
+  tab: ViewTab,
+  pathname: string,
+  assignedView: AssignedView,
+) {
+  if (scope === "assigned") {
+    return tab.key === assignedView;
+  }
+  return pathname === tab.href;
+}
+
+export function IssuesPageChrome({
+  scope = "workspace",
+  title = "Issues",
+  assignedView = "all",
+}: {
+  scope?: IssuesTabScope;
+  title?: string;
+  assignedView?: AssignedView;
+}) {
   const pathname = usePathname();
   const { organization } = useSession();
+  const tabs = getViewTabs(scope, assignedView);
 
   return (
     <header className="shrink-0">
@@ -41,7 +87,7 @@ export function IssuesPageChrome() {
           </span>
           <span className="text-foreground/75">{organization.name}</span>
           <ChevronRight className="size-3 text-muted-foreground/35" />
-          <span className="text-muted-foreground/75">Issues</span>
+          <span className="text-muted-foreground/75">{title}</span>
           <button
             type="button"
             className="ml-0.5 rounded p-1 text-muted-foreground/35 hover:bg-white/[0.05] hover:text-muted-foreground"
@@ -59,8 +105,8 @@ export function IssuesPageChrome() {
 
       <div className="flex h-9 items-center justify-between border-b border-white/[0.06] px-5">
         <div className="flex items-center gap-0.5">
-          {VIEW_TABS.map((tab) => {
-            const isActive = pathname === tab.href;
+          {tabs.map((tab) => {
+            const isActive = isTabActive(scope, tab, pathname, assignedView);
             return (
               <Link
                 key={tab.href}

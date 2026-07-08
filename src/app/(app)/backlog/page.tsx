@@ -3,7 +3,7 @@
 import { TaskListView } from "@/components/list/task-list-view";
 import { useTasks } from "@/hooks/use-tasks";
 
-export default function ActivePage() {
+export default function BacklogPage() {
   const { tasks, loading, createTask, updateTask, deleteTask } = useTasks();
 
   return (
@@ -11,8 +11,8 @@ export default function ActivePage() {
       tasks={tasks}
       allTasks={tasks}
       loading={loading}
-      filterStatus={["IN_PROGRESS", "TODO"]}
-      emptyMessage="No issues"
+      filterStatus={["BACKLOG"]}
+      emptyMessage="No backlog issues"
       onCreate={createTask}
       onUpdate={updateTask}
       onDelete={deleteTask}

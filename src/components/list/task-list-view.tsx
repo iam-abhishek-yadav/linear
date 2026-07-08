@@ -10,7 +10,11 @@ import {
   Sparkles,
 } from "lucide-react";
 import { TaskDialog } from "@/components/kanban/task-dialog";
-import { IssuesPageChrome } from "@/components/issues/issues-header";
+import {
+  IssuesPageChrome,
+  type AssignedView,
+  type IssuesTabScope,
+} from "@/components/issues/issues-header";
 import { useSession } from "@/components/session-provider";
 import { StatusIcon } from "@/components/tasks/status-icon";
 import { useMembers, type Member } from "@/hooks/use-members";
@@ -33,6 +37,9 @@ type TaskListViewProps = {
   loading: boolean;
   filterStatus?: TaskStatus[];
   emptyMessage?: string;
+  tabScope?: IssuesTabScope;
+  pageTitle?: string;
+  assignedView?: AssignedView;
   onCreate: (data: TaskInput) => Promise<void>;
   onUpdate: (id: string, data: TaskInput) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
@@ -163,6 +170,9 @@ export function TaskListView({
   loading,
   filterStatus,
   emptyMessage = "No issues yet",
+  tabScope = "workspace",
+  pageTitle = "Issues",
+  assignedView = "all",
   onCreate,
   onUpdate,
   onDelete,
@@ -201,7 +211,11 @@ export function TaskListView({
   if (loading) {
     return (
       <div className="flex flex-1 flex-col">
-        <IssuesPageChrome />
+        <IssuesPageChrome
+          scope={tabScope}
+          title={pageTitle}
+          assignedView={assignedView}
+        />
         <div className="flex flex-1 items-center justify-center">
           <Loader2 className="size-5 animate-spin text-muted-foreground" />
         </div>
@@ -212,7 +226,11 @@ export function TaskListView({
   return (
     <>
       <div className="relative flex flex-1 flex-col overflow-hidden">
-        <IssuesPageChrome />
+        <IssuesPageChrome
+          scope={tabScope}
+          title={pageTitle}
+          assignedView={assignedView}
+        />
 
         <main className="flex-1 overflow-y-auto pb-14">
           {sorted.length === 0 ? (

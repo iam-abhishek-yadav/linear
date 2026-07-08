@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   defaultDropAnimationSideEffects,
   rectIntersection,
   useSensor,
@@ -117,7 +118,11 @@ export function KanbanBoard() {
   }, [tasks]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, {
+      // Press-and-hold so a normal finger swipe can scroll the column
+      activationConstraint: { delay: 250, tolerance: 8 },
+    }),
   );
 
   const grouped = groupByStatus(tasks);

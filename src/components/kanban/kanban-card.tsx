@@ -115,7 +115,7 @@ export function KanbanCard({ task, allTasks, members, onClick }: KanbanCardProps
         transition: isDragging ? undefined : transition,
         opacity: isDragging ? 0.35 : 1,
       }}
-      className="touch-none cursor-grab active:cursor-grabbing"
+      className="cursor-grab touch-pan-y active:cursor-grabbing"
       {...attributes}
       {...listeners}
     >

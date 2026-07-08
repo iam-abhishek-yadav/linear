@@ -28,6 +28,9 @@ export const tasks = pgTable(
   "Task",
   {
     id: text("id").primaryKey(),
+    organizationId: text("organizationId")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     description: text("description"),
     status: taskStatusEnum("status").notNull().default("BACKLOG"),
@@ -49,7 +52,12 @@ export const tasks = pgTable(
       .$onUpdate(() => new Date()),
   },
   (table) => [
-    index("Task_status_position_idx").on(table.status, table.position),
+    index("Task_organizationId_status_position_idx").on(
+      table.organizationId,
+      table.status,
+      table.position,
+    ),
+    index("Task_organizationId_idx").on(table.organizationId),
     index("Task_assigneeId_idx").on(table.assigneeId),
   ],
 );

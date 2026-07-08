@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { taskComments } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getOrganizationTask } from "@/lib/task-access";
 
 type RouteContext = {
   params: Promise<{ id: string; commentId: string }>;
@@ -15,6 +16,11 @@ export async function DELETE(_request: Request, context: RouteContext) {
   }
 
   const { id, commentId } = await context.params;
+
+  const task = await getOrganizationTask(session.organization.id, id);
+  if (!task) {
+    return NextResponse.json({ error: "Task not found" }, { status: 404 });
+  }
 
   const [comment] = await db
     .select({ id: taskComments.id, userId: taskComments.userId })

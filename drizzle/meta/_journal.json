@@ -50,6 +50,13 @@
       "when": 1783414426072,
       "tag": "0006_red_harpoon",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1783513261742,
+      "tag": "0007_brainy_winter_soldier",
+      "breakpoints": true
     }
   ]
 }

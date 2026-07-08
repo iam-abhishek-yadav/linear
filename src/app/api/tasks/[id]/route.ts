@@ -1,10 +1,14 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { tasks } from "@/db/schema";
 import { requireAdmin, requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createAssignmentNotification } from "@/lib/notifications";
 import { recordTaskStatusChange } from "@/lib/task-activity";
+import {
+  getOrganizationTask,
+  isAssigneeInOrganization,
+} from "@/lib/task-access";
 import { updateTaskSchema } from "@/lib/validations";
 
 type RouteContext = {
@@ -12,9 +16,13 @@ type RouteContext = {
 };
 
 export async function GET(_request: Request, context: RouteContext) {
-  const { id } = await context.params;
+  const session = await requireUser();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  const [task] = await db.select().from(tasks).where(eq(tasks.id, id));
+  const { id } = await context.params;
+  const task = await getOrganizationTask(session.organization.id, id);
 
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
@@ -40,10 +48,24 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
-  const [existing] = await db.select().from(tasks).where(eq(tasks.id, id));
+  const organizationId = session.organization.id;
+  const existing = await getOrganizationTask(organizationId, id);
 
   if (!existing) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
+  }
+
+  if (parsed.data.assigneeId !== undefined) {
+    const assigneeOk = await isAssigneeInOrganization(
+      parsed.data.assigneeId,
+      organizationId,
+    );
+    if (!assigneeOk) {
+      return NextResponse.json(
+        { error: "Assignee must be a member of your organization" },
+        { status: 400 },
+      );
+    }
   }
 
   const nextStatus = parsed.data.status ?? existing.status;
@@ -52,7 +74,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     const [updated] = await tx
       .update(tasks)
       .set(parsed.data)
-      .where(eq(tasks.id, id))
+      .where(
+        and(eq(tasks.id, id), eq(tasks.organizationId, organizationId)),
+      )
       .returning();
 
     if (parsed.data.status && parsed.data.status !== existing.status) {
@@ -89,14 +113,17 @@ export async function DELETE(_request: Request, context: RouteContext) {
   }
 
   const { id } = await context.params;
+  const organizationId = session.organization.id;
 
-  const [existing] = await db.select().from(tasks).where(eq(tasks.id, id));
+  const existing = await getOrganizationTask(organizationId, id);
 
   if (!existing) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }
 
-  await db.delete(tasks).where(eq(tasks.id, id));
+  await db
+    .delete(tasks)
+    .where(and(eq(tasks.id, id), eq(tasks.organizationId, organizationId)));
 
   return NextResponse.json({ success: true });
 }

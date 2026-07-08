@@ -26,5 +26,4 @@ This project uses **Next.js 16** with breaking changes from earlier versions. Ch
 
 - Commit `.env` or secrets
 - Use open registration — org signup requires an invite token
-- Add org-scoping to tasks unless explicitly requested (known gap)
 - Create nested settings sidebars — settings replaces the main sidebar

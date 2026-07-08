@@ -1,9 +1,7 @@
-import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import { tasks } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
-import { db } from "@/lib/db";
 import { getTaskActivities } from "@/lib/task-activity";
+import { getOrganizationTask } from "@/lib/task-access";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -16,8 +14,7 @@ export async function GET(_request: Request, context: RouteContext) {
   }
 
   const { id } = await context.params;
-
-  const [task] = await db.select({ id: tasks.id }).from(tasks).where(eq(tasks.id, id));
+  const task = await getOrganizationTask(session.organization.id, id);
 
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });

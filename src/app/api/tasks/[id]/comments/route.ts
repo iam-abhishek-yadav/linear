@@ -1,9 +1,8 @@
-import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import { tasks } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createTaskComment, getTaskComments } from "@/lib/task-comments";
+import { getOrganizationTask } from "@/lib/task-access";
 import { createCommentSchema } from "@/lib/validations";
 
 type RouteContext = {
@@ -17,11 +16,7 @@ export async function GET(_request: Request, context: RouteContext) {
   }
 
   const { id } = await context.params;
-
-  const [task] = await db
-    .select({ id: tasks.id })
-    .from(tasks)
-    .where(eq(tasks.id, id));
+  const task = await getOrganizationTask(session.organization.id, id);
 
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
@@ -56,10 +51,7 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
-  const [task] = await db
-    .select({ id: tasks.id })
-    .from(tasks)
-    .where(eq(tasks.id, id));
+  const task = await getOrganizationTask(session.organization.id, id);
 
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });

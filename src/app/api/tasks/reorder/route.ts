@@ -4,6 +4,7 @@ import { tasks } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { recordTaskStatusChange } from "@/lib/task-activity";
+import { getOrganizationTask } from "@/lib/task-access";
 import { reorderTaskSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
@@ -23,8 +24,9 @@ export async function POST(request: Request) {
   }
 
   const { taskId, status, position } = parsed.data;
+  const organizationId = session.organization.id;
 
-  const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId));
+  const task = await getOrganizationTask(organizationId, taskId);
 
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
@@ -32,6 +34,7 @@ export async function POST(request: Request) {
 
   const oldStatus = task.status;
   const oldPosition = task.position;
+  const inOrg = eq(tasks.organizationId, organizationId);
 
   await db.transaction(async (tx) => {
     if (oldStatus === status) {
@@ -41,6 +44,7 @@ export async function POST(request: Request) {
           .set({ position: sql`${tasks.position} + 1` })
           .where(
             and(
+              inOrg,
               eq(tasks.status, status),
               gte(tasks.position, position),
               lt(tasks.position, oldPosition),
@@ -52,6 +56,7 @@ export async function POST(request: Request) {
           .set({ position: sql`${tasks.position} - 1` })
           .where(
             and(
+              inOrg,
               eq(tasks.status, status),
               gt(tasks.position, oldPosition),
               lte(tasks.position, position),
@@ -63,21 +68,29 @@ export async function POST(request: Request) {
         .update(tasks)
         .set({ position: sql`${tasks.position} - 1` })
         .where(
-          and(eq(tasks.status, oldStatus), gt(tasks.position, oldPosition)),
+          and(
+            inOrg,
+            eq(tasks.status, oldStatus),
+            gt(tasks.position, oldPosition),
+          ),
         );
 
       await tx
         .update(tasks)
         .set({ position: sql`${tasks.position} + 1` })
         .where(
-          and(eq(tasks.status, status), gte(tasks.position, position)),
+          and(
+            inOrg,
+            eq(tasks.status, status),
+            gte(tasks.position, position),
+          ),
         );
     }
 
     await tx
       .update(tasks)
       .set({ status, position })
-      .where(eq(tasks.id, taskId));
+      .where(and(eq(tasks.id, taskId), inOrg));
 
     if (oldStatus !== status) {
       await recordTaskStatusChange(tx, {
@@ -89,7 +102,7 @@ export async function POST(request: Request) {
     }
   });
 
-  const [updated] = await db.select().from(tasks).where(eq(tasks.id, taskId));
+  const updated = await getOrganizationTask(organizationId, taskId);
 
   return NextResponse.json(updated);
 }

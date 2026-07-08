@@ -33,7 +33,10 @@ export async function createAssignmentNotification(
   });
 }
 
-export async function getNotifications(userId: string) {
+export async function getNotifications(
+  userId: string,
+  organizationId: string,
+) {
   const actor = aliasedTable(users, "actor");
 
   const rows = await db
@@ -53,7 +56,13 @@ export async function getNotifications(userId: string) {
       },
     })
     .from(notifications)
-    .innerJoin(tasks, eq(notifications.taskId, tasks.id))
+    .innerJoin(
+      tasks,
+      and(
+        eq(notifications.taskId, tasks.id),
+        eq(tasks.organizationId, organizationId),
+      ),
+    )
     .leftJoin(actor, eq(notifications.actorId, actor.id))
     .where(eq(notifications.userId, userId))
     .orderBy(desc(notifications.createdAt));

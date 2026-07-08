@@ -8,6 +8,9 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const rows = await getNotifications(session.user.id);
+  const rows = await getNotifications(
+    session.user.id,
+    session.organization.id,
+  );
   return NextResponse.json(rows.map(serializeNotification));
 }

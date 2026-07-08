@@ -1,14 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  CalendarClock,
-  ChevronDown,
-  Loader2,
-  MoreHorizontal,
-  Plus,
-  Sparkles,
-} from "lucide-react";
+import { Check, ChevronDown, Loader2, Plus } from "lucide-react";
 import { TaskDialog } from "@/components/kanban/task-dialog";
 import {
   IssuesPageChrome,
@@ -16,19 +9,25 @@ import {
   type IssuesTabScope,
 } from "@/components/issues/issues-header";
 import { useSession } from "@/components/session-provider";
+import { PriorityIcon } from "@/components/tasks/priority-icon";
 import { StatusIcon } from "@/components/tasks/status-icon";
-import { useMembers, type Member } from "@/hooks/use-members";
-import type { TaskInput } from "@/hooks/use-tasks";
-import { getStatusMeta, LIST_STATUS_ORDER } from "@/lib/constants";
 import {
-  formatDueDate,
-  formatTaskDate,
-  formatTaskIdentifier,
-  getProjectKey,
-  isOverdue,
-} from "@/lib/task-utils";
-import type { Task, TaskStatus } from "@/lib/types";
-import { getAvatarColor, getInitials } from "@/lib/user-utils";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import type { TaskInput } from "@/hooks/use-tasks";
+import {
+  getPriorityMeta,
+  getStatusMeta,
+  LIST_STATUS_ORDER,
+  PRIORITIES,
+} from "@/lib/constants";
+import { formatTaskIdentifier, getProjectKey } from "@/lib/task-utils";
+import type { Task, TaskPriority, TaskStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type TaskListViewProps = {
@@ -45,70 +44,102 @@ type TaskListViewProps = {
   onDelete: (id: string) => Promise<void>;
 };
 
+function ListPriorityButton({
+  priority,
+  onChange,
+}: {
+  priority: TaskPriority;
+  onChange: (priority: TaskPriority) => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <button
+            type="button"
+            className={cn(
+              "flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground/50 transition-colors",
+              "hover:bg-white/[0.06] hover:text-muted-foreground",
+              priority !== "NONE" && "text-muted-foreground/80",
+            )}
+            aria-label="Set priority"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          />
+        }
+      >
+        <PriorityIcon priority={priority} />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-44" sideOffset={4}>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="text-xs text-muted-foreground">
+            Set priority…
+          </DropdownMenuLabel>
+          {PRIORITIES.map((p) => (
+            <DropdownMenuItem
+              key={p.id}
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange(p.id);
+              }}
+            >
+              <PriorityIcon priority={p.id} />
+              <span className="flex-1">{getPriorityMeta(p.id).label}</span>
+              {priority === p.id && (
+                <Check className="size-3.5 text-muted-foreground" />
+              )}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function IssueRow({
   task,
   allTasks,
-  members,
   selected,
   onClick,
+  onPriorityChange,
 }: {
   task: Task;
   allTasks: Task[];
-  members: Member[];
   selected: boolean;
   onClick: () => void;
+  onPriorityChange: (priority: TaskPriority) => void;
 }) {
   const { organization } = useSession();
   const projectKey = getProjectKey(organization.name);
-  const assignee = members.find((m) => m.id === task.assigneeId) ?? null;
-  const dueLabel = formatDueDate(task.dueDate);
-  const overdue = isOverdue(task.dueDate);
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       className={cn(
-        "group relative flex h-9 w-full items-center gap-2.5 pr-5 pl-9 text-left transition-colors",
+        "group flex h-9 w-full cursor-pointer items-center gap-2.5 pr-5 pl-3 text-left transition-colors",
         selected ? "bg-white/[0.05]" : "hover:bg-white/[0.035]",
       )}
     >
-      <MoreHorizontal className="absolute left-3 size-3.5 text-muted-foreground/0 transition-colors group-hover:text-muted-foreground/40" />
-      <span className="w-[46px] shrink-0 font-mono text-[12px] tracking-tight text-white/30">
+      <ListPriorityButton
+        priority={task.priority}
+        onChange={onPriorityChange}
+      />
+      <span className="w-[52px] shrink-0 font-mono text-[12px] tracking-tight text-white/30">
         {formatTaskIdentifier(task, allTasks, projectKey)}
       </span>
       <StatusIcon status={task.status} />
       <span className="min-w-0 flex-1 truncate text-[13px] font-normal text-foreground/95">
         {task.title}
       </span>
-      {dueLabel && (
-        <span
-          className={cn(
-            "flex shrink-0 items-center gap-1 text-[11px] tabular-nums",
-            overdue ? "text-red-400" : "text-white/40",
-          )}
-        >
-          <CalendarClock className="size-3" />
-          {dueLabel}
-        </span>
-      )}
-      {assignee ? (
-        <span
-          className={cn(
-            "flex size-4 shrink-0 items-center justify-center rounded-full text-[8px] font-semibold text-white",
-            getAvatarColor(assignee.name),
-          )}
-          title={assignee.name}
-        >
-          {getInitials(assignee.name)}
-        </span>
-      ) : (
-        <span className="size-4 shrink-0 rounded-full bg-white/[0.06] ring-1 ring-white/[0.08]" />
-      )}
-      <span className="w-[42px] shrink-0 text-right text-[12px] tabular-nums text-white/30">
-        {formatTaskDate(task.updatedAt)}
-      </span>
-    </button>
+    </div>
   );
 }
 
@@ -116,18 +147,18 @@ function StatusGroup({
   status,
   tasks,
   allTasks,
-  members,
   selectedTaskId,
   onTaskClick,
   onAddIssue,
+  onPriorityChange,
 }: {
   status: TaskStatus;
   tasks: Task[];
   allTasks: Task[];
-  members: Member[];
   selectedTaskId: string | null;
   onTaskClick: (task: Task) => void;
   onAddIssue: (status: TaskStatus) => void;
+  onPriorityChange: (task: Task, priority: TaskPriority) => void;
 }) {
   const meta = getStatusMeta(status);
 
@@ -135,7 +166,7 @@ function StatusGroup({
 
   return (
     <section className="border-t border-white/[0.05] first:border-t-0">
-      <div className="group/header flex h-9 items-center gap-2 bg-white/[0.015] px-5">
+      <div className="group/header flex h-9 items-center gap-2 bg-white/[0.025] px-5">
         <ChevronDown className="size-3 text-muted-foreground/35" />
         <StatusIcon status={status} />
         <span className="text-[13px] text-muted-foreground/75">{meta.label}</span>
@@ -154,9 +185,9 @@ function StatusGroup({
             key={task.id}
             task={task}
             allTasks={allTasks}
-            members={members}
             selected={selectedTaskId === task.id}
             onClick={() => onTaskClick(task)}
+            onPriorityChange={(priority) => onPriorityChange(task, priority)}
           />
         ))}
       </div>
@@ -181,7 +212,6 @@ export function TaskListView({
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [defaultStatus, setDefaultStatus] = useState<TaskStatus>("TODO");
-  const members = useMembers();
 
   const visible = filterStatus
     ? tasks.filter((t) => filterStatus.includes(t.status))
@@ -206,6 +236,20 @@ export function TaskListView({
     setSelectedTaskId(task.id);
     setEditingTask(task);
     setDialogOpen(true);
+  }
+
+  async function handlePriorityChange(task: Task, priority: TaskPriority) {
+    if (task.priority === priority) return;
+    await onUpdate(task.id, {
+      title: task.title,
+      description: task.description ?? undefined,
+      status: task.status,
+      priority,
+      assigneeId: task.assigneeId,
+      dueDate: task.dueDate
+        ? new Date(task.dueDate).toISOString().slice(0, 10)
+        : null,
+    });
   }
 
   if (loading) {
@@ -252,10 +296,10 @@ export function TaskListView({
                   status={status}
                   tasks={sorted.filter((t) => t.status === status)}
                   allTasks={allTasks}
-                  members={members}
                   selectedTaskId={selectedTaskId}
                   onTaskClick={openTask}
                   onAddIssue={openCreate}
+                  onPriorityChange={handlePriorityChange}
                 />
               ))}
             </div>

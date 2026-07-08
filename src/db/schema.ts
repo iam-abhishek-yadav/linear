@@ -65,6 +65,9 @@ export const tasks = pgTable(
 export const taskActivityTypeEnum = pgEnum("TaskActivityType", [
   "CREATED",
   "STATUS_CHANGED",
+  "ASSIGNEE_CHANGED",
+  "PRIORITY_CHANGED",
+  "DUE_DATE_CHANGED",
 ]);
 
 export const taskActivities = pgTable(
@@ -80,6 +83,16 @@ export const taskActivities = pgTable(
     type: taskActivityTypeEnum("type").notNull(),
     fromStatus: taskStatusEnum("fromStatus"),
     toStatus: taskStatusEnum("toStatus"),
+    fromPriority: taskPriorityEnum("fromPriority"),
+    toPriority: taskPriorityEnum("toPriority"),
+    fromAssigneeId: text("fromAssigneeId").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    toAssigneeId: text("toAssigneeId").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    fromDueDate: timestamp("fromDueDate", { precision: 3, mode: "date" }),
+    toDueDate: timestamp("toDueDate", { precision: 3, mode: "date" }),
     createdAt: timestamp("createdAt", { precision: 3, mode: "date" })
       .notNull()
       .defaultNow(),
@@ -113,7 +126,11 @@ export const taskComments = pgTable(
   ],
 );
 
-export const notificationTypeEnum = pgEnum("NotificationType", ["ASSIGNED"]);
+export const notificationTypeEnum = pgEnum("NotificationType", [
+  "ASSIGNED",
+  "COMMENT",
+  "STATUS_CHANGED",
+]);
 
 export const notifications = pgTable(
   "Notification",

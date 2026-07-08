@@ -1,25 +1,28 @@
 import { createId } from "@paralleldrive/cuid2";
 import { aliasedTable, and, desc, eq, isNull } from "drizzle-orm";
-import { notifications, tasks, users } from "@/db/schema";
+import {
+  notifications,
+  tasks,
+  users,
+  type NotificationType,
+} from "@/db/schema";
 import { db } from "@/lib/db";
 import type { NotificationItem } from "@/lib/notification-types";
 
 type DbExecutor = Pick<typeof db, "insert">;
 
-/**
- * Record an assignment notification for the assignee. No-op when a user
- * assigns a task to themselves (you don't need to notify yourself).
- */
-export async function createAssignmentNotification(
+async function createNotification(
   executor: DbExecutor,
   {
     recipientId,
     actorId,
     taskId,
+    type,
   }: {
     recipientId: string;
     actorId: string;
     taskId: string;
+    type: NotificationType;
   },
 ) {
   if (recipientId === actorId) return;
@@ -29,7 +32,72 @@ export async function createAssignmentNotification(
     userId: recipientId,
     actorId,
     taskId,
-    type: "ASSIGNED",
+    type,
+  });
+}
+
+/**
+ * Record an assignment notification for the assignee. No-op when a user
+ * assigns a task to themselves (you don't need to notify yourself).
+ */
+export async function createAssignmentNotification(
+  executor: DbExecutor,
+  params: {
+    recipientId: string;
+    actorId: string;
+    taskId: string;
+  },
+) {
+  await createNotification(executor, { ...params, type: "ASSIGNED" });
+}
+
+/**
+ * Notify the task assignee that someone commented. No-op when the commenter
+ * is the assignee, or when the task has no assignee.
+ */
+export async function createCommentNotification(
+  executor: DbExecutor,
+  {
+    assigneeId,
+    actorId,
+    taskId,
+  }: {
+    assigneeId: string | null;
+    actorId: string;
+    taskId: string;
+  },
+) {
+  if (!assigneeId) return;
+  await createNotification(executor, {
+    recipientId: assigneeId,
+    actorId,
+    taskId,
+    type: "COMMENT",
+  });
+}
+
+/**
+ * Notify the task assignee that status changed. No-op when the actor is the
+ * assignee, or when the task has no assignee.
+ */
+export async function createStatusChangeNotification(
+  executor: DbExecutor,
+  {
+    assigneeId,
+    actorId,
+    taskId,
+  }: {
+    assigneeId: string | null;
+    actorId: string;
+    taskId: string;
+  },
+) {
+  if (!assigneeId) return;
+  await createNotification(executor, {
+    recipientId: assigneeId,
+    actorId,
+    taskId,
+    type: "STATUS_CHANGED",
   });
 }
 

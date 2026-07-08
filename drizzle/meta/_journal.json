@@ -57,6 +57,13 @@
       "when": 1783513261742,
       "tag": "0007_brainy_winter_soldier",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1783514252048,
+      "tag": "0008_colossal_prism",
+      "breakpoints": true
     }
   ]
 }

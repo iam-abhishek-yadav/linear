@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { tasks } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { createStatusChangeNotification } from "@/lib/notifications";
 import { recordTaskStatusChange } from "@/lib/task-activity";
 import { getOrganizationTask } from "@/lib/task-access";
 import { reorderTaskSchema } from "@/lib/validations";
@@ -98,6 +99,11 @@ export async function POST(request: Request) {
         userId: session.user.id,
         fromStatus: oldStatus,
         toStatus: status,
+      });
+      await createStatusChangeNotification(tx, {
+        assigneeId: task.assigneeId,
+        actorId: session.user.id,
+        taskId,
       });
     }
   });

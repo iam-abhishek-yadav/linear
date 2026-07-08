@@ -6,13 +6,19 @@ import {
   formatActivityMessage,
   formatActivityTime,
 } from "@/lib/task-activity-format";
-import type { TaskActivityType, TaskStatus } from "@/lib/types";
+import type { TaskActivityType, TaskPriority, TaskStatus } from "@/lib/types";
 
 export type TaskActivityItem = {
   id: string;
   type: TaskActivityType;
   fromStatus: TaskStatus | null;
   toStatus: TaskStatus | null;
+  fromPriority: TaskPriority | null;
+  toPriority: TaskPriority | null;
+  fromDueDate: string | null;
+  toDueDate: string | null;
+  fromAssignee: { id: string; name: string } | null;
+  toAssignee: { id: string; name: string } | null;
   createdAt: string;
   user: { id: string; name: string };
 };

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { createCommentNotification } from "@/lib/notifications";
 import { createTaskComment, getTaskComments } from "@/lib/task-comments";
 import { getOrganizationTask } from "@/lib/task-access";
 import { createCommentSchema } from "@/lib/validations";
@@ -57,10 +58,20 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }
 
-  const commentId = await createTaskComment(db, {
-    taskId: id,
-    userId: session.user.id,
-    body: parsed.data.body,
+  const commentId = await db.transaction(async (tx) => {
+    const idCreated = await createTaskComment(tx, {
+      taskId: id,
+      userId: session.user.id,
+      body: parsed.data.body,
+    });
+
+    await createCommentNotification(tx, {
+      assigneeId: task.assigneeId,
+      actorId: session.user.id,
+      taskId: id,
+    });
+
+    return idCreated;
   });
 
   return NextResponse.json(

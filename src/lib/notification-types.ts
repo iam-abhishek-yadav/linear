@@ -26,6 +26,10 @@ export function formatNotificationMessage(
   switch (type) {
     case "ASSIGNED":
       return `${name} assigned this issue to you`;
+    case "COMMENT":
+      return `${name} commented on this issue`;
+    case "STATUS_CHANGED":
+      return `${name} changed the status`;
     default:
       return `${name} updated this issue`;
   }

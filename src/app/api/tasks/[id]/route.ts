@@ -3,8 +3,16 @@ import { NextResponse } from "next/server";
 import { tasks } from "@/db/schema";
 import { requireAdmin, requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { createAssignmentNotification } from "@/lib/notifications";
-import { recordTaskStatusChange } from "@/lib/task-activity";
+import {
+  createAssignmentNotification,
+  createStatusChangeNotification,
+} from "@/lib/notifications";
+import {
+  recordTaskAssigneeChange,
+  recordTaskDueDateChange,
+  recordTaskPriorityChange,
+  recordTaskStatusChange,
+} from "@/lib/task-activity";
 import {
   getOrganizationTask,
   isAssigneeInOrganization,
@@ -69,6 +77,13 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   const nextStatus = parsed.data.status ?? existing.status;
+  const nextPriority = parsed.data.priority ?? existing.priority;
+  const nextAssigneeId =
+    parsed.data.assigneeId !== undefined
+      ? parsed.data.assigneeId
+      : existing.assigneeId;
+  const nextDueDate =
+    parsed.data.dueDate !== undefined ? parsed.data.dueDate : existing.dueDate;
 
   const [task] = await db.transaction(async (tx) => {
     const [updated] = await tx
@@ -79,12 +94,19 @@ export async function PATCH(request: Request, context: RouteContext) {
       )
       .returning();
 
+    const actorId = session.user.id;
+
     if (parsed.data.status && parsed.data.status !== existing.status) {
       await recordTaskStatusChange(tx, {
         taskId: id,
-        userId: session.user.id,
+        userId: actorId,
         fromStatus: existing.status,
         toStatus: nextStatus,
+      });
+      await createStatusChangeNotification(tx, {
+        assigneeId: nextAssigneeId,
+        actorId,
+        taskId: id,
       });
     }
 
@@ -92,11 +114,38 @@ export async function PATCH(request: Request, context: RouteContext) {
       parsed.data.assigneeId !== undefined &&
       parsed.data.assigneeId !== existing.assigneeId;
 
-    if (assigneeChanged && parsed.data.assigneeId) {
-      await createAssignmentNotification(tx, {
-        recipientId: parsed.data.assigneeId,
-        actorId: session.user.id,
+    if (assigneeChanged) {
+      await recordTaskAssigneeChange(tx, {
         taskId: id,
+        userId: actorId,
+        fromAssigneeId: existing.assigneeId,
+        toAssigneeId: parsed.data.assigneeId ?? null,
+      });
+
+      if (parsed.data.assigneeId) {
+        await createAssignmentNotification(tx, {
+          recipientId: parsed.data.assigneeId,
+          actorId,
+          taskId: id,
+        });
+      }
+    }
+
+    if (parsed.data.priority && parsed.data.priority !== existing.priority) {
+      await recordTaskPriorityChange(tx, {
+        taskId: id,
+        userId: actorId,
+        fromPriority: existing.priority,
+        toPriority: nextPriority,
+      });
+    }
+
+    if (parsed.data.dueDate !== undefined) {
+      await recordTaskDueDateChange(tx, {
+        taskId: id,
+        userId: actorId,
+        fromDueDate: existing.dueDate,
+        toDueDate: nextDueDate ?? null,
       });
     }
 

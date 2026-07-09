@@ -13,6 +13,7 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
+import { IssueActivitySection } from "@/components/issues/issue-activity-section";
 import { IssuePropertiesPanel } from "@/components/issues/issue-properties-panel";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,10 +32,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSession } from "@/components/session-provider";
 import { SidebarTrigger } from "@/components/sidebar-provider";
-import { useMembers } from "@/hooks/use-members";
-import { useTasks } from "@/hooks/use-tasks";
-import { TaskActivityFeed } from "@/components/issues/task-activity-feed";
-import { TaskComments } from "@/components/issues/task-comments";
+import { IssueDetailLink } from "@/components/issues/issue-detail-link";
+import { IssueDetailSkeleton } from "@/components/issues/issue-detail-skeleton";
+import { useIssueDetail } from "@/hooks/use-issue-detail";
+import { useMembersCache, prefetchMembers } from "@/hooks/use-members-cache";
+import { useTaskTimeline } from "@/hooks/use-task-timeline";
+import { setCachedIssueDetail } from "@/lib/issue-detail-cache";
+import type { IssueDetailData, SerializedTask } from "@/lib/issue-detail-data";
+import { buildPropertyChangeActivity } from "@/lib/task-timeline";
 import {
   formatTaskIdentifier,
   getProjectKey,
@@ -46,45 +51,79 @@ import { cn } from "@/lib/utils";
 
 export function IssueDetail() {
   const { id } = useParams<{ id: string }>();
+  const { data, loading, error } = useIssueDetail(id);
+
+  useEffect(() => {
+    prefetchMembers();
+  }, []);
+
+  if (loading) {
+    return <IssueDetailSkeleton />;
+  }
+
+  if (error === "not_found" || !data) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3">
+        <p className="text-sm text-muted-foreground">Issue not found</p>
+        <Link
+          href="/board"
+          className="text-sm text-violet-400 hover:text-violet-300"
+        >
+          Back to board
+        </Link>
+      </div>
+    );
+  }
+
+  return <IssueDetailView key={data.task.id} data={data} />;
+}
+
+function IssueDetailView({ data }: { data: IssueDetailData }) {
   const router = useRouter();
   const { user, organization } = useSession();
-  const { tasks, loading, updateTask, deleteTask } = useTasks();
-  const members = useMembers();
-
-  const projectKey = getProjectKey(organization.name);
-  const task = tasks.find((t) => t.id === id);
+  const members = useMembersCache();
   const titleRef = useRef<HTMLInputElement>(null);
   const initializedRef = useRef(false);
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<Task["status"]>("BACKLOG");
-  const [priority, setPriority] = useState<Task["priority"]>("NONE");
-  const [assigneeId, setAssigneeId] = useState<string | null>(null);
-  const [dueDate, setDueDate] = useState<string | null>(null);
+  const [task, setTask] = useState(data.task);
+  const [taskNav] = useState(data.tasks);
+
+  const [title, setTitle] = useState(task.title);
+  const [description, setDescription] = useState(task.description ?? "");
+  const [status, setStatus] = useState<Task["status"]>(task.status);
+  const [priority, setPriority] = useState<Task["priority"]>(task.priority);
+  const [assigneeId, setAssigneeId] = useState<string | null>(
+    task.assigneeId ?? null,
+  );
+  const [dueDate, setDueDate] = useState<string | null>(
+    toDateInputValue(task.dueDate),
+  );
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<
     "confirm" | "admin-required" | null
   >(null);
-  const [activityRefreshKey, setActivityRefreshKey] = useState(0);
   const [copied, setCopied] = useState(false);
 
+  const timeline = useTaskTimeline(task.id, {
+    activities: data.activities,
+    comments: data.comments,
+  });
+
+  const projectKey = getProjectKey(organization.name);
   const isAdmin = user.role === "ADMIN";
-  const identifier = task ? formatTaskIdentifier(task, tasks, projectKey) : null;
+  const identifier = formatTaskIdentifier(task, taskNav, projectKey);
 
   const sortedTasks = useMemo(
     () =>
-      [...tasks].sort(
+      [...taskNav].sort(
         (a, b) =>
           new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       ),
-    [tasks],
+    [taskNav],
   );
 
-  const currentIndex = task
-    ? sortedTasks.findIndex((item) => item.id === task.id)
-    : -1;
+  const currentIndex = sortedTasks.findIndex((item) => item.id === task.id);
   const prevTask = currentIndex > 0 ? sortedTasks[currentIndex - 1] : null;
   const nextTask =
     currentIndex >= 0 && currentIndex < sortedTasks.length - 1
@@ -92,10 +131,6 @@ export function IssueDetail() {
       : null;
 
   useEffect(() => {
-    if (!task) {
-      initializedRef.current = false;
-      return;
-    }
     setTitle(task.title);
     setDescription(task.description ?? "");
     setStatus(task.status);
@@ -114,21 +149,33 @@ export function IssueDetail() {
       assigneeId?: string | null;
       dueDate?: string | null;
     }) => {
-      if (!task || saving) return;
+      if (saving) return;
 
       setSaving(true);
       try {
-        await updateTask(task.id, {
-          title: fields.title ?? title.trim(),
-          description:
-            fields.description ?? (description.trim() || undefined),
-          status: fields.status ?? status,
-          priority: fields.priority ?? priority,
-          assigneeId:
-            fields.assigneeId !== undefined ? fields.assigneeId : assigneeId,
-          dueDate: fields.dueDate !== undefined ? fields.dueDate : dueDate,
+        const response = await fetch(`/api/tasks/${task.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: fields.title ?? title.trim(),
+            description:
+              fields.description ?? (description.trim() || undefined),
+            status: fields.status ?? status,
+            priority: fields.priority ?? priority,
+            assigneeId:
+              fields.assigneeId !== undefined ? fields.assigneeId : assigneeId,
+            dueDate: fields.dueDate !== undefined ? fields.dueDate : dueDate,
+          }),
         });
-        setActivityRefreshKey((key) => key + 1);
+        if (!response.ok) throw new Error("Failed to update task");
+        const updated: SerializedTask = await response.json();
+        setTask(updated);
+        setCachedIssueDetail(task.id, {
+          task: updated,
+          tasks: taskNav,
+          activities: timeline.activities,
+          comments: timeline.comments,
+        });
       } finally {
         setSaving(false);
       }
@@ -140,14 +187,16 @@ export function IssueDetail() {
       priority,
       saving,
       status,
-      task,
+      task.id,
+      taskNav,
+      timeline.activities,
+      timeline.comments,
       title,
-      updateTask,
     ],
   );
 
   useEffect(() => {
-    if (!task || !initializedRef.current || !title.trim()) return;
+    if (!initializedRef.current || !title.trim()) return;
     if (title === task.title && description === (task.description ?? "")) {
       return;
     }
@@ -160,18 +209,37 @@ export function IssueDetail() {
     }, 800);
 
     return () => clearTimeout(timer);
-  }, [description, save, task, title]);
+  }, [description, save, task.description, task.title, title]);
 
   async function handlePropertyChange(
     field: "status" | "priority" | "assigneeId" | "dueDate",
     value: Task["status"] | Task["priority"] | string | null,
   ) {
-    if (!task) return;
+    const previous = { status, priority, assigneeId, dueDate };
+    const next = {
+      status: field === "status" ? (value as Task["status"]) : status,
+      priority: field === "priority" ? (value as Task["priority"]) : priority,
+      assigneeId:
+        field === "assigneeId" ? (value as string | null) : assigneeId,
+      dueDate: field === "dueDate" ? (value as string | null) : dueDate,
+    };
 
-    if (field === "status") setStatus(value as Task["status"]);
-    if (field === "priority") setPriority(value as Task["priority"]);
-    if (field === "assigneeId") setAssigneeId(value as string | null);
-    if (field === "dueDate") setDueDate(value as string | null);
+    const activity = buildPropertyChangeActivity(
+      field,
+      previous,
+      next,
+      { id: user.id, name: user.name },
+      members,
+    );
+
+    if (field === "status") setStatus(next.status);
+    if (field === "priority") setPriority(next.priority);
+    if (field === "assigneeId") setAssigneeId(next.assigneeId);
+    if (field === "dueDate") setDueDate(next.dueDate);
+
+    if (activity) {
+      timeline.appendActivity(activity);
+    }
 
     await save({ [field]: value });
   }
@@ -181,10 +249,12 @@ export function IssueDetail() {
   }
 
   async function handleConfirmDelete() {
-    if (!task) return;
     setDeleting(true);
     try {
-      await deleteTask(task.id);
+      const response = await fetch(`/api/tasks/${task.id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete task");
       router.push("/board");
     } finally {
       setDeleting(false);
@@ -195,28 +265,6 @@ export function IssueDetail() {
     await navigator.clipboard.writeText(window.location.href);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
-  }
-
-  if (loading) {
-    return (
-      <div className="flex flex-1 items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (!task) {
-    return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3">
-        <p className="text-sm text-muted-foreground">Issue not found</p>
-        <Link
-          href="/board"
-          className="text-sm text-violet-400 hover:text-violet-300"
-        >
-          Back to board
-        </Link>
-      </div>
-    );
   }
 
   return (
@@ -287,26 +335,30 @@ export function IssueDetail() {
               <span className="px-1.5">
                 {currentIndex + 1}/{sortedTasks.length}
               </span>
-              <Link
-                href={prevTask ? `/issues/${prevTask.id}` : "#"}
-                aria-disabled={!prevTask}
-                className={cn(
-                  "inline-flex size-7 items-center justify-center rounded-md hover:bg-white/[0.04] hover:text-foreground",
-                  !prevTask && "pointer-events-none opacity-30",
-                )}
-              >
-                <ChevronUp className="size-3.5" />
-              </Link>
-              <Link
-                href={nextTask ? `/issues/${nextTask.id}` : "#"}
-                aria-disabled={!nextTask}
-                className={cn(
-                  "inline-flex size-7 items-center justify-center rounded-md hover:bg-white/[0.04] hover:text-foreground",
-                  !nextTask && "pointer-events-none opacity-30",
-                )}
-              >
-                <ChevronDown className="size-3.5" />
-              </Link>
+              {prevTask ? (
+                <IssueDetailLink
+                  taskId={prevTask.id}
+                  className="inline-flex size-7 items-center justify-center rounded-md hover:bg-white/[0.04] hover:text-foreground"
+                >
+                  <ChevronUp className="size-3.5" />
+                </IssueDetailLink>
+              ) : (
+                <span className="inline-flex size-7 items-center justify-center opacity-30">
+                  <ChevronUp className="size-3.5" />
+                </span>
+              )}
+              {nextTask ? (
+                <IssueDetailLink
+                  taskId={nextTask.id}
+                  className="inline-flex size-7 items-center justify-center rounded-md hover:bg-white/[0.04] hover:text-foreground"
+                >
+                  <ChevronDown className="size-3.5" />
+                </IssueDetailLink>
+              ) : (
+                <span className="inline-flex size-7 items-center justify-center opacity-30">
+                  <ChevronDown className="size-3.5" />
+                </span>
+              )}
             </div>
             <button
               type="button"
@@ -354,11 +406,13 @@ export function IssueDetail() {
                   {getInitials(user.name)}
                 </span>
               </div>
-              <TaskActivityFeed
+              <IssueActivitySection
                 taskId={task.id}
-                refreshKey={activityRefreshKey}
+                activities={timeline.activities}
+                comments={timeline.comments}
+                onAddComment={timeline.addComment}
+                onRemoveComment={timeline.removeComment}
               />
-              <TaskComments taskId={task.id} embedded />
             </section>
           </div>
         </div>

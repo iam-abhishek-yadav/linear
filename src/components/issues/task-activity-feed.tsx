@@ -1,7 +1,5 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
 import { formatActivityAction } from "@/lib/task-activity-format";
 import { formatRelativeDate, getAvatarColor, getInitials } from "@/lib/user-utils";
 import type { TaskActivityType, TaskPriority, TaskStatus } from "@/lib/types";
@@ -22,11 +20,6 @@ export type TaskActivityItem = {
   user: { id: string; name: string };
 };
 
-type TaskActivityFeedProps = {
-  taskId: string;
-  refreshKey?: number;
-};
-
 function ActivityAvatar({ name }: { name: string }) {
   return (
     <span
@@ -40,40 +33,14 @@ function ActivityAvatar({ name }: { name: string }) {
   );
 }
 
-export function TaskActivityFeed({ taskId, refreshKey = 0 }: TaskActivityFeedProps) {
-  const [activities, setActivities] = useState<TaskActivityItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const loadActivities = useCallback(async () => {
-    const response = await fetch(`/api/tasks/${taskId}/activity`);
-    if (!response.ok) {
-      setActivities([]);
-      setLoading(false);
-      return;
-    }
-
-    const data = await response.json();
-    setActivities(data);
-    setLoading(false);
-  }, [taskId]);
-
-  useEffect(() => {
-    setLoading(true);
-    loadActivities();
-  }, [loadActivities, refreshKey]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
-        <Loader2 className="size-3.5 animate-spin" />
-        Loading activity...
-      </div>
-    );
-  }
-
+export function TaskActivityFeed({
+  activities,
+}: {
+  activities: TaskActivityItem[];
+}) {
   if (activities.length === 0) {
     return (
-      <p className="py-4 text-sm text-muted-foreground">No activity recorded yet.</p>
+      <p className="py-2 text-sm text-muted-foreground">No activity recorded yet.</p>
     );
   }
 

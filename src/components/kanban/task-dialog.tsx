@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { IssueDetailLink } from "@/components/issues/issue-detail-link";
 import { ChevronRight, Loader2, Maximize2, Plus, Trash2 } from "lucide-react";
 import {
   AssigneePill,
@@ -161,14 +161,14 @@ export function TaskDialog({
             <span>{isEditing ? "Edit issue" : "New issue"}</span>
           </div>
           {isEditing && task && (
-            <Link
-              href={`/issues/${task.id}`}
+            <IssueDetailLink
+              taskId={task.id}
               onClick={() => onOpenChange(false)}
               className="mr-1 flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
             >
               <Maximize2 className="size-3" />
               Open
-            </Link>
+            </IssueDetailLink>
           )}
         </div>
 

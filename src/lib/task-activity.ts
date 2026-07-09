@@ -142,6 +142,7 @@ export async function recordTaskDueDateChange(
 }
 
 type NamedUser = { id: string; name: string };
+type UserMap = Map<string, NamedUser>;
 
 async function loadUserMap(ids: (string | null)[]) {
   const unique = [...new Set(ids.filter((id): id is string => Boolean(id)))];
@@ -155,7 +156,16 @@ async function loadUserMap(ids: (string | null)[]) {
   return new Map(rows.map((row) => [row.id, row]));
 }
 
-export async function getTaskActivities(taskId: string) {
+export function buildUserMapFromMembers(
+  members: { id: string; name: string }[],
+): UserMap {
+  return new Map(members.map((member) => [member.id, member]));
+}
+
+export async function getTaskActivities(
+  taskId: string,
+  userMap?: UserMap,
+) {
   const rows = await db
     .select({
       id: taskActivities.id,
@@ -179,9 +189,11 @@ export async function getTaskActivities(taskId: string) {
     .where(eq(taskActivities.taskId, taskId))
     .orderBy(asc(taskActivities.createdAt));
 
-  const userMap = await loadUserMap(
-    rows.flatMap((row) => [row.fromAssigneeId, row.toAssigneeId]),
-  );
+  const assigneeMap =
+    userMap ??
+    (await loadUserMap(
+      rows.flatMap((row) => [row.fromAssigneeId, row.toAssigneeId]),
+    ));
 
   return rows.map((row) => ({
     id: row.id,
@@ -195,10 +207,10 @@ export async function getTaskActivities(taskId: string) {
     createdAt: row.createdAt,
     user: row.user,
     fromAssignee: row.fromAssigneeId
-      ? (userMap.get(row.fromAssigneeId) ?? null)
+      ? (assigneeMap.get(row.fromAssigneeId) ?? null)
       : null,
     toAssignee: row.toAssigneeId
-      ? (userMap.get(row.toAssigneeId) ?? null)
+      ? (assigneeMap.get(row.toAssigneeId) ?? null)
       : null,
   }));
 }

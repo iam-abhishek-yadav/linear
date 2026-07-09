@@ -15,8 +15,8 @@ export function getProjectKey(orgName: string): string {
 }
 
 export function formatTaskIdentifier(
-  task: Task,
-  allTasks: Task[],
+  task: { id: string; createdAt: Date | string },
+  allTasks: { id: string; createdAt: Date | string }[],
   projectKey: string,
 ): string {
   const sorted = [...allTasks].sort(

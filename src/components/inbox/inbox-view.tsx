@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { prefetchIssueNavigation } from "@/components/issues/issue-detail-link";
 import { CheckCheck, ChevronRight, Inbox, Loader2 } from "lucide-react";
 import {
   useNotifications,
@@ -106,6 +107,7 @@ export function InboxView() {
 
   function openNotification(notification: NotificationItem) {
     if (!notification.read) markRead(notification.id);
+    prefetchIssueNavigation(notification.task.id);
     router.push(`/issues/${notification.task.id}`);
   }
 

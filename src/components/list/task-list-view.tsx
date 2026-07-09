@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Check, ChevronDown, Loader2, Plus } from "lucide-react";
 import { TaskDialog } from "@/components/kanban/task-dialog";
 import {
@@ -27,6 +28,11 @@ import {
   PRIORITIES,
 } from "@/lib/constants";
 import { formatTaskIdentifier, getProjectKey } from "@/lib/task-utils";
+import {
+  countStaleCompletedTasks,
+  filterMainViewTasks,
+  getTaskCompletedAt,
+} from "@/lib/task-visibility";
 import type { Task, TaskPriority, TaskStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +45,7 @@ type TaskListViewProps = {
   tabScope?: IssuesTabScope;
   pageTitle?: string;
   assignedView?: AssignedView;
+  variant?: "default" | "completed";
   onCreate: (data: TaskInput) => Promise<void>;
   onUpdate: (id: string, data: TaskInput) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
@@ -204,6 +211,7 @@ export function TaskListView({
   tabScope = "workspace",
   pageTitle = "Issues",
   assignedView = "all",
+  variant = "default",
   onCreate,
   onUpdate,
   onDelete,
@@ -213,16 +221,30 @@ export function TaskListView({
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [defaultStatus, setDefaultStatus] = useState<TaskStatus>("TODO");
 
-  const visible = filterStatus
-    ? tasks.filter((t) => filterStatus.includes(t.status))
-    : tasks;
+  const staleCompletedCount = countStaleCompletedTasks(allTasks);
+  const completedHref =
+    tabScope === "assigned" ? "/my-issues?view=completed" : "/completed";
 
-  const sorted = [...visible].sort((a, b) => {
-    const order = filterStatus ?? LIST_STATUS_ORDER;
-    const statusOrder = order.indexOf(a.status) - order.indexOf(b.status);
-    if (statusOrder !== 0) return statusOrder;
-    return a.position - b.position;
-  });
+  const scopedTasks =
+    variant === "completed" ? tasks : filterMainViewTasks(tasks);
+
+  const visible = filterStatus
+    ? scopedTasks.filter((t) => filterStatus.includes(t.status))
+    : scopedTasks;
+
+  const sorted =
+    variant === "completed"
+      ? [...visible].sort((a, b) => {
+          const aTime = getTaskCompletedAt(a)?.getTime() ?? 0;
+          const bTime = getTaskCompletedAt(b)?.getTime() ?? 0;
+          return bTime - aTime;
+        })
+      : [...visible].sort((a, b) => {
+          const order = filterStatus ?? LIST_STATUS_ORDER;
+          const statusOrder = order.indexOf(a.status) - order.indexOf(b.status);
+          if (statusOrder !== 0) return statusOrder;
+          return a.position - b.position;
+        });
 
   const statusesToShow = filterStatus ?? LIST_STATUS_ORDER;
 
@@ -288,6 +310,21 @@ export function TaskListView({
                 Create an issue
               </button>
             </div>
+          ) : variant === "completed" ? (
+            <div className="pt-1">
+              {sorted.map((task) => (
+                <IssueRow
+                  key={task.id}
+                  task={task}
+                  allTasks={allTasks}
+                  selected={selectedTaskId === task.id}
+                  onClick={() => openTask(task)}
+                  onPriorityChange={(priority) =>
+                    handlePriorityChange(task, priority)
+                  }
+                />
+              ))}
+            </div>
           ) : (
             <div className="pt-1">
               {statusesToShow.map((status) => (
@@ -302,6 +339,17 @@ export function TaskListView({
                   onPriorityChange={handlePriorityChange}
                 />
               ))}
+              {staleCompletedCount > 0 && (
+                <div className="border-t border-white/[0.05] px-5 py-3">
+                  <Link
+                    href={completedHref}
+                    className="text-[13px] text-violet-400 transition-colors hover:text-violet-300"
+                  >
+                    {staleCompletedCount} more completed{" "}
+                    {staleCompletedCount === 1 ? "issue" : "issues"}
+                  </Link>
+                </div>
+              )}
             </div>
           )}
         </main>

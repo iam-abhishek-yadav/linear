@@ -21,6 +21,7 @@ type KanbanColumnProps = {
   members: Member[];
   onTaskClick: (task: Task) => void;
   onCreate: (data: TaskInput) => Promise<void>;
+  footer?: React.ReactNode;
 };
 
 export function KanbanColumn({
@@ -31,6 +32,7 @@ export function KanbanColumn({
   members,
   onTaskClick,
   onCreate,
+  footer,
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id, data: { type: "column" } });
 
@@ -68,7 +70,8 @@ export function KanbanColumn({
           </SortableContext>
         </div>
 
-        <div className="mt-1.5">
+        <div className="mt-1.5 space-y-1">
+          {footer}
           <NewTaskButton status={id} onCreate={onCreate} />
         </div>
       </div>

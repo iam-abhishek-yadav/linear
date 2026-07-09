@@ -17,7 +17,7 @@ import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
 
 export type IssuesTabScope = "workspace" | "assigned";
-export type AssignedView = "all" | "active" | "backlog";
+export type AssignedView = "all" | "active" | "backlog" | "completed";
 
 type ViewTab = {
   href: string;
@@ -34,16 +34,15 @@ function getViewTabs(
       { href: "/my-issues", label: "All issues", key: "all" },
       { href: "/my-issues?view=active", label: "Active", key: "active" },
       { href: "/my-issues?view=backlog", label: "Backlog", key: "backlog" },
-    ].map((tab) => ({
-      ...tab,
-      // keep key for active matching against assignedView
-    }));
+      { href: "/my-issues?view=completed", label: "Completed", key: "completed" },
+    ];
   }
 
   return [
     { href: "/list", label: "All issues", key: "all" },
     { href: "/active", label: "Active", key: "active" },
     { href: "/backlog", label: "Backlog", key: "backlog" },
+    { href: "/completed", label: "Completed", key: "completed" },
   ];
 }
 
@@ -55,6 +54,9 @@ function isTabActive(
 ) {
   if (scope === "assigned") {
     return tab.key === assignedView;
+  }
+  if (tab.key === "completed") {
+    return pathname === "/completed";
   }
   return pathname === tab.href;
 }

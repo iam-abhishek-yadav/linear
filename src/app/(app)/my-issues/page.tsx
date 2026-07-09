@@ -7,9 +7,15 @@ import { useSession } from "@/components/session-provider";
 import { useTasks } from "@/hooks/use-tasks";
 import type { AssignedView } from "@/components/issues/issues-header";
 import type { TaskStatus } from "@/lib/types";
+import {
+  filterCompletedArchiveTasks,
+  filterMainViewTasks,
+} from "@/lib/task-visibility";
 
 function resolveAssignedView(view: string | null): AssignedView {
-  if (view === "active" || view === "backlog") return view;
+  if (view === "active" || view === "backlog" || view === "completed") {
+    return view;
+  }
   return "all";
 }
 
@@ -29,15 +35,27 @@ function MyIssuesContent() {
       ? ["IN_PROGRESS", "TODO"]
       : assignedView === "backlog"
         ? ["BACKLOG"]
-        : undefined;
+        : assignedView === "completed"
+          ? ["DONE"]
+          : undefined;
+
+  const visibleTasks =
+    assignedView === "completed"
+      ? filterCompletedArchiveTasks(myTasks)
+      : filterMainViewTasks(myTasks);
 
   return (
     <TaskListView
-      tasks={myTasks}
+      tasks={visibleTasks}
       allTasks={tasks}
       loading={loading}
       filterStatus={filterStatus}
-      emptyMessage="No issues assigned to you"
+      variant={assignedView === "completed" ? "completed" : "default"}
+      emptyMessage={
+        assignedView === "completed"
+          ? "No completed issues older than a day"
+          : "No issues assigned to you"
+      }
       tabScope="assigned"
       pageTitle="My issues"
       assignedView={assignedView}

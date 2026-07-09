@@ -17,6 +17,7 @@ import {
   getOrganizationTask,
   isAssigneeInOrganization,
 } from "@/lib/task-access";
+import { resolveCompletedAtUpdate } from "@/lib/task-visibility";
 import { updateTaskSchema } from "@/lib/validations";
 
 type RouteContext = {
@@ -84,11 +85,16 @@ export async function PATCH(request: Request, context: RouteContext) {
       : existing.assigneeId;
   const nextDueDate =
     parsed.data.dueDate !== undefined ? parsed.data.dueDate : existing.dueDate;
+  const completedAt = resolveCompletedAtUpdate(existing.status, nextStatus);
+  const updatePayload = {
+    ...parsed.data,
+    ...(completedAt !== undefined ? { completedAt } : {}),
+  };
 
   const [task] = await db.transaction(async (tx) => {
     const [updated] = await tx
       .update(tasks)
-      .set(parsed.data)
+      .set(updatePayload)
       .where(
         and(eq(tasks.id, id), eq(tasks.organizationId, organizationId)),
       )

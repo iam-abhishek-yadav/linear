@@ -78,6 +78,7 @@ export async function POST(request: Request) {
         position: (maxPos?.value ?? -1) + 1,
         assigneeId,
         dueDate: parsed.data.dueDate ?? null,
+        completedAt: status === "DONE" ? now : null,
         createdById: session.user.id,
         createdAt: now,
         updatedAt: now,

@@ -40,6 +40,7 @@ export const tasks = pgTable(
       onDelete: "set null",
     }),
     dueDate: timestamp("dueDate", { precision: 3, mode: "date" }),
+    completedAt: timestamp("completedAt", { precision: 3, mode: "date" }),
     createdById: text("createdById").references(() => users.id, {
       onDelete: "set null",
     }),

@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { createStatusChangeNotification } from "@/lib/notifications";
 import { recordTaskStatusChange } from "@/lib/task-activity";
 import { getOrganizationTask } from "@/lib/task-access";
+import { resolveCompletedAtUpdate } from "@/lib/task-visibility";
 import { reorderTaskSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
@@ -88,9 +89,15 @@ export async function POST(request: Request) {
         );
     }
 
+    const completedAt = resolveCompletedAtUpdate(oldStatus, status);
+
     await tx
       .update(tasks)
-      .set({ status, position })
+      .set({
+        status,
+        position,
+        ...(completedAt !== undefined ? { completedAt } : {}),
+      })
       .where(and(eq(tasks.id, taskId), inOrg));
 
     if (oldStatus !== status) {

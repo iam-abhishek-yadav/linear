@@ -17,6 +17,7 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
 import { KanbanColumn } from "@/components/kanban/kanban-column";
 import { KanbanCardContent } from "@/components/kanban/kanban-card";
 import { TaskDialog } from "@/components/kanban/task-dialog";
@@ -24,6 +25,10 @@ import { BoardPageChrome } from "@/components/issues/board-header";
 import { useMembers } from "@/hooks/use-members";
 import { useTasks } from "@/hooks/use-tasks";
 import { COLUMNS } from "@/lib/constants";
+import {
+  countStaleCompletedTasks,
+  filterMainViewTasks,
+} from "@/lib/task-visibility";
 import type { Task, TaskStatus } from "@/lib/types";
 
 const dropAnimation: DropAnimation = {
@@ -125,7 +130,9 @@ export function KanbanBoard() {
     }),
   );
 
-  const grouped = groupByStatus(tasks);
+  const staleCompletedCount = countStaleCompletedTasks(tasks);
+  const visibleTasks = filterMainViewTasks(tasks);
+  const grouped = groupByStatus(visibleTasks);
 
   function handleDragStart(event: DragStartEvent) {
     const task = tasksRef.current.find((t) => t.id === event.active.id);
@@ -233,6 +240,17 @@ export function KanbanBoard() {
                   setDialogOpen(true);
                 }}
                 onCreate={createTask}
+                footer={
+                  col.id === "DONE" && staleCompletedCount > 0 ? (
+                    <Link
+                      href="/completed"
+                      className="block rounded-md px-2 py-2 text-[12px] text-violet-400 transition-colors hover:bg-white/[0.04] hover:text-violet-300"
+                    >
+                      {staleCompletedCount} more completed{" "}
+                      {staleCompletedCount === 1 ? "issue" : "issues"}
+                    </Link>
+                  ) : undefined
+                }
               />
             ))}
           </div>

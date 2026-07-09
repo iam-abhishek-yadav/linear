@@ -7,10 +7,11 @@ import { getTaskActivities } from "@/lib/task-activity";
 import { getTaskComments } from "@/lib/task-comments";
 import type { Task } from "@/lib/types";
 
-export type SerializedTask = Omit<Task, "createdAt" | "updatedAt" | "dueDate"> & {
+export type SerializedTask = Omit<Task, "createdAt" | "updatedAt" | "dueDate" | "completedAt"> & {
   createdAt: string;
   updatedAt: string;
   dueDate: string | null;
+  completedAt: string | null;
 };
 
 export type TaskNavItem = {
@@ -29,6 +30,7 @@ function serializeTask(task: (typeof tasks.$inferSelect)): SerializedTask {
   return {
     ...task,
     dueDate: task.dueDate?.toISOString() ?? null,
+    completedAt: task.completedAt?.toISOString() ?? null,
     createdAt: task.createdAt.toISOString(),
     updatedAt: task.updatedAt.toISOString(),
   };

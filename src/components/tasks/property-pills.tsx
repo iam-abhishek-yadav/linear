@@ -23,22 +23,34 @@ import { cn } from "@/lib/utils";
 const pillClass =
   "h-7 gap-1.5 rounded-md border border-border/50 bg-muted/20 px-2 text-xs font-normal text-muted-foreground hover:bg-muted/40 hover:text-foreground";
 
+const rowClass =
+  "h-8 w-full justify-start gap-2 rounded-md px-2 text-[13px] font-normal text-foreground hover:bg-white/[0.04]";
+
 export function StatusPill({
   value,
   onChange,
+  variant = "pill",
 }: {
   value: TaskStatus;
   onChange: (status: TaskStatus) => void;
+  variant?: "pill" | "row";
 }) {
   const meta = getStatusMeta(value);
+  const triggerClass = variant === "row" ? rowClass : pillClass;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={<Button type="button" variant="outline" className={pillClass} />}
+        render={
+          <Button
+            type="button"
+            variant={variant === "row" ? "ghost" : "outline"}
+            className={triggerClass}
+          />
+        }
       >
         <StatusIcon status={value} />
-        {meta.label}
+        <span className="flex-1 truncate text-left">{meta.label}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-52">
         <DropdownMenuGroup>
@@ -64,20 +76,34 @@ export function StatusPill({
 export function PriorityPill({
   value,
   onChange,
+  variant = "pill",
 }: {
   value: TaskPriority;
   onChange: (priority: TaskPriority) => void;
+  variant?: "pill" | "row";
 }) {
   const meta = getPriorityMeta(value);
-  const label = value === "NONE" ? "Priority" : meta.label;
+  const label =
+    value === "NONE"
+      ? variant === "row"
+        ? "No priority"
+        : "Priority"
+      : meta.label;
+  const triggerClass = variant === "row" ? rowClass : pillClass;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={<Button type="button" variant="outline" className={pillClass} />}
+        render={
+          <Button
+            type="button"
+            variant={variant === "row" ? "ghost" : "outline"}
+            className={triggerClass}
+          />
+        }
       >
         <PriorityIcon priority={value} />
-        {label}
+        <span className="flex-1 truncate text-left">{label}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-52">
         <DropdownMenuGroup>
@@ -116,24 +142,35 @@ export function AssigneePill({
   value,
   members,
   onChange,
+  variant = "pill",
 }: {
   value: string | null;
   members: Member[];
   onChange: (assigneeId: string | null) => void;
+  variant?: "pill" | "row";
 }) {
   const assignee = members.find((m) => m.id === value) ?? null;
+  const triggerClass = variant === "row" ? rowClass : pillClass;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={<Button type="button" variant="outline" className={pillClass} />}
+        render={
+          <Button
+            type="button"
+            variant={variant === "row" ? "ghost" : "outline"}
+            className={triggerClass}
+          />
+        }
       >
         {assignee ? (
           <MiniAvatar name={assignee.name} />
         ) : (
-          <CircleUser className="size-3.5" />
+          <CircleUser className="size-3.5 text-muted-foreground" />
         )}
-        {assignee ? assignee.name : "Assignee"}
+        <span className="flex-1 truncate text-left">
+          {assignee ? assignee.name : variant === "row" ? "Unassigned" : "Assignee"}
+        </span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56">
         <DropdownMenuGroup>
@@ -168,12 +205,14 @@ export function AssigneePill({
 export function DueDatePill({
   value,
   onChange,
+  variant = "pill",
 }: {
   value: string | null;
   onChange: (dueDate: string | null) => void;
+  variant?: "pill" | "row";
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const label = value ? formatDueDate(value) : "ETA";
+  const label = value ? formatDueDate(value) : variant === "row" ? "No due date" : "ETA";
   const overdue = value ? isOverdue(value) : false;
 
   function openPicker() {
@@ -185,6 +224,48 @@ export function DueDatePill({
       el.focus();
       el.click();
     }
+  }
+
+  if (variant === "row") {
+    return (
+      <span
+        className={cn(
+          "relative inline-flex h-8 w-full items-center gap-2 rounded-md px-2 text-[13px] transition-colors hover:bg-white/[0.04]",
+          value && !overdue && "text-foreground",
+          !value && "text-muted-foreground",
+          overdue && "text-red-400",
+        )}
+      >
+        <button
+          type="button"
+          onClick={openPicker}
+          className="inline-flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left outline-none"
+        >
+          <CalendarClock className="size-3.5 shrink-0 text-muted-foreground" />
+          <span className="truncate">{label}</span>
+        </button>
+        {value && (
+          <button
+            type="button"
+            aria-label="Clear due date"
+            onClick={() => onChange(null)}
+            className="rounded-sm p-0.5 text-muted-foreground/70 hover:bg-white/10 hover:text-foreground"
+          >
+            <X className="size-3" />
+          </button>
+        )}
+        <input
+          ref={inputRef}
+          type="date"
+          aria-label="Set due date"
+          value={value ?? ""}
+          onChange={(event) => onChange(event.target.value || null)}
+          tabIndex={-1}
+          aria-hidden
+          className="pointer-events-none absolute bottom-0 left-2 size-0 opacity-0"
+        />
+      </span>
+    );
   }
 
   return (
@@ -244,4 +325,28 @@ export function PropertyPill({
       {children}
     </span>
   );
+}
+
+export function StatusRow(
+  props: Omit<React.ComponentProps<typeof StatusPill>, "variant">,
+) {
+  return <StatusPill {...props} variant="row" />;
+}
+
+export function PriorityRow(
+  props: Omit<React.ComponentProps<typeof PriorityPill>, "variant">,
+) {
+  return <PriorityPill {...props} variant="row" />;
+}
+
+export function AssigneeRow(
+  props: Omit<React.ComponentProps<typeof AssigneePill>, "variant">,
+) {
+  return <AssigneePill {...props} variant="row" />;
+}
+
+export function DueDateRow(
+  props: Omit<React.ComponentProps<typeof DueDatePill>, "variant">,
+) {
+  return <DueDatePill {...props} variant="row" />;
 }

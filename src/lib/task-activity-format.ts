@@ -16,6 +16,12 @@ function assigneeLabel(user: NamedUser) {
   return user?.name ?? "Unassigned";
 }
 
+export function formatActivityAction(activity: Parameters<typeof formatActivityMessage>[0]) {
+  const full = formatActivityMessage(activity);
+  const prefix = `${activity.user.name} `;
+  return full.startsWith(prefix) ? full.slice(prefix.length) : full;
+}
+
 export function formatActivityMessage(activity: {
   type: TaskActivityType;
   user: { name: string };

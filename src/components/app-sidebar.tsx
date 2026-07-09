@@ -1,16 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
+  Building2,
   Inbox,
   LayoutGrid,
   List,
+  LogOut,
   User,
+  Users,
 } from "lucide-react";
 import { useNotifications } from "@/components/notifications-provider";
+import { useSession } from "@/components/session-provider";
 import { WorkspaceMenu } from "@/components/workspace-menu";
+import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
+
+const adminNav = [
+  { href: "/settings/workspace", label: "Workspace", icon: Building2 },
+  { href: "/settings/members", label: "Members", icon: Users },
+];
+
+const roleLabels = {
+  ADMIN: "Admin",
+  MEMBER: "Member",
+} as const;
 
 function NavLink({
   href,
@@ -48,7 +63,7 @@ function NavLink({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="px-2 pb-1 pt-4 text-[11px] font-medium text-muted-foreground/60">
+    <p className="px-2 pb-1 pt-4 text-[11px] font-medium text-muted-foreground/60 first:pt-0">
       {children}
     </p>
   );
@@ -56,7 +71,17 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { unreadCount } = useNotifications();
+  const { user } = useSession();
+  const initials = getInitials(user.name);
+  const avatarColor = getAvatarColor(user.name);
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
+  }
 
   return (
     <aside className="flex w-[220px] shrink-0 flex-col bg-black">
@@ -95,6 +120,46 @@ export function AppSidebar() {
           active={pathname === "/board"}
         />
       </nav>
+
+      <div className="border-t border-white/[0.06] px-2 py-3">
+        <SectionLabel>Administration</SectionLabel>
+        <div className="space-y-0.5">
+          {adminNav.map((item) => (
+            <NavLink
+              key={item.href}
+              {...item}
+              active={pathname === item.href}
+            />
+          ))}
+        </div>
+
+        <div className="mt-3 flex items-center gap-2 border-t border-white/[0.06] px-1 pt-3">
+          <span
+            className={cn(
+              "flex size-6 shrink-0 items-center justify-center rounded text-[10px] font-bold text-white",
+              avatarColor,
+            )}
+          >
+            {initials}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[13px] font-medium text-foreground">
+              {user.name}
+            </p>
+            <p className="truncate text-[11px] text-muted-foreground/70">
+              {roleLabels[user.role]}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground/60 hover:bg-white/[0.04] hover:text-foreground"
+            aria-label="Sign out"
+          >
+            <LogOut className="size-3.5" />
+          </button>
+        </div>
+      </div>
     </aside>
   );
 }

@@ -3,13 +3,11 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
-import { SettingsSidebar } from "@/components/settings/settings-sidebar";
 import { SidebarProvider, useSidebar } from "@/components/sidebar-provider";
 import { cn } from "@/lib/utils";
 
 function ShellContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isSettings = pathname.startsWith("/settings");
   const { open, setOpen } = useSidebar();
 
   useEffect(() => {
@@ -32,7 +30,7 @@ function ShellContent({ children }: { children: React.ReactNode }) {
           open ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         )}
       >
-        {isSettings ? <SettingsSidebar /> : <AppSidebar />}
+        <AppSidebar />
       </div>
       <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl bg-panel shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
         {children}

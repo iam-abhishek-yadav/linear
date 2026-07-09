@@ -12,7 +12,7 @@ This project uses **Next.js 16** with breaking changes from earlier versions. Ch
 
 - **Auth**: custom sessions, not NextAuth/Clerk — see `src/lib/auth.ts`
 - **Invites**: org (CLI) + member (admin UI); links copied manually until Resend is added
-- **Sidebars**: `AppShell` swaps app sidebar ↔ settings sidebar on `/settings/*`
+- **Sidebar**: single `AppSidebar` with app nav, settings links, and user info at the bottom
 - **Admin actions**: member invite, revoke member, revoke pending invite — all on `/settings/members`
 
 ## When unsure
@@ -26,4 +26,3 @@ This project uses **Next.js 16** with breaking changes from earlier versions. Ch
 
 - Commit `.env` or secrets
 - Use open registration — org signup requires an invite token
-- Create nested settings sidebars — settings replaces the main sidebar

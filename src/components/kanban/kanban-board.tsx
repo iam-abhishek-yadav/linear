@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -22,9 +22,11 @@ import { KanbanColumn } from "@/components/kanban/kanban-column";
 import { KanbanCardContent } from "@/components/kanban/kanban-card";
 import { TaskDialog } from "@/components/kanban/task-dialog";
 import { BoardPageChrome } from "@/components/issues/board-header";
+import { useAssigneeFilter } from "@/hooks/use-assignee-filter";
 import { useMembers } from "@/hooks/use-members";
 import { useTasks } from "@/hooks/use-tasks";
 import { COLUMNS } from "@/lib/constants";
+import { filterByAssignee } from "@/lib/task-filters";
 import {
   countStaleCompletedTasks,
   filterMainViewTasks,
@@ -100,6 +102,20 @@ function moveTaskInState(
 }
 
 export function KanbanBoard() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-1 items-center justify-center">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <KanbanBoardContent />
+    </Suspense>
+  );
+}
+
+function KanbanBoardContent() {
   const {
     tasks,
     loading,
@@ -111,6 +127,7 @@ export function KanbanBoard() {
     persistReorder,
   } = useTasks();
   const members = useMembers();
+  const { selectedId, select, clear } = useAssigneeFilter();
 
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -131,7 +148,10 @@ export function KanbanBoard() {
   );
 
   const staleCompletedCount = countStaleCompletedTasks(tasks);
-  const visibleTasks = filterMainViewTasks(tasks);
+  const visibleTasks = filterByAssignee(
+    filterMainViewTasks(tasks),
+    selectedId,
+  );
   const grouped = groupByStatus(visibleTasks);
 
   function handleDragStart(event: DragStartEvent) {
@@ -216,7 +236,13 @@ export function KanbanBoard() {
 
   return (
     <>
-      <BoardPageChrome onNewIssue={() => setNewDialogOpen(true)} />
+      <BoardPageChrome
+        onNewIssue={() => setNewDialogOpen(true)}
+        members={members}
+        selectedAssigneeId={selectedId}
+        onSelectAssignee={select}
+        onClearAssigneeFilter={clear}
+      />
       <DndContext
         sensors={sensors}
         collisionDetection={rectIntersection}

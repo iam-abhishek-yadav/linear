@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { Check, ChevronDown, Loader2, Plus } from "lucide-react";
 import { TaskDialog } from "@/components/kanban/task-dialog";
@@ -20,7 +20,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAssigneeFilter } from "@/hooks/use-assignee-filter";
 import type { TaskInput } from "@/hooks/use-tasks";
+import { useMembers } from "@/hooks/use-members";
 import {
   getPriorityMeta,
   getStatusMeta,
@@ -28,6 +30,7 @@ import {
   PRIORITIES,
 } from "@/lib/constants";
 import { formatTaskIdentifier, getProjectKey } from "@/lib/task-utils";
+import { filterByAssignee } from "@/lib/task-filters";
 import {
   countStaleCompletedTasks,
   filterMainViewTasks,
@@ -202,7 +205,7 @@ function StatusGroup({
   );
 }
 
-export function TaskListView({
+function TaskListViewContent({
   tasks,
   allTasks,
   loading,
@@ -216,6 +219,8 @@ export function TaskListView({
   onUpdate,
   onDelete,
 }: TaskListViewProps) {
+  const members = useMembers();
+  const { selectedId, select, clear } = useAssigneeFilter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -232,14 +237,19 @@ export function TaskListView({
     ? scopedTasks.filter((t) => filterStatus.includes(t.status))
     : scopedTasks;
 
+  const assigneeFiltered =
+    tabScope === "assigned"
+      ? visible
+      : filterByAssignee(visible, selectedId);
+
   const sorted =
     variant === "completed"
-      ? [...visible].sort((a, b) => {
+      ? [...assigneeFiltered].sort((a, b) => {
           const aTime = getTaskCompletedAt(a)?.getTime() ?? 0;
           const bTime = getTaskCompletedAt(b)?.getTime() ?? 0;
           return bTime - aTime;
         })
-      : [...visible].sort((a, b) => {
+      : [...assigneeFiltered].sort((a, b) => {
           const order = filterStatus ?? LIST_STATUS_ORDER;
           const statusOrder = order.indexOf(a.status) - order.indexOf(b.status);
           if (statusOrder !== 0) return statusOrder;
@@ -274,21 +284,6 @@ export function TaskListView({
     });
   }
 
-  if (loading) {
-    return (
-      <div className="flex flex-1 flex-col">
-        <IssuesPageChrome
-          scope={tabScope}
-          title={pageTitle}
-          assignedView={assignedView}
-        />
-        <div className="flex flex-1 items-center justify-center">
-          <Loader2 className="size-5 animate-spin text-muted-foreground" />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
       <div className="relative flex flex-1 flex-col overflow-hidden">
@@ -296,6 +291,10 @@ export function TaskListView({
           scope={tabScope}
           title={pageTitle}
           assignedView={assignedView}
+          members={members}
+          selectedAssigneeId={selectedId}
+          onSelectAssignee={select}
+          onClearAssigneeFilter={clear}
         />
 
         <main className="flex-1 overflow-y-auto pb-14">
@@ -375,5 +374,50 @@ export function TaskListView({
         }
       />
     </>
+  );
+}
+
+function TaskListViewFallback({
+  tabScope = "workspace",
+  pageTitle = "Issues",
+  assignedView = "all",
+}: Pick<TaskListViewProps, "tabScope" | "pageTitle" | "assignedView">) {
+  return (
+    <div className="flex flex-1 flex-col">
+      <IssuesPageChrome
+        scope={tabScope}
+        title={pageTitle}
+        assignedView={assignedView}
+      />
+      <div className="flex flex-1 items-center justify-center">
+        <Loader2 className="size-5 animate-spin text-muted-foreground" />
+      </div>
+    </div>
+  );
+}
+
+export function TaskListView(props: TaskListViewProps) {
+  if (props.loading) {
+    return (
+      <TaskListViewFallback
+        tabScope={props.tabScope}
+        pageTitle={props.pageTitle}
+        assignedView={props.assignedView}
+      />
+    );
+  }
+
+  return (
+    <Suspense
+      fallback={
+        <TaskListViewFallback
+          tabScope={props.tabScope}
+          pageTitle={props.pageTitle}
+          assignedView={props.assignedView}
+        />
+      }
+    >
+      <TaskListViewContent {...props} />
+    </Suspense>
   );
 }

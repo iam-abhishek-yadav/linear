@@ -10,9 +10,11 @@ import {
   SlidersHorizontal,
   Star,
 } from "lucide-react";
+import { AssigneeFilter } from "@/components/issues/assignee-filter";
 import { useSession } from "@/components/session-provider";
 import { SidebarTrigger } from "@/components/sidebar-provider";
 import { Button } from "@/components/ui/button";
+import type { Member } from "@/hooks/use-members";
 import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
 
@@ -65,10 +67,18 @@ export function IssuesPageChrome({
   scope = "workspace",
   title = "Issues",
   assignedView = "all",
+  members = [],
+  selectedAssigneeId = null,
+  onSelectAssignee,
+  onClearAssigneeFilter,
 }: {
   scope?: IssuesTabScope;
   title?: string;
   assignedView?: AssignedView;
+  members?: Member[];
+  selectedAssigneeId?: string | null;
+  onSelectAssignee?: (id: string) => void;
+  onClearAssigneeFilter?: () => void;
 }) {
   const pathname = usePathname();
   const { organization } = useSession();
@@ -105,8 +115,9 @@ export function IssuesPageChrome({
         </button>
       </div>
 
-      <div className="flex h-9 items-center justify-between border-b border-white/[0.06] px-5">
-        <div className="flex items-center gap-0.5">
+      <div className="flex h-9 items-center justify-between gap-3 border-b border-white/[0.06] px-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex shrink-0 items-center gap-0.5">
           {tabs.map((tab) => {
             const isActive = isTabActive(scope, tab, pathname, assignedView);
             return (
@@ -124,9 +135,22 @@ export function IssuesPageChrome({
               </Link>
             );
           })}
+          </div>
+
+          {scope !== "assigned" &&
+            onSelectAssignee &&
+            onClearAssigneeFilter &&
+            members.length > 0 && (
+              <AssigneeFilter
+                members={members}
+                selectedId={selectedAssigneeId}
+                onSelect={onSelectAssignee}
+                onClear={onClearAssigneeFilter}
+              />
+            )}
         </div>
 
-        <div className="flex items-center gap-0.5">
+        <div className="flex shrink-0 items-center gap-0.5">
           <Button
             variant="ghost"
             size="icon-sm"

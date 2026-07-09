@@ -13,11 +13,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PriorityIcon } from "@/components/tasks/priority-icon";
 import { StatusIcon } from "@/components/tasks/status-icon";
+import { UserAvatar } from "@/components/user-avatar";
 import type { Member } from "@/hooks/use-members";
 import { COLUMNS, getPriorityMeta, getStatusMeta, PRIORITIES } from "@/lib/constants";
 import { formatDueDate, isOverdue } from "@/lib/task-utils";
 import type { TaskPriority, TaskStatus } from "@/lib/types";
-import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
 
 const pillClass =
@@ -125,19 +125,6 @@ export function PriorityPill({
   );
 }
 
-function MiniAvatar({ name }: { name: string }) {
-  return (
-    <span
-      className={cn(
-        "flex size-4 shrink-0 items-center justify-center rounded-full text-[8px] font-semibold text-white",
-        getAvatarColor(name),
-      )}
-    >
-      {getInitials(name)}
-    </span>
-  );
-}
-
 export function AssigneePill({
   value,
   members,
@@ -164,7 +151,7 @@ export function AssigneePill({
         }
       >
         {assignee ? (
-          <MiniAvatar name={assignee.name} />
+          <UserAvatar name={assignee.name} size="xs" />
         ) : (
           <CircleUser className="size-3.5 text-muted-foreground" />
         )}
@@ -184,7 +171,7 @@ export function AssigneePill({
           </DropdownMenuItem>
           {members.map((member) => (
             <DropdownMenuItem key={member.id} onClick={() => onChange(member.id)}>
-              <MiniAvatar name={member.name} />
+              <UserAvatar name={member.name} size="xs" />
               <span className="flex-1 truncate">
                 {member.name}
                 {member.isCurrentUser && (

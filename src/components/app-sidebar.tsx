@@ -46,8 +46,8 @@ function NavLink({
       className={cn(
         "flex items-center gap-2 rounded-md px-2 py-1 text-[13px] transition-colors",
         active
-          ? "bg-white/[0.08] font-medium text-foreground"
-          : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground",
+          ? "bg-white/8 font-medium text-foreground"
+          : "text-muted-foreground hover:bg-white/4 hover:text-foreground",
       )}
     >
       <Icon className="size-3.5 shrink-0 opacity-70" />
@@ -121,7 +121,7 @@ export function AppSidebar() {
         />
       </nav>
 
-      <div className="border-t border-white/[0.06] px-2 py-3">
+      <div className="border-t border-white/6 px-2 py-3">
         <SectionLabel>Administration</SectionLabel>
         <div className="space-y-0.5">
           {adminNav.map((item) => (
@@ -133,7 +133,7 @@ export function AppSidebar() {
           ))}
         </div>
 
-        <div className="mt-3 flex items-center gap-2 border-t border-white/[0.06] px-1 pt-3">
+        <div className="mt-3 flex items-center gap-2 border-t border-white/6 px-1 pt-3">
           <span
             className={cn(
               "flex size-6 shrink-0 items-center justify-center rounded text-[10px] font-bold text-white",
@@ -153,7 +153,7 @@ export function AppSidebar() {
           <button
             type="button"
             onClick={handleLogout}
-            className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground/60 hover:bg-white/[0.04] hover:text-foreground"
+            className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground/60 hover:bg-white/4 hover:text-foreground"
             aria-label="Sign out"
           >
             <LogOut className="size-3.5" />

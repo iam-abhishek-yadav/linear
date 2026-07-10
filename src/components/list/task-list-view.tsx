@@ -161,6 +161,7 @@ function StatusGroup({
   onTaskClick,
   onAddIssue,
   onPriorityChange,
+  archiveLink,
 }: {
   status: TaskStatus;
   tasks: Task[];
@@ -169,10 +170,11 @@ function StatusGroup({
   onTaskClick: (task: Task) => void;
   onAddIssue: (status: TaskStatus) => void;
   onPriorityChange: (task: Task, priority: TaskPriority) => void;
+  archiveLink?: { count: number; href: string };
 }) {
   const meta = getStatusMeta(status);
 
-  if (tasks.length === 0) return null;
+  if (tasks.length === 0 && !archiveLink) return null;
 
   return (
     <section className="border-t border-white/[0.05] first:border-t-0">
@@ -180,14 +182,29 @@ function StatusGroup({
         <ChevronDown className="size-3 text-muted-foreground/35" />
         <StatusIcon status={status} />
         <span className="text-[13px] text-muted-foreground/75">{meta.label}</span>
-        <span className="text-[13px] text-muted-foreground/40">{tasks.length}</span>
-        <button
-          type="button"
-          onClick={() => onAddIssue(status)}
-          className="ml-auto rounded p-0.5 text-muted-foreground/25 transition-colors hover:bg-white/[0.05] hover:text-muted-foreground/60"
-        >
-          <Plus className="size-3.5" />
-        </button>
+        {tasks.length > 0 && (
+          <span className="text-[13px] text-muted-foreground/40">
+            {tasks.length}
+          </span>
+        )}
+        <div className="ml-auto flex items-center gap-2">
+          {archiveLink && (
+            <Link
+              href={archiveLink.href}
+              className="text-[12px] text-violet-400/90 transition-colors hover:text-violet-300"
+            >
+              {archiveLink.count} more completed{" "}
+              {archiveLink.count === 1 ? "issue" : "issues"}
+            </Link>
+          )}
+          <button
+            type="button"
+            onClick={() => onAddIssue(status)}
+            className="rounded p-0.5 text-muted-foreground/25 transition-colors hover:bg-white/[0.05] hover:text-muted-foreground/60"
+          >
+            <Plus className="size-3.5" />
+          </button>
+        </div>
       </div>
       <div>
         {tasks.map((task) => (
@@ -326,29 +343,27 @@ function TaskListViewContent({
             </div>
           ) : (
             <div className="pt-1">
-              {statusesToShow.map((status) => (
-                <StatusGroup
-                  key={status}
-                  status={status}
-                  tasks={sorted.filter((t) => t.status === status)}
-                  allTasks={allTasks}
-                  selectedTaskId={selectedTaskId}
-                  onTaskClick={openTask}
-                  onAddIssue={openCreate}
-                  onPriorityChange={handlePriorityChange}
-                />
-              ))}
-              {staleCompletedCount > 0 && (
-                <div className="border-t border-white/[0.05] px-5 py-3">
-                  <Link
-                    href={completedHref}
-                    className="text-[13px] text-violet-400 transition-colors hover:text-violet-300"
-                  >
-                    {staleCompletedCount} more completed{" "}
-                    {staleCompletedCount === 1 ? "issue" : "issues"}
-                  </Link>
-                </div>
-              )}
+              {statusesToShow.map((status) => {
+                const statusTasks = sorted.filter((t) => t.status === status);
+                const archiveLink =
+                  !filterStatus && status === "DONE" && staleCompletedCount > 0
+                    ? { count: staleCompletedCount, href: completedHref }
+                    : undefined;
+
+                return (
+                  <StatusGroup
+                    key={status}
+                    status={status}
+                    tasks={statusTasks}
+                    allTasks={allTasks}
+                    selectedTaskId={selectedTaskId}
+                    onTaskClick={openTask}
+                    onAddIssue={openCreate}
+                    onPriorityChange={handlePriorityChange}
+                    archiveLink={archiveLink}
+                  />
+                );
+              })}
             </div>
           )}
         </main>

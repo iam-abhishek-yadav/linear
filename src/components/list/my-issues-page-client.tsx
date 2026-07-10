@@ -47,7 +47,7 @@ function MyIssuesContent() {
   return (
     <TaskListView
       tasks={visibleTasks}
-      allTasks={tasks}
+      allTasks={myTasks}
       loading={loading}
       filterStatus={filterStatus}
       variant={assignedView === "completed" ? "completed" : "default"}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { TaskListView } from "@/components/list/task-list-view";
 import type { AssignedView } from "@/components/issues/issues-header";
@@ -25,7 +25,10 @@ function MyIssuesViewContent() {
   const assignedView = resolveAssignedView(searchParams.get("view"));
   const { tasks, createTask, updateTask, deleteTask } = useTasks();
 
-  const myTasks = tasks.filter((task) => task.assigneeId === user.id);
+  const myTasks = useMemo(
+    () => tasks.filter((task) => task.assigneeId === user.id),
+    [tasks, user.id],
+  );
 
   const filterStatus: TaskStatus[] | undefined =
     assignedView === "active"
@@ -44,7 +47,7 @@ function MyIssuesViewContent() {
   return (
     <TaskListView
       tasks={visibleTasks}
-      allTasks={tasks}
+      allTasks={myTasks}
       loading={false}
       filterStatus={filterStatus}
       variant={assignedView === "completed" ? "completed" : "default"}

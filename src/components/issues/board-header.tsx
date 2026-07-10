@@ -29,21 +29,23 @@ export function BoardPageChrome({
 
   return (
     <header className="shrink-0">
-      <div className="flex h-12 items-center justify-between gap-3 px-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="flex items-center gap-1.5 text-[13px]">
-          <SidebarTrigger />
-          <span
-            className={cn(
-              "flex size-[18px] items-center justify-center rounded-[4px] text-[8px] font-bold text-white",
-              getAvatarColor(organization.name),
-            )}
-          >
-            {getInitials(organization.name)}
-          </span>
-          <span className="text-foreground/80">{organization.name}</span>
-          <ChevronRight className="size-3 text-muted-foreground/40" />
-          <span className="text-muted-foreground">Board</span>
+      <div className="flex h-12 items-center gap-2 px-3 md:px-4">
+        <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto overscroll-x-contain scrollbar-none">
+          <div className="flex shrink-0 items-center gap-1.5 text-[13px]">
+            <SidebarTrigger />
+            <span
+              className={cn(
+                "flex size-[18px] shrink-0 items-center justify-center rounded-[4px] text-[8px] font-bold text-white",
+                getAvatarColor(organization.name),
+              )}
+            >
+              {getInitials(organization.name)}
+            </span>
+            <span className="hidden truncate text-foreground/80 sm:inline">
+              {organization.name}
+            </span>
+            <ChevronRight className="hidden size-3 shrink-0 text-muted-foreground/40 sm:block" />
+            <span className="shrink-0 text-muted-foreground">Board</span>
           </div>
 
           {onSelectAssignee &&
@@ -61,11 +63,11 @@ export function BoardPageChrome({
           <Button
             size="sm"
             variant="ghost"
-            className="h-7 gap-1.5 text-[13px] text-muted-foreground hover:bg-white/[0.06]"
+            className="h-7 shrink-0 gap-1.5 px-2 text-[13px] text-muted-foreground hover:bg-white/[0.06] sm:px-3"
             onClick={onNewIssue}
           >
             <Plus className="size-3.5" />
-            New issue
+            <span className="hidden sm:inline">New issue</span>
           </Button>
         )}
       </div>

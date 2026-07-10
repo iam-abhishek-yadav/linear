@@ -86,82 +86,86 @@ export function IssuesPageChrome({
 
   return (
     <header className="shrink-0">
-      <div className="flex h-11 items-center justify-between px-5">
-        <div className="flex items-center gap-1.5 text-[13px]">
+      <div className="flex h-11 items-center justify-between gap-2 px-3 md:px-5">
+        <div className="flex min-w-0 items-center gap-1.5 text-[13px]">
           <SidebarTrigger />
           <span
             className={cn(
-              "flex size-[18px] items-center justify-center rounded-[5px] text-[9px] font-semibold text-white",
+              "flex size-[18px] shrink-0 items-center justify-center rounded-[5px] text-[9px] font-semibold text-white",
               getAvatarColor(organization.name),
             )}
           >
             {getInitials(organization.name)}
           </span>
-          <span className="text-foreground/75">{organization.name}</span>
-          <ChevronRight className="size-3 text-muted-foreground/35" />
-          <span className="text-muted-foreground/75">{title}</span>
+          <span className="hidden truncate text-foreground/75 sm:inline">
+            {organization.name}
+          </span>
+          <ChevronRight className="hidden size-3 shrink-0 text-muted-foreground/35 sm:block" />
+          <span className="truncate text-muted-foreground/75">{title}</span>
           <button
             type="button"
-            className="ml-0.5 rounded p-1 text-muted-foreground/35 hover:bg-white/[0.05] hover:text-muted-foreground"
+            className="ml-0.5 hidden rounded p-1 text-muted-foreground/35 hover:bg-white/[0.05] hover:text-muted-foreground sm:block"
           >
             <Star className="size-3.5" />
           </button>
         </div>
         <button
           type="button"
-          className="rounded-md p-1.5 text-muted-foreground/45 hover:bg-white/[0.05] hover:text-muted-foreground"
+          className="shrink-0 rounded-md p-1.5 text-muted-foreground/45 hover:bg-white/[0.05] hover:text-muted-foreground"
         >
           <Bell className="size-4" />
         </button>
       </div>
 
-      <div className="flex h-9 items-center justify-between gap-3 border-b border-white/[0.06] px-5">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="flex shrink-0 items-center gap-0.5">
-          {tabs.map((tab) => {
-            const isActive = isTabActive(scope, tab, pathname, assignedView);
-            return (
-              <Link
-                key={tab.href}
-                href={tab.href}
-                className={cn(
-                  "rounded-[6px] px-2.5 py-1 text-[13px] transition-colors",
-                  isActive
-                    ? "bg-white/[0.07] text-foreground"
-                    : "text-muted-foreground/70 hover:text-foreground/80",
-                )}
-              >
-                {tab.label}
-              </Link>
-            );
-          })}
-          </div>
+      <div className="flex h-9 items-stretch border-b border-white/[0.06]">
+        <div className="flex min-w-0 flex-1 overflow-x-auto overscroll-x-contain scrollbar-none">
+          <div className="flex items-center gap-3 px-3 md:px-5">
+            <div className="flex shrink-0 items-center gap-0.5">
+              {tabs.map((tab) => {
+                const isActive = isTabActive(scope, tab, pathname, assignedView);
+                return (
+                  <Link
+                    key={tab.href}
+                    href={tab.href}
+                    className={cn(
+                      "shrink-0 rounded-[6px] px-2.5 py-1 text-[13px] whitespace-nowrap transition-colors",
+                      isActive
+                        ? "bg-white/[0.07] text-foreground"
+                        : "text-muted-foreground/70 hover:text-foreground/80",
+                    )}
+                  >
+                    {tab.label}
+                  </Link>
+                );
+              })}
+            </div>
 
-          {scope !== "assigned" &&
-            onSelectAssignee &&
-            onClearAssigneeFilter &&
-            members.length > 0 && (
-              <AssigneeFilter
-                members={members}
-                selectedId={selectedAssigneeId}
-                onSelect={onSelectAssignee}
-                onClear={onClearAssigneeFilter}
-              />
-            )}
+            {scope !== "assigned" &&
+              onSelectAssignee &&
+              onClearAssigneeFilter &&
+              members.length > 0 && (
+                <AssigneeFilter
+                  members={members}
+                  selectedId={selectedAssigneeId}
+                  onSelect={onSelectAssignee}
+                  onClear={onClearAssigneeFilter}
+                />
+              )}
+          </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-0.5">
+        <div className="flex shrink-0 items-center gap-0.5 border-l border-white/[0.06] bg-panel px-1.5 md:px-2">
           <Button
             variant="ghost"
             size="icon-sm"
-            className="size-7 rounded-[6px] text-muted-foreground/45 hover:bg-white/[0.05] hover:text-muted-foreground"
+            className="hidden size-7 rounded-[6px] text-muted-foreground/45 hover:bg-white/[0.05] hover:text-muted-foreground sm:inline-flex"
           >
             <SlidersHorizontal className="size-3.5" />
           </Button>
           <Button
             variant="ghost"
             size="icon-sm"
-            className="size-7 rounded-[6px] text-muted-foreground/45 hover:bg-white/[0.05] hover:text-muted-foreground"
+            className="hidden size-7 rounded-[6px] text-muted-foreground/45 hover:bg-white/[0.05] hover:text-muted-foreground sm:inline-flex"
           >
             <LayoutList className="size-3.5" />
           </Button>

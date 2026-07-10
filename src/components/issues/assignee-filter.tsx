@@ -58,7 +58,7 @@ export function AssigneeFilter({
             type="button"
             variant="ghost"
             className={cn(
-              "h-7 max-w-[180px] gap-1.5 rounded-[6px] px-2.5 text-[13px] font-normal",
+              "h-7 max-w-[140px] gap-1.5 rounded-[6px] px-2.5 text-[13px] font-normal sm:max-w-[180px]",
               isFiltering
                 ? "bg-violet-500/15 text-violet-300 hover:bg-violet-500/20 hover:text-violet-200"
                 : "text-muted-foreground/70 hover:bg-white/[0.05] hover:text-foreground/80",

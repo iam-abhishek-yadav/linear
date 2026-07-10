@@ -173,55 +173,57 @@ export function MembersPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center justify-between gap-4 border-b border-border/40 px-8 py-6">
+      <div className="flex flex-col gap-4 border-b border-border/40 px-4 py-4 md:flex-row md:items-center md:justify-between md:px-8 md:py-6">
         <div className="flex items-center gap-2">
           <SidebarTrigger />
-          <h1 className="text-2xl font-semibold tracking-tight">Members</h1>
+          <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Members</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="relative min-w-0 flex-1 sm:min-w-48 sm:flex-none">
             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search by name or email"
-              className="h-8 w-56 border-border/60 bg-black/20 pl-8 text-[13px]"
+              className="h-8 w-full border-border/60 bg-black/20 pl-8 text-[13px] sm:w-56"
             />
           </div>
-          <Select
-            value={roleFilter}
-            onValueChange={(value) => setRoleFilter(value ?? "all")}
-          >
-            <SelectTrigger className="h-8 w-24 border-border/60 bg-black/20 text-[13px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="member">Member</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 border-border/60 bg-transparent text-[13px]"
-            disabled
-          >
-            Export CSV
-          </Button>
-          {isAdmin && (
-            <Button
-              size="sm"
-              className="h-8 bg-violet-600 text-[13px] text-white hover:bg-violet-500"
-              onClick={() => setInviteOpen(true)}
+          <div className="flex items-center gap-2">
+            <Select
+              value={roleFilter}
+              onValueChange={(value) => setRoleFilter(value ?? "all")}
             >
-              Invite
+              <SelectTrigger className="h-8 w-24 border-border/60 bg-black/20 text-[13px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="member">Member</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden h-8 border-border/60 bg-transparent text-[13px] sm:inline-flex"
+              disabled
+            >
+              Export CSV
             </Button>
-          )}
+            {isAdmin && (
+              <Button
+                size="sm"
+                className="h-8 bg-violet-600 text-[13px] text-white hover:bg-violet-500"
+                onClick={() => setInviteOpen(true)}
+              >
+                Invite
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto px-8 py-4">
+      <div className="min-h-0 flex-1 overflow-auto px-4 py-4 md:px-8">
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading members...</p>
         ) : (
@@ -230,7 +232,67 @@ export function MembersPage() {
               <h2 className="mb-3 text-[13px] font-medium text-muted-foreground">
                 Active {filteredMembers.length}
               </h2>
-              <div className="overflow-hidden rounded-lg border border-border/40">
+
+              {/* Mobile card list */}
+              <div className="space-y-2 md:hidden">
+                {filteredMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    className="rounded-lg border border-border/40 p-3"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <MemberAvatar name={member.name} />
+                        <p className="truncate font-medium">{member.name}</p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <RoleBadge role={member.role} />
+                        {isAdmin && canRevokeMember(member) && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger
+                              className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
+                              aria-label={`Actions for ${member.name}`}
+                            >
+                              <MoreHorizontal className="size-3.5" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() =>
+                                  setRevokeTarget({
+                                    type: "member",
+                                    id: member.id,
+                                    name: member.name,
+                                  })
+                                }
+                              >
+                                Revoke access
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </div>
+                    </div>
+                    <p className="mt-2 truncate pl-10 text-[12px] text-muted-foreground">
+                      {member.email}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted-foreground">
+                      <span>
+                        Joined {formatRelativeDate(new Date(member.createdAt))}
+                      </span>
+                      {member.isCurrentUser && (
+                        <span className="inline-flex items-center gap-1.5 text-emerald-400">
+                          <span className="size-1.5 rounded-full bg-emerald-400" />
+                          Online
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden overflow-hidden rounded-lg border border-border/40 md:block">
                 <table className="w-full text-left text-[13px]">
                   <thead className="border-b border-border/40 bg-white/[0.02] text-muted-foreground">
                     <tr>
@@ -251,12 +313,7 @@ export function MembersPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             <MemberAvatar name={member.name} />
-                            <div>
-                              <p className="font-medium">{member.name}</p>
-                              <p className="text-[12px] text-muted-foreground">
-                                {member.email}
-                              </p>
-                            </div>
+                            <p className="font-medium">{member.name}</p>
                           </div>
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">{member.email}</td>
@@ -316,7 +373,63 @@ export function MembersPage() {
                 <h2 className="mb-3 text-[13px] font-medium text-muted-foreground">
                   Pending {filteredInvites.length}
                 </h2>
-                <div className="overflow-hidden rounded-lg border border-border/40">
+
+                {/* Mobile card list */}
+                <div className="space-y-2 md:hidden">
+                  {filteredInvites.map((invite) => (
+                    <div
+                      key={invite.id}
+                      className="rounded-lg border border-border/40 p-3"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{invite.email}</p>
+                          <div className="mt-1">
+                            <Badge
+                              variant="outline"
+                              className="h-5 rounded px-1.5 text-[11px] font-medium"
+                            >
+                              Invited
+                            </Badge>
+                          </div>
+                        </div>
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 shrink-0 text-[12px] text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() =>
+                              setRevokeTarget({
+                                type: "invite",
+                                id: invite.id,
+                                email: invite.email,
+                              })
+                            }
+                          >
+                            Revoke
+                          </Button>
+                        )}
+                      </div>
+                      <div className="mt-2 flex min-w-0 items-center gap-2">
+                        <span className="min-w-0 truncate font-mono text-[11px] text-muted-foreground">
+                          {invite.inviteUrl}
+                        </span>
+                        <InviteLinkCopy url={invite.inviteUrl} compact />
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-muted-foreground">
+                        <span>
+                          Invited {formatRelativeDate(new Date(invite.createdAt))}
+                        </span>
+                        <span>
+                          Expires {formatRelativeDate(new Date(invite.expiresAt))}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop table */}
+                <div className="hidden overflow-hidden rounded-lg border border-border/40 md:block">
                   <table className="w-full text-left text-[13px]">
                     <thead className="border-b border-border/40 bg-white/[0.02] text-muted-foreground">
                       <tr>

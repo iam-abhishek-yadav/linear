@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Check, ChevronDown, Loader2, Plus } from "lucide-react";
 import { TaskDialog } from "@/components/kanban/task-dialog";
 import {
@@ -31,11 +30,7 @@ import {
 } from "@/lib/constants";
 import { formatTaskIdentifier, getProjectKey } from "@/lib/task-utils";
 import { filterByAssignee } from "@/lib/task-filters";
-import {
-  countStaleCompletedTasks,
-  filterMainViewTasks,
-  getTaskCompletedAt,
-} from "@/lib/task-visibility";
+import { getTaskCompletedAt } from "@/lib/task-visibility";
 import type { Task, TaskPriority, TaskStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -161,7 +156,6 @@ function StatusGroup({
   onTaskClick,
   onAddIssue,
   onPriorityChange,
-  archiveLink,
 }: {
   status: TaskStatus;
   tasks: Task[];
@@ -170,11 +164,10 @@ function StatusGroup({
   onTaskClick: (task: Task) => void;
   onAddIssue: (status: TaskStatus) => void;
   onPriorityChange: (task: Task, priority: TaskPriority) => void;
-  archiveLink?: { count: number; href: string };
 }) {
   const meta = getStatusMeta(status);
 
-  if (tasks.length === 0 && !archiveLink) return null;
+  if (tasks.length === 0) return null;
 
   return (
     <section className="border-t border-white/[0.05] first:border-t-0">
@@ -188,15 +181,6 @@ function StatusGroup({
           </span>
         )}
         <div className="ml-auto flex items-center gap-2">
-          {archiveLink && (
-            <Link
-              href={archiveLink.href}
-              className="text-[13px] text-violet-400/90 transition-colors hover:text-violet-300"
-            >
-              {archiveLink.count} more completed{" "}
-              {archiveLink.count === 1 ? "issue" : "issues"}
-            </Link>
-          )}
           <button
             type="button"
             onClick={() => onAddIssue(status)}
@@ -243,16 +227,9 @@ function TaskListViewContent({
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [defaultStatus, setDefaultStatus] = useState<TaskStatus>("TODO");
 
-  const staleCompletedCount = countStaleCompletedTasks(allTasks);
-  const completedHref =
-    tabScope === "assigned" ? "/my-issues?view=completed" : "/completed";
-
-  const scopedTasks =
-    variant === "completed" ? tasks : filterMainViewTasks(tasks);
-
   const visible = filterStatus
-    ? scopedTasks.filter((t) => filterStatus.includes(t.status))
-    : scopedTasks;
+    ? tasks.filter((t) => filterStatus.includes(t.status))
+    : tasks;
 
   const assigneeFiltered =
     tabScope === "assigned"
@@ -345,10 +322,6 @@ function TaskListViewContent({
             <div className="pt-1">
               {statusesToShow.map((status) => {
                 const statusTasks = sorted.filter((t) => t.status === status);
-                const archiveLink =
-                  !filterStatus && status === "DONE" && staleCompletedCount > 0
-                    ? { count: staleCompletedCount, href: completedHref }
-                    : undefined;
 
                 return (
                   <StatusGroup
@@ -360,7 +333,6 @@ function TaskListViewContent({
                     onTaskClick={openTask}
                     onAddIssue={openCreate}
                     onPriorityChange={handlePriorityChange}
-                    archiveLink={archiveLink}
                   />
                 );
               })}

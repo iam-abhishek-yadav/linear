@@ -3,7 +3,6 @@
 import { usePathname } from "next/navigation";
 import { TaskListView } from "@/components/list/task-list-view";
 import { useTasks } from "@/hooks/use-tasks";
-import { filterCompletedArchiveTasks } from "@/lib/task-visibility";
 import type { TaskStatus } from "@/lib/types";
 
 type WorkspaceView = "all" | "active" | "backlog" | "completed";
@@ -32,7 +31,7 @@ function getViewConfig(view: WorkspaceView) {
     case "completed":
       return {
         filterStatus: undefined,
-        emptyMessage: "No completed issues older than a day",
+        emptyMessage: "No completed issues",
         variant: "completed" as const,
       };
     default:
@@ -51,7 +50,9 @@ export function WorkspaceIssuesView() {
   const { tasks, createTask, updateTask, deleteTask } = useTasks();
 
   const visibleTasks =
-    variant === "completed" ? filterCompletedArchiveTasks(tasks) : tasks;
+    view === "completed"
+      ? tasks.filter((task) => task.status === "DONE")
+      : tasks;
 
   return (
     <TaskListView

@@ -3,7 +3,6 @@
 import { TaskListView } from "@/components/list/task-list-view";
 import type { AssignedView, IssuesTabScope } from "@/components/issues/issues-header";
 import { useTasks } from "@/hooks/use-tasks";
-import { filterCompletedArchiveTasks } from "@/lib/task-visibility";
 import type { TaskStatus } from "@/lib/types";
 
 type TaskListPageClientProps = {
@@ -25,7 +24,9 @@ export function TaskListPageClient({
 }: TaskListPageClientProps) {
   const { tasks, loading, createTask, updateTask, deleteTask } = useTasks();
   const visibleTasks =
-    variant === "completed" ? filterCompletedArchiveTasks(tasks) : tasks;
+    variant === "completed"
+      ? tasks.filter((task) => task.status === "DONE")
+      : tasks;
 
   return (
     <TaskListView

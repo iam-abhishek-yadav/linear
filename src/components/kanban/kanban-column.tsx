@@ -6,10 +6,8 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { KanbanCard } from "@/components/kanban/kanban-card";
-import { NewTaskButton } from "@/components/kanban/task-dialog";
 import { StatusIcon } from "@/components/tasks/status-icon";
 import type { Member } from "@/hooks/use-members";
-import type { TaskInput } from "@/hooks/use-tasks";
 import type { Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +18,6 @@ type KanbanColumnProps = {
   allTasks: Task[];
   members: Member[];
   onTaskClick: (task: Task) => void;
-  onCreate: (data: TaskInput) => Promise<void>;
   footer?: React.ReactNode;
 };
 
@@ -31,7 +28,6 @@ export function KanbanColumn({
   allTasks,
   members,
   onTaskClick,
-  onCreate,
   footer,
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id, data: { type: "column" } });
@@ -70,10 +66,9 @@ export function KanbanColumn({
           </SortableContext>
         </div>
 
-        <div className="mt-1.5 space-y-1">
-          {footer}
-          <NewTaskButton status={id} onCreate={onCreate} />
-        </div>
+        {footer ? (
+          <div className="mt-1.5 flex justify-center">{footer}</div>
+        ) : null}
       </div>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { IssueDetailLink } from "@/components/issues/issue-detail-link";
-import { ChevronRight, Loader2, Maximize2, Plus, Trash2 } from "lucide-react";
+import { ChevronRight, Loader2, Maximize2, Trash2 } from "lucide-react";
 import {
   AssigneePill,
   DueDatePill,
@@ -294,34 +294,5 @@ export function TaskDialog({
         </DialogContent>
       </Dialog>
     </Dialog>
-  );
-}
-
-export function NewTaskButton({
-  status,
-  onCreate,
-}: {
-  status: Task["status"];
-  onCreate: (data: TaskFormData) => Promise<void>;
-}) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
-      >
-        <Plus className="size-3.5" />
-        Add issue
-      </button>
-      <TaskDialog
-        open={open}
-        onOpenChange={setOpen}
-        defaultStatus={status}
-        onSave={onCreate}
-      />
-    </>
   );
 }

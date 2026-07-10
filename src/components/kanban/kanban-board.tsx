@@ -265,14 +265,11 @@ function KanbanBoardContent() {
                   setEditingTask(task);
                   setDialogOpen(true);
                 }}
-                onCreate={async (data) => {
-                  await createTask(data);
-                }}
                 footer={
                   col.id === "DONE" && staleCompletedCount > 0 ? (
                     <Link
                       href="/completed"
-                      className="block rounded-md px-2 py-2 text-[13px] text-violet-400 transition-colors hover:bg-white/[0.04] hover:text-violet-300"
+                      className="block rounded-md px-2 py-2 text-[13px] text-violet-400 transition-colors hover:bg-white/4 hover:text-violet-300"
                     >
                       {staleCompletedCount} more completed{" "}
                       {staleCompletedCount === 1 ? "issue" : "issues"}

@@ -123,7 +123,7 @@ export function AppSidebar() {
 
       <div className="border-t border-white/6 px-2 py-3">
         <SectionLabel>Administration</SectionLabel>
-        <div className="space-y-0.5">
+        <div className="space-y-0">
           {adminNav.map((item) => (
             <NavLink
               key={item.href}
@@ -142,7 +142,7 @@ export function AppSidebar() {
           >
             {initials}
           </span>
-          <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 flex-1 flex-col gap-1 leading-none">
             <p className="truncate text-[14px] font-medium text-foreground">
               {user.name}
             </p>

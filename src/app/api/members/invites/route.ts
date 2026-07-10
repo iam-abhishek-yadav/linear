@@ -5,8 +5,9 @@ import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createMemberInvite } from "@/lib/member-invites";
 import { createMemberInviteSchema } from "@/lib/member-validations";
+import { withApiRoute } from "@/lib/logger";
 
-export async function POST(request: Request) {
+export const POST = withApiRoute("members.invites.create", async (request: Request) => {
   const session = await requireAdmin();
   if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -54,4 +55,4 @@ export async function POST(request: Request) {
     },
     { status: 201 },
   );
-}
+});

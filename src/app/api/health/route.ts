@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
+import { withApiRoute } from "@/lib/logger";
 
-export async function GET() {
+export const GET = withApiRoute("health.check", async () => {
   return NextResponse.json({ status: "ok" });
-}
+});

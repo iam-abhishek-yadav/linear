@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { getValidOrgInvite } from "@/lib/invites";
+import { withApiRoute } from "@/lib/logger";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ token: string }> },
-) {
+export const GET = withApiRoute(
+  "invites.get",
+  async (
+    _request: Request,
+    { params }: { params: Promise<{ token: string }> },
+  ) => {
   const { token } = await params;
   const invite = await getValidOrgInvite(token);
 
@@ -19,4 +22,5 @@ export async function GET(
     email: invite.email,
     expiresAt: invite.expiresAt.toISOString(),
   });
-}
+  },
+);

@@ -8,8 +8,9 @@ import { createAssignmentNotification } from "@/lib/notifications";
 import { recordTaskCreated } from "@/lib/task-activity";
 import { isAssigneeInOrganization } from "@/lib/task-access";
 import { createTaskSchema } from "@/lib/validations";
+import { withApiRoute } from "@/lib/logger";
 
-export async function GET() {
+export const GET = withApiRoute("tasks.list", async () => {
   const session = await requireUser();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -22,9 +23,9 @@ export async function GET() {
     .orderBy(asc(tasks.status), asc(tasks.position));
 
   return NextResponse.json(allTasks);
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withApiRoute("tasks.create", async (request: Request) => {
   const session = await requireUser();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -103,4 +104,4 @@ export async function POST(request: Request) {
   });
 
   return NextResponse.json(task, { status: 201 });
-}
+});

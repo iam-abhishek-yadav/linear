@@ -9,11 +9,14 @@ import {
 import { db } from "@/lib/db";
 import { getValidMemberInvite } from "@/lib/member-invites";
 import { acceptMemberInviteSchema } from "@/lib/member-validations";
+import { withApiRoute } from "@/lib/logger";
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ token: string }> },
-) {
+export const POST = withApiRoute(
+  "members.invites.accept",
+  async (
+    request: Request,
+    { params }: { params: Promise<{ token: string }> },
+  ) => {
   const { token } = await params;
   const body = await request.json();
   const parsed = acceptMemberInviteSchema.safeParse({ ...body, token });
@@ -92,4 +95,5 @@ export async function POST(
     },
     { status: 201 },
   );
-}
+  },
+);

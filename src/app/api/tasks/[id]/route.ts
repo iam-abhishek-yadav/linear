@@ -19,12 +19,15 @@ import {
 } from "@/lib/task-access";
 import { resolveCompletedAtUpdate } from "@/lib/task-visibility";
 import { updateTaskSchema } from "@/lib/validations";
+import { withApiRoute } from "@/lib/logger";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-export async function GET(_request: Request, context: RouteContext) {
+export const GET = withApiRoute(
+  "tasks.get",
+  async (_request: Request, context: RouteContext) => {
   const session = await requireUser();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -38,9 +41,12 @@ export async function GET(_request: Request, context: RouteContext) {
   }
 
   return NextResponse.json(task);
-}
+  },
+);
 
-export async function PATCH(request: Request, context: RouteContext) {
+export const PATCH = withApiRoute(
+  "tasks.update",
+  async (request: Request, context: RouteContext) => {
   const session = await requireUser();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -159,9 +165,12 @@ export async function PATCH(request: Request, context: RouteContext) {
   });
 
   return NextResponse.json(task);
-}
+  },
+);
 
-export async function DELETE(_request: Request, context: RouteContext) {
+export const DELETE = withApiRoute(
+  "tasks.delete",
+  async (_request: Request, context: RouteContext) => {
   const session = await requireAdmin();
   if (!session) {
     return NextResponse.json({ error: "Admin access required" }, { status: 403 });
@@ -181,4 +190,5 @@ export async function DELETE(_request: Request, context: RouteContext) {
     .where(and(eq(tasks.id, id), eq(tasks.organizationId, organizationId)));
 
   return NextResponse.json({ success: true });
-}
+  },
+);

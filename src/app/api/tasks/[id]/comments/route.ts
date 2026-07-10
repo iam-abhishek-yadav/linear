@@ -5,12 +5,15 @@ import { createCommentNotification } from "@/lib/notifications";
 import { createTaskComment, getTaskComments } from "@/lib/task-comments";
 import { getOrganizationTask } from "@/lib/task-access";
 import { createCommentSchema } from "@/lib/validations";
+import { withApiRoute } from "@/lib/logger";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-export async function GET(_request: Request, context: RouteContext) {
+export const GET = withApiRoute(
+  "tasks.comments.list",
+  async (_request: Request, context: RouteContext) => {
   const session = await requireUser();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -33,9 +36,12 @@ export async function GET(_request: Request, context: RouteContext) {
       user: comment.user,
     })),
   );
-}
+  },
+);
 
-export async function POST(request: Request, context: RouteContext) {
+export const POST = withApiRoute(
+  "tasks.comments.create",
+  async (request: Request, context: RouteContext) => {
   const session = await requireUser();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -83,4 +89,5 @@ export async function POST(request: Request, context: RouteContext) {
     },
     { status: 201 },
   );
-}
+  },
+);

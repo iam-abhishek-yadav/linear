@@ -2,12 +2,15 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { withDbRetry } from "@/lib/db";
 import { getIssueDetailData } from "@/lib/issue-detail-data";
+import { withApiRoute } from "@/lib/logger";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-export async function GET(_request: Request, context: RouteContext) {
+export const GET = withApiRoute(
+  "tasks.detail",
+  async (_request: Request, context: RouteContext) => {
   const session = await requireUser();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -23,4 +26,5 @@ export async function GET(_request: Request, context: RouteContext) {
   }
 
   return NextResponse.json(data);
-}
+  },
+);

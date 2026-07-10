@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { markNotificationRead } from "@/lib/notifications";
+import { withApiRoute } from "@/lib/logger";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-export async function PATCH(_request: Request, context: RouteContext) {
+export const PATCH = withApiRoute(
+  "notifications.read",
+  async (_request: Request, context: RouteContext) => {
   const session = await requireUser();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -23,4 +26,5 @@ export async function PATCH(_request: Request, context: RouteContext) {
   }
 
   return NextResponse.json({ success: true });
-}
+  },
+);

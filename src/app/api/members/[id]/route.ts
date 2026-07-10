@@ -3,11 +3,14 @@ import { NextResponse } from "next/server";
 import { users } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { withApiRoute } from "@/lib/logger";
 
-export async function DELETE(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export const DELETE = withApiRoute(
+  "members.revoke",
+  async (
+    _request: Request,
+    { params }: { params: Promise<{ id: string }> },
+  ) => {
   const session = await requireAdmin();
   if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -47,4 +50,5 @@ export async function DELETE(
   await db.delete(users).where(eq(users.id, id));
 
   return NextResponse.json({ success: true });
-}
+  },
+);

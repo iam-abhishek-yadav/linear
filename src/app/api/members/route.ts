@@ -4,8 +4,9 @@ import { memberInvites, users } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getMemberInviteUrl } from "@/lib/member-invites";
+import { withApiRoute } from "@/lib/logger";
 
-export async function GET() {
+export const GET = withApiRoute("members.list", async () => {
   const session = await requireUser();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -58,4 +59,4 @@ export async function GET() {
       expiresAt: invite.expiresAt.toISOString(),
     })),
   });
-}
+});

@@ -4,8 +4,9 @@ import { organizations, users } from "@/db/schema";
 import { createSession, verifyPassword } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { loginSchema } from "@/lib/validations";
+import { withApiRoute } from "@/lib/logger";
 
-export async function POST(request: Request) {
+export const POST = withApiRoute("auth.login", async (request: Request) => {
   const body = await request.json();
   const parsed = loginSchema.safeParse(body);
 
@@ -53,4 +54,4 @@ export async function POST(request: Request) {
     user,
     organization: result.organization,
   });
-}
+});

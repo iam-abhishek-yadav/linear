@@ -3,11 +3,14 @@ import { NextResponse } from "next/server";
 import { organizations } from "@/db/schema";
 import { db } from "@/lib/db";
 import { getValidMemberInvite } from "@/lib/member-invites";
+import { withApiRoute } from "@/lib/logger";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ token: string }> },
-) {
+export const GET = withApiRoute(
+  "members.invites.get",
+  async (
+    _request: Request,
+    { params }: { params: Promise<{ token: string }> },
+  ) => {
   const { token } = await params;
   const invite = await getValidMemberInvite(token);
 
@@ -36,4 +39,5 @@ export async function GET(
     organization,
     expiresAt: invite.expiresAt.toISOString(),
   });
-}
+  },
+);

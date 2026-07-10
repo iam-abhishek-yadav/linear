@@ -4,12 +4,15 @@ import { taskComments } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getOrganizationTask } from "@/lib/task-access";
+import { withApiRoute } from "@/lib/logger";
 
 type RouteContext = {
   params: Promise<{ id: string; commentId: string }>;
 };
 
-export async function DELETE(_request: Request, context: RouteContext) {
+export const DELETE = withApiRoute(
+  "tasks.comments.delete",
+  async (_request: Request, context: RouteContext) => {
   const session = await requireUser();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -44,4 +47,5 @@ export async function DELETE(_request: Request, context: RouteContext) {
   await db.delete(taskComments).where(eq(taskComments.id, commentId));
 
   return NextResponse.json({ success: true });
-}
+  },
+);

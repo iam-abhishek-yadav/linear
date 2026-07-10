@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { getValidOrgInvite } from "@/lib/invites";
 import { createOrganizationWithAdmin } from "@/lib/registration";
 import { bootstrapRegisterSchema, registerSchema } from "@/lib/validations";
+import { withApiRoute } from "@/lib/logger";
 
-export async function POST(request: Request) {
+export const POST = withApiRoute("auth.register", async (request: Request) => {
   const body = await request.json();
 
   if (body.token) {
@@ -68,4 +69,4 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json(result, { status: 201 });
-}
+});

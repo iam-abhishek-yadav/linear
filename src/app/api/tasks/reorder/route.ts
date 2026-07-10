@@ -8,8 +8,9 @@ import { recordTaskStatusChange } from "@/lib/task-activity";
 import { getOrganizationTask } from "@/lib/task-access";
 import { resolveCompletedAtUpdate } from "@/lib/task-visibility";
 import { reorderTaskSchema } from "@/lib/validations";
+import { withApiRoute } from "@/lib/logger";
 
-export async function POST(request: Request) {
+export const POST = withApiRoute("tasks.reorder", async (request: Request) => {
   const session = await requireUser();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -118,4 +119,4 @@ export async function POST(request: Request) {
   const updated = await getOrganizationTask(organizationId, taskId);
 
   return NextResponse.json(updated);
-}
+});

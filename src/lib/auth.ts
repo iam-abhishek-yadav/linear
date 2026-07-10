@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { organizations, sessions, users } from "@/db/schema";
 import { SESSION_COOKIE } from "@/lib/auth-constants";
 import { db, withDbRetry } from "@/lib/db";
+import { logServerCall } from "@/lib/logger";
 
 const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -53,42 +54,44 @@ export async function deleteSession() {
 }
 
 export async function getCurrentUser() {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get(SESSION_COOKIE)?.value;
+  return logServerCall("getCurrentUser", async () => {
+    const cookieStore = await cookies();
+    const sessionId = cookieStore.get(SESSION_COOKIE)?.value;
 
-  if (!sessionId) {
-    return null;
-  }
+    if (!sessionId) {
+      return null;
+    }
 
-  const [result] = await withDbRetry(() =>
-    db
-      .select({
-        user: users,
-        organization: organizations,
-        session: sessions,
-      })
-      .from(sessions)
-      .innerJoin(users, eq(sessions.userId, users.id))
-      .innerJoin(organizations, eq(users.organizationId, organizations.id))
-      .where(eq(sessions.id, sessionId))
-      .limit(1),
-  );
+    const [result] = await withDbRetry(() =>
+      db
+        .select({
+          user: users,
+          organization: organizations,
+          session: sessions,
+        })
+        .from(sessions)
+        .innerJoin(users, eq(sessions.userId, users.id))
+        .innerJoin(organizations, eq(users.organizationId, organizations.id))
+        .where(eq(sessions.id, sessionId))
+        .limit(1),
+    );
 
-  if (!result) {
-    return null;
-  }
+    if (!result) {
+      return null;
+    }
 
-  if (result.session.expiresAt < new Date()) {
-    await db.delete(sessions).where(eq(sessions.id, sessionId));
-    return null;
-  }
+    if (result.session.expiresAt < new Date()) {
+      await db.delete(sessions).where(eq(sessions.id, sessionId));
+      return null;
+    }
 
-  const { passwordHash: _, ...user } = result.user;
+    const { passwordHash: _, ...user } = result.user;
 
-  return {
-    user,
-    organization: result.organization,
-  };
+    return {
+      user,
+      organization: result.organization,
+    };
+  });
 }
 
 export async function requireUser() {

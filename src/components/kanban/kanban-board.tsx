@@ -22,8 +22,8 @@ import { KanbanColumn } from "@/components/kanban/kanban-column";
 import { KanbanCardContent } from "@/components/kanban/kanban-card";
 import { TaskDialog } from "@/components/kanban/task-dialog";
 import { BoardPageChrome } from "@/components/issues/board-header";
+import { useMembersContext } from "@/components/members-provider";
 import { useAssigneeFilter } from "@/hooks/use-assignee-filter";
-import type { Member } from "@/lib/members";
 import { useTasks } from "@/hooks/use-tasks";
 import { COLUMNS } from "@/lib/constants";
 import { filterByAssignee } from "@/lib/task-filters";
@@ -101,7 +101,7 @@ function moveTaskInState(
   return [...others, ...sourceColumn, ...repositionedTarget];
 }
 
-export function KanbanBoard({ members }: { members: Member[] }) {
+export function KanbanBoard() {
   return (
     <Suspense
       fallback={
@@ -110,12 +110,12 @@ export function KanbanBoard({ members }: { members: Member[] }) {
         </div>
       }
     >
-      <KanbanBoardContent members={members} />
+      <KanbanBoardContent />
     </Suspense>
   );
 }
 
-function KanbanBoardContent({ members }: { members: Member[] }) {
+function KanbanBoardContent() {
   const {
     tasks,
     loading,
@@ -126,6 +126,7 @@ function KanbanBoardContent({ members }: { members: Member[] }) {
     deleteTask,
     persistReorder,
   } = useTasks();
+  const members = useMembersContext();
   const { selectedId, select, clear } = useAssigneeFilter();
 
   const [activeTask, setActiveTask] = useState<Task | null>(null);

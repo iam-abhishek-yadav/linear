@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { organizations, sessions, users } from "@/db/schema";
 import { SESSION_COOKIE } from "@/lib/auth-constants";
@@ -53,8 +54,8 @@ export async function deleteSession() {
   }
 }
 
-export async function getCurrentUser() {
-  return logServerCall("getCurrentUser", async () => {
+export const getCurrentUser = cache(() =>
+  logServerCall("getCurrentUser", async () => {
     const cookieStore = await cookies();
     const sessionId = cookieStore.get(SESSION_COOKIE)?.value;
 
@@ -91,8 +92,8 @@ export async function getCurrentUser() {
       user,
       organization: result.organization,
     };
-  });
-}
+  }),
+);
 
 export async function requireUser() {
   const session = await getCurrentUser();

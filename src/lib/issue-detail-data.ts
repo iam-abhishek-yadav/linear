@@ -4,7 +4,8 @@ import type { TaskCommentItem } from "@/components/issues/task-comments";
 import { tasks } from "@/db/schema";
 import { db } from "@/lib/db";
 import { logServerCall } from "@/lib/logger";
-import { getTaskActivities } from "@/lib/task-activity";
+import { getOrgMembers } from "@/lib/members";
+import { getTaskActivities, buildUserMapFromMembers } from "@/lib/task-activity";
 import { getTaskComments } from "@/lib/task-comments";
 import type { Task } from "@/lib/types";
 
@@ -42,6 +43,9 @@ export async function getIssueDetailData(
   taskId: string,
 ): Promise<IssueDetailData | null> {
   return logServerCall("getIssueDetailData", async () => {
+    const members = await getOrgMembers();
+    const userMap = buildUserMapFromMembers(members);
+
     const [taskRows, taskNav, activities, comments] = await Promise.all([
       db
         .select()
@@ -55,7 +59,7 @@ export async function getIssueDetailData(
         .from(tasks)
         .where(eq(tasks.organizationId, organizationId))
         .orderBy(asc(tasks.createdAt)),
-      getTaskActivities(taskId),
+      getTaskActivities(taskId, userMap),
       getTaskComments(taskId),
     ]);
 

@@ -3,12 +3,10 @@
 import { TaskListView } from "@/components/list/task-list-view";
 import type { AssignedView, IssuesTabScope } from "@/components/issues/issues-header";
 import { useTasks } from "@/hooks/use-tasks";
-import type { Member } from "@/lib/members";
 import { filterCompletedArchiveTasks } from "@/lib/task-visibility";
 import type { TaskStatus } from "@/lib/types";
 
 type TaskListPageClientProps = {
-  members: Member[];
   filterStatus?: TaskStatus[];
   emptyMessage?: string;
   tabScope?: IssuesTabScope;
@@ -18,7 +16,6 @@ type TaskListPageClientProps = {
 };
 
 export function TaskListPageClient({
-  members,
   filterStatus,
   emptyMessage,
   tabScope,
@@ -32,7 +29,6 @@ export function TaskListPageClient({
 
   return (
     <TaskListView
-      members={members}
       tasks={visibleTasks}
       allTasks={tasks}
       loading={loading}

@@ -1,6 +1,7 @@
 import { asc, eq } from "drizzle-orm";
+import { cache } from "react";
 import { users } from "@/db/schema";
-import { requireUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { logServerCall } from "@/lib/logger";
 
@@ -12,27 +13,34 @@ export type Member = {
   isCurrentUser: boolean;
 };
 
-export async function getOrgMembers(): Promise<Member[]> {
-  return logServerCall("getOrgMembers", async () => {
-    const session = await requireUser();
+async function fetchOrgMembers(
+  organizationId: string,
+  currentUserId: string,
+): Promise<Member[]> {
+  const rows = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      role: users.role,
+    })
+    .from(users)
+    .where(eq(users.organizationId, organizationId))
+    .orderBy(asc(users.createdAt));
+
+  return rows.map((member) => ({
+    ...member,
+    isCurrentUser: member.id === currentUserId,
+  }));
+}
+
+export const getOrgMembers = cache(() =>
+  logServerCall("getOrgMembers", async () => {
+    const session = await getCurrentUser();
     if (!session) {
       return [];
     }
 
-    const rows = await db
-      .select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        role: users.role,
-      })
-      .from(users)
-      .where(eq(users.organizationId, session.organization.id))
-      .orderBy(asc(users.createdAt));
-
-    return rows.map((member) => ({
-      ...member,
-      isCurrentUser: member.id === session.user.id,
-    }));
-  });
-}
+    return fetchOrgMembers(session.organization.id, session.user.id);
+  }),
+);

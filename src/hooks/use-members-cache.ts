@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Member } from "@/hooks/use-members";
+import type { Member } from "@/lib/members";
+import { useMembersContext } from "@/components/members-provider";
 
 let cachedMembers: Member[] | null = null;
 let inflightMembers: Promise<Member[]> | null = null;
@@ -11,6 +12,10 @@ async function fetchMembers(): Promise<Member[]> {
   if (!response.ok) return [];
   const data = await response.json();
   return data.members ?? [];
+}
+
+export function seedMembersCache(members: Member[]) {
+  cachedMembers = members;
 }
 
 export function loadMembers(): Promise<Member[]> {
@@ -35,13 +40,22 @@ export function prefetchMembers() {
 }
 
 export function useMembersCache() {
-  const [members, setMembers] = useState<Member[]>(cachedMembers ?? []);
+  const contextMembers = useMembersContext();
+  const [members, setMembers] = useState<Member[]>(
+    contextMembers.length > 0 ? contextMembers : (cachedMembers ?? []),
+  );
 
   useEffect(() => {
+    if (contextMembers.length > 0) {
+      setMembers(contextMembers);
+      return;
+    }
+
     if (cachedMembers) {
       setMembers(cachedMembers);
       return;
     }
+
     let active = true;
     void loadMembers().then((loaded) => {
       if (active) setMembers(loaded);
@@ -49,7 +63,13 @@ export function useMembersCache() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [contextMembers]);
 
-  return members;
+  return members.length > 0 ? members : contextMembers;
+}
+
+export type { Member };
+
+export function useMembers() {
+  return useMembersCache();
 }

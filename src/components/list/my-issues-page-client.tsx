@@ -6,7 +6,6 @@ import { TaskListView } from "@/components/list/task-list-view";
 import type { AssignedView } from "@/components/issues/issues-header";
 import { useSession } from "@/components/session-provider";
 import { useTasks } from "@/hooks/use-tasks";
-import type { Member } from "@/lib/members";
 import type { TaskStatus } from "@/lib/types";
 import {
   filterCompletedArchiveTasks,
@@ -20,7 +19,7 @@ function resolveAssignedView(view: string | null): AssignedView {
   return "all";
 }
 
-function MyIssuesContent({ members }: { members: Member[] }) {
+function MyIssuesContent() {
   const { user } = useSession();
   const searchParams = useSearchParams();
   const assignedView = resolveAssignedView(searchParams.get("view"));
@@ -47,7 +46,6 @@ function MyIssuesContent({ members }: { members: Member[] }) {
 
   return (
     <TaskListView
-      members={members}
       tasks={visibleTasks}
       allTasks={tasks}
       loading={loading}
@@ -68,10 +66,10 @@ function MyIssuesContent({ members }: { members: Member[] }) {
   );
 }
 
-export function MyIssuesPageClient({ members }: { members: Member[] }) {
+export function MyIssuesPageClient() {
   return (
     <Suspense fallback={null}>
-      <MyIssuesContent members={members} />
+      <MyIssuesContent />
     </Suspense>
   );
 }

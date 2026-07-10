@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAssigneeFilter } from "@/hooks/use-assignee-filter";
 import type { TaskInput } from "@/hooks/use-tasks";
-import type { Member } from "@/lib/members";
+import { useMembersContext } from "@/components/members-provider";
 import {
   getPriorityMeta,
   getStatusMeta,
@@ -40,7 +40,6 @@ import type { Task, TaskPriority, TaskStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type TaskListViewProps = {
-  members: Member[];
   tasks: Task[];
   allTasks: Task[];
   loading: boolean;
@@ -207,7 +206,6 @@ function StatusGroup({
 }
 
 function TaskListViewContent({
-  members,
   tasks,
   allTasks,
   loading,
@@ -221,6 +219,7 @@ function TaskListViewContent({
   onUpdate,
   onDelete,
 }: TaskListViewProps) {
+  const members = useMembersContext();
   const { selectedId, select, clear } = useAssigneeFilter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -379,11 +378,11 @@ function TaskListViewContent({
 }
 
 function TaskListViewFallback({
-  members,
   tabScope = "workspace",
   pageTitle = "Issues",
   assignedView = "all",
-}: Pick<TaskListViewProps, "members" | "tabScope" | "pageTitle" | "assignedView">) {
+}: Pick<TaskListViewProps, "tabScope" | "pageTitle" | "assignedView">) {
+  const members = useMembersContext();
   const { selectedId, select, clear } = useAssigneeFilter();
 
   return (
@@ -408,7 +407,6 @@ export function TaskListView(props: TaskListViewProps) {
   if (props.loading) {
     return (
       <TaskListViewFallback
-        members={props.members}
         tabScope={props.tabScope}
         pageTitle={props.pageTitle}
         assignedView={props.assignedView}
@@ -420,7 +418,6 @@ export function TaskListView(props: TaskListViewProps) {
     <Suspense
       fallback={
         <TaskListViewFallback
-          members={props.members}
           tabScope={props.tabScope}
           pageTitle={props.pageTitle}
           assignedView={props.assignedView}

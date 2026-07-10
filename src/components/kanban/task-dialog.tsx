@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { useSession } from "@/components/session-provider";
 import { Switch } from "@/components/ui/switch";
-import { useMembers } from "@/hooks/use-members";
+import { useMembersCache } from "@/hooks/use-members-cache";
 import { getProjectKey, toDateInputValue } from "@/lib/task-utils";
 import type { Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -59,7 +59,7 @@ export function TaskDialog({
   const [assigneeId, setAssigneeId] = useState<string | null>(null);
   const [dueDate, setDueDate] = useState<string | null>(null);
   const [createMore, setCreateMore] = useState(false);
-  const members = useMembers();
+  const members = useMembersCache();
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { prefetchIssueNavigation } from "@/components/issues/issue-detail-link";
+import { usePrefetchIssueDetail } from "@/components/issues/issue-detail-route";
 import { CheckCheck, ChevronRight, Inbox, Loader2 } from "lucide-react";
 import {
   useNotifications,
@@ -90,6 +90,7 @@ function NotificationRow({
 
 export function InboxView() {
   const router = useRouter();
+  const prefetchIssueDetail = usePrefetchIssueDetail();
   const { organization } = useSession();
   const { notifications, loading, unreadCount, markRead, markAllRead } =
     useNotifications();
@@ -107,7 +108,7 @@ export function InboxView() {
 
   function openNotification(notification: NotificationItem) {
     if (!notification.read) markRead(notification.id);
-    prefetchIssueNavigation(notification.task.id);
+    prefetchIssueDetail(notification.task.id);
     router.push(`/issues/${notification.task.id}`);
   }
 

@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { prefetchIssueDetail } from "@/lib/issue-detail-cache";
-import { prefetchMembers } from "@/hooks/use-members-cache";
+import { usePrefetchIssueDetail } from "@/components/issues/issue-detail-route";
 
 type IssueDetailLinkProps = {
   taskId: string;
@@ -17,25 +16,17 @@ export function IssueDetailLink({
   children,
   onClick,
 }: IssueDetailLinkProps) {
-  function handlePrefetch() {
-    prefetchMembers();
-    prefetchIssueDetail(taskId);
-  }
+  const prefetchIssueDetail = usePrefetchIssueDetail();
 
   return (
     <Link
       href={`/issues/${taskId}`}
       className={className}
       onClick={onClick}
-      onMouseEnter={handlePrefetch}
-      onFocus={handlePrefetch}
+      onMouseEnter={() => prefetchIssueDetail(taskId)}
+      onFocus={() => prefetchIssueDetail(taskId)}
     >
       {children}
     </Link>
   );
-}
-
-export function prefetchIssueNavigation(taskId: string) {
-  prefetchMembers();
-  prefetchIssueDetail(taskId);
 }

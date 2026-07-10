@@ -1,14 +1,15 @@
-import { and, asc, eq, max } from "drizzle-orm";
+import { and, eq, max } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
 import { NextResponse } from "next/server";
 import { tasks } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { withApiRoute } from "@/lib/logger";
 import { createAssignmentNotification } from "@/lib/notifications";
 import { recordTaskCreated } from "@/lib/task-activity";
 import { isAssigneeInOrganization } from "@/lib/task-access";
+import { getOrgTasks } from "@/lib/tasks";
 import { createTaskSchema } from "@/lib/validations";
-import { withApiRoute } from "@/lib/logger";
 
 export const GET = withApiRoute("tasks.list", async () => {
   const session = await requireUser();
@@ -16,13 +17,7 @@ export const GET = withApiRoute("tasks.list", async () => {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const allTasks = await db
-    .select()
-    .from(tasks)
-    .where(eq(tasks.organizationId, session.organization.id))
-    .orderBy(asc(tasks.status), asc(tasks.position));
-
-  return NextResponse.json(allTasks);
+  return NextResponse.json(await getOrgTasks());
 });
 
 export const POST = withApiRoute("tasks.create", async (request: Request) => {

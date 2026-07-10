@@ -1,53 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import {
-  getCachedIssueDetail,
-  loadIssueDetail,
-} from "@/lib/issue-detail-cache";
-import type { IssueDetailData } from "@/lib/issue-detail-data";
+import { useQuery } from "@tanstack/react-query";
+import { fetchIssueDetail } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 
 export function useIssueDetail(taskId: string) {
-  const [data, setData] = useState<IssueDetailData | null>(() =>
-    getCachedIssueDetail(taskId),
-  );
-  const [loading, setLoading] = useState(() => !getCachedIssueDetail(taskId));
-  const [error, setError] = useState<"not_found" | "failed" | null>(null);
+  const query = useQuery({
+    queryKey: queryKeys.issueDetail(taskId),
+    queryFn: () => fetchIssueDetail(taskId),
+    enabled: Boolean(taskId),
+  });
 
-  useEffect(() => {
-    const cached = getCachedIssueDetail(taskId);
-    if (cached) {
-      setData(cached);
-      setLoading(false);
-      setError(null);
-      return;
-    }
+  const error =
+    query.isError
+      ? ("failed" as const)
+      : query.isSuccess && query.data === null
+        ? ("not_found" as const)
+        : null;
 
-    let active = true;
-    setLoading(true);
-    setError(null);
-    setData(null);
-
-    loadIssueDetail(taskId)
-      .then((result) => {
-        if (!active) return;
-        if (!result) {
-          setError("not_found");
-          return;
-        }
-        setData(result);
-      })
-      .catch(() => {
-        if (active) setError("failed");
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [taskId]);
-
-  return { data, loading, error, setData };
+  return {
+    data: query.data ?? null,
+    loading: query.isPending,
+    isFetching: query.isFetching,
+    error,
+    refetch: query.refetch,
+  };
 }

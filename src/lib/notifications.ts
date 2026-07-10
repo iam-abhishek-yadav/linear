@@ -1,13 +1,17 @@
 import { createId } from "@paralleldrive/cuid2";
 import { aliasedTable, and, desc, eq, isNull } from "drizzle-orm";
+import { cache } from "react";
 import {
   notifications,
   tasks,
   users,
   type NotificationType,
 } from "@/db/schema";
+import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { logServerCall } from "@/lib/logger";
 import type { NotificationItem } from "@/lib/notification-types";
+import { toIsoString } from "@/lib/serialize";
 
 type DbExecutor = Pick<typeof db, "insert">;
 
@@ -145,11 +149,26 @@ export function serializeNotification(
     id: row.id,
     type: row.type,
     read: row.readAt !== null,
-    createdAt: row.createdAt.toISOString(),
+    createdAt: toIsoString(row.createdAt),
     actor: row.actor?.id ? row.actor : null,
     task: row.task,
   };
 }
+
+export const getOrgNotifications = cache(() =>
+  logServerCall("getOrgNotifications", async (): Promise<NotificationItem[]> => {
+    const session = await getCurrentUser();
+    if (!session) {
+      return [];
+    }
+
+    const rows = await logServerCall("getOrgNotifications.query", () =>
+      getNotifications(session.user.id, session.organization.id),
+    );
+
+    return rows.map(serializeNotification);
+  }),
+);
 
 export async function markNotificationRead(
   userId: string,

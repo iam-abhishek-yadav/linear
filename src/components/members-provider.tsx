@@ -1,8 +1,10 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { createContext, useContext } from "react";
+import { fetchMembersPage } from "@/lib/api";
 import type { Member } from "@/lib/members";
-import { seedMembersCache } from "@/hooks/use-members-cache";
+import { queryKeys } from "@/lib/query-keys";
 
 const MembersContext = createContext<Member[]>([]);
 
@@ -13,10 +15,21 @@ export function MembersProvider({
   members: Member[];
   children: React.ReactNode;
 }) {
-  seedMembersCache(members);
+  const membersQuery = useQuery({
+    queryKey: queryKeys.members,
+    queryFn: fetchMembersPage,
+    select: (data) => data.members,
+    initialData: {
+      members: members.map((member) => ({ ...member, createdAt: "" })),
+      pendingInvites: [],
+    },
+    initialDataUpdatedAt: Date.now(),
+  });
 
   return (
-    <MembersContext.Provider value={members}>{children}</MembersContext.Provider>
+    <MembersContext.Provider value={membersQuery.data ?? members}>
+      {children}
+    </MembersContext.Provider>
   );
 }
 

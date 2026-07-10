@@ -30,6 +30,7 @@ type IssueActivitySectionProps = {
   comments: TaskCommentItem[];
   onAddComment: (comment: TaskCommentItem) => void;
   onRemoveComment: (commentId: string) => void;
+  onChange?: () => void | Promise<void>;
 };
 
 export function IssueActivitySection({
@@ -38,6 +39,7 @@ export function IssueActivitySection({
   comments,
   onAddComment,
   onRemoveComment,
+  onChange,
 }: IssueActivitySectionProps) {
   const { user } = useSession();
   const [body, setBody] = useState("");
@@ -61,6 +63,7 @@ export function IssueActivitySection({
       const comment: TaskCommentItem = await response.json();
       onAddComment(comment);
       setBody("");
+      await onChange?.();
     } finally {
       setSubmitting(false);
     }
@@ -75,6 +78,7 @@ export function IssueActivitySection({
       );
       if (!response.ok) return;
       onRemoveComment(commentId);
+      await onChange?.();
     } finally {
       setDeletingId(null);
     }

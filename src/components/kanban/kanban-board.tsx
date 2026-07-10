@@ -265,7 +265,9 @@ function KanbanBoardContent() {
                   setEditingTask(task);
                   setDialogOpen(true);
                 }}
-                onCreate={createTask}
+                onCreate={async (data) => {
+                  await createTask(data);
+                }}
                 footer={
                   col.id === "DONE" && staleCompletedCount > 0 ? (
                     <Link
@@ -318,7 +320,9 @@ function KanbanBoardContent() {
         open={newDialogOpen}
         onOpenChange={setNewDialogOpen}
         defaultStatus="TODO"
-        onSave={createTask}
+        onSave={async (data) => {
+          await createTask(data);
+        }}
       />
     </>
   );

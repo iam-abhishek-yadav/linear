@@ -38,8 +38,12 @@ export function TaskListPageClient({
       pageTitle={pageTitle}
       assignedView={assignedView}
       variant={variant}
-      onCreate={createTask}
-      onUpdate={updateTask}
+      onCreate={async (data) => {
+        await createTask(data);
+      }}
+      onUpdate={async (id, data) => {
+        await updateTask(id, data);
+      }}
       onDelete={deleteTask}
     />
   );

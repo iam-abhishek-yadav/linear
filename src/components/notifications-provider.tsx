@@ -1,13 +1,23 @@
 "use client";
 
 import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
-  useState,
+  useMemo,
 } from "react";
+import {
+  fetchNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+} from "@/lib/api";
 import type { NotificationItem } from "@/lib/notification-types";
+import { NOTIFICATIONS_POLL_MS, queryKeys } from "@/lib/query-keys";
 
 export type { NotificationItem };
 
@@ -24,75 +34,106 @@ const NotificationsContext = createContext<NotificationsContextValue | null>(
   null,
 );
 
-const POLL_INTERVAL_MS = 30_000;
-
 function markNotificationsRead(
   notifications: NotificationItem[],
   id?: string,
 ) {
-  return notifications.map((n) =>
-    !id || n.id === id ? { ...n, read: true } : n,
+  return notifications.map((notification) =>
+    !id || notification.id === id
+      ? { ...notification, read: true }
+      : notification,
   );
 }
 
 export function NotificationsProvider({
+  initialNotifications,
   children,
 }: {
+  initialNotifications: NotificationItem[];
   children: React.ReactNode;
 }) {
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  const notificationsQuery = useQuery({
+    queryKey: queryKeys.notifications,
+    queryFn: fetchNotifications,
+    initialData: initialNotifications,
+    refetchInterval: NOTIFICATIONS_POLL_MS,
+  });
+
+  const notifications = notificationsQuery.data ?? [];
 
   const refresh = useCallback(async () => {
-    try {
-      const res = await fetch("/api/notifications");
-      if (!res.ok) return;
-      const data = (await res.json()) as NotificationItem[];
-      setNotifications(data);
-    } catch {
-      // Ignore transient fetch failures; the next poll will retry.
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    await queryClient.invalidateQueries({ queryKey: queryKeys.notifications });
+  }, [queryClient]);
 
-  useEffect(() => {
-    refresh();
-    const interval = setInterval(refresh, POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [refresh]);
+  const markReadMutation = useMutation({
+    mutationFn: markNotificationRead,
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.notifications });
+      const previous = queryClient.getQueryData<NotificationItem[]>(
+        queryKeys.notifications,
+      );
+      queryClient.setQueryData<NotificationItem[]>(
+        queryKeys.notifications,
+        (current = []) => markNotificationsRead(current, id),
+      );
+      return { previous };
+    },
+    onError: (_error, _id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKeys.notifications, context.previous);
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.notifications });
+    },
+  });
 
-  const markRead = useCallback(async (id: string) => {
-    setNotifications((prev) => markNotificationsRead(prev, id));
-    try {
-      await fetch(`/api/notifications/${id}`, { method: "PATCH" });
-    } catch {
-      // Optimistic; ignore failure.
-    }
-  }, []);
+  const markAllReadMutation = useMutation({
+    mutationFn: markAllNotificationsRead,
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.notifications });
+      const previous = queryClient.getQueryData<NotificationItem[]>(
+        queryKeys.notifications,
+      );
+      queryClient.setQueryData<NotificationItem[]>(
+        queryKeys.notifications,
+        (current = []) => markNotificationsRead(current),
+      );
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKeys.notifications, context.previous);
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.notifications });
+    },
+  });
 
-  const markAllRead = useCallback(async () => {
-    setNotifications((prev) => markNotificationsRead(prev));
-    try {
-      await fetch("/api/notifications/read-all", { method: "POST" });
-    } catch {
-      // Optimistic; ignore failure.
-    }
-  }, []);
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const value = useMemo<NotificationsContextValue>(
+    () => ({
+      notifications,
+      loading: notificationsQuery.isPending,
+      unreadCount: notifications.filter((notification) => !notification.read)
+        .length,
+      refresh,
+      markRead: (id) => markReadMutation.mutateAsync(id),
+      markAllRead: () => markAllReadMutation.mutateAsync(),
+    }),
+    [
+      notifications,
+      notificationsQuery.isPending,
+      refresh,
+      markReadMutation,
+      markAllReadMutation,
+    ],
+  );
 
   return (
-    <NotificationsContext.Provider
-      value={{
-        notifications,
-        loading,
-        unreadCount,
-        refresh,
-        markRead,
-        markAllRead,
-      }}
-    >
+    <NotificationsContext.Provider value={value}>
       {children}
     </NotificationsContext.Provider>
   );

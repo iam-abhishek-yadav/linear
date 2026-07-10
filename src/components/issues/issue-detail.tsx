@@ -1,8 +1,9 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   ChevronDown,
   ChevronRight,
@@ -33,12 +34,11 @@ import {
 import { useSession } from "@/components/session-provider";
 import { SidebarTrigger } from "@/components/sidebar-provider";
 import { IssueDetailLink } from "@/components/issues/issue-detail-link";
-import { IssueDetailSkeleton } from "@/components/issues/issue-detail-skeleton";
-import { useIssueDetail } from "@/hooks/use-issue-detail";
-import { useMembersCache, prefetchMembers } from "@/hooks/use-members-cache";
+import { useMembersCache } from "@/hooks/use-members-cache";
 import { useTaskTimeline } from "@/hooks/use-task-timeline";
-import { setCachedIssueDetail } from "@/lib/issue-detail-cache";
 import type { IssueDetailData, SerializedTask } from "@/lib/issue-detail-data";
+import { revalidateIssueCaches } from "@/lib/revalidate-issue";
+import { queryKeys } from "@/lib/query-keys";
 import { buildPropertyChangeActivity } from "@/lib/task-timeline";
 import {
   formatTaskIdentifier,
@@ -49,37 +49,13 @@ import type { Task } from "@/lib/types";
 import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
 
-export function IssueDetail() {
-  const { id } = useParams<{ id: string }>();
-  const { data, loading, error } = useIssueDetail(id);
-
-  useEffect(() => {
-    prefetchMembers();
-  }, []);
-
-  if (loading) {
-    return <IssueDetailSkeleton />;
-  }
-
-  if (error === "not_found" || !data) {
-    return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3">
-        <p className="text-sm text-muted-foreground">Issue not found</p>
-        <Link
-          href="/board"
-          className="text-sm text-violet-400 hover:text-violet-300"
-        >
-          Back to board
-        </Link>
-      </div>
-    );
-  }
-
-  return <IssueDetailView key={data.task.id} data={data} />;
+export function IssueDetail({ initialData }: { initialData: IssueDetailData }) {
+  return <IssueDetailView data={initialData} />;
 }
 
 function IssueDetailView({ data }: { data: IssueDetailData }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user, organization } = useSession();
   const members = useMembersCache();
   const titleRef = useRef<HTMLInputElement>(null);
@@ -131,13 +107,24 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
       : null;
 
   useEffect(() => {
+    setTask(data.task);
+    setTitle(data.task.title);
+    setDescription(data.task.description ?? "");
+    setStatus(data.task.status);
+    setPriority(data.task.priority);
+    setAssigneeId(data.task.assigneeId ?? null);
+    setDueDate(toDateInputValue(data.task.dueDate));
+    initializedRef.current = true;
+  }, [data.task.id, data.task.updatedAt]);
+
+  useEffect(() => {
+    if (!initializedRef.current) return;
     setTitle(task.title);
     setDescription(task.description ?? "");
     setStatus(task.status);
     setPriority(task.priority);
     setAssigneeId(task.assigneeId ?? null);
     setDueDate(toDateInputValue(task.dueDate));
-    initializedRef.current = true;
   }, [task]);
 
   const save = useCallback(
@@ -170,12 +157,7 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
         if (!response.ok) throw new Error("Failed to update task");
         const updated: SerializedTask = await response.json();
         setTask(updated);
-        setCachedIssueDetail(task.id, {
-          task: updated,
-          tasks: taskNav,
-          activities: timeline.activities,
-          comments: timeline.comments,
-        });
+        await revalidateIssueCaches(queryClient, task.id);
       } finally {
         setSaving(false);
       }
@@ -185,15 +167,17 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
       description,
       dueDate,
       priority,
+      queryClient,
       saving,
       status,
       task.id,
-      taskNav,
-      timeline.activities,
-      timeline.comments,
       title,
     ],
   );
+
+  const handleIssueChange = useCallback(async () => {
+    await revalidateIssueCaches(queryClient, task.id);
+  }, [queryClient, task.id]);
 
   useEffect(() => {
     if (!initializedRef.current || !title.trim()) return;
@@ -255,6 +239,8 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete task");
+      queryClient.removeQueries({ queryKey: queryKeys.issueDetail(task.id) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.tasks });
       router.push("/board");
     } finally {
       setDeleting(false);
@@ -412,6 +398,7 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
                 comments={timeline.comments}
                 onAddComment={timeline.addComment}
                 onRemoveComment={timeline.removeComment}
+                onChange={handleIssueChange}
               />
             </section>
           </div>

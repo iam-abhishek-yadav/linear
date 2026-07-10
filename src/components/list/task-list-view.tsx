@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Check, ChevronDown, Loader2, Plus } from "lucide-react";
 import { TaskDialog } from "@/components/kanban/task-dialog";
@@ -414,17 +414,5 @@ export function TaskListView(props: TaskListViewProps) {
     );
   }
 
-  return (
-    <Suspense
-      fallback={
-        <TaskListViewFallback
-          tabScope={props.tabScope}
-          pageTitle={props.pageTitle}
-          assignedView={props.assignedView}
-        />
-      }
-    >
-      <TaskListViewContent {...props} />
-    </Suspense>
-  );
+  return <TaskListViewContent {...props} />;
 }

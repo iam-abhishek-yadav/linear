@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { MoreHorizontal, Search } from "lucide-react";
 import { InviteMemberDialog } from "@/components/settings/invite-member-dialog";
 import { InviteLinkCopy } from "@/components/settings/invite-link-copy";
 import { useSession } from "@/components/session-provider";
 import { SidebarTrigger } from "@/components/sidebar-provider";
+import { useMembersPage } from "@/hooks/use-members-page";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatRelativeDate, getAvatarColor, getInitials } from "@/lib/user-utils";
+import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
 type Member = {
@@ -79,11 +82,23 @@ function RoleBadge({ role }: { role: Member["role"] }) {
   );
 }
 
-export function MembersPage() {
+export function MembersPage({
+  initialMembers,
+  initialPendingInvites,
+}: {
+  initialMembers: Member[];
+  initialPendingInvites: PendingInvite[];
+}) {
+  const queryClient = useQueryClient();
   const { user } = useSession();
-  const [members, setMembers] = useState<Member[]>([]);
-  const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
-  const [loading, setLoading] = useState(true);
+  const membersQuery = useMembersPage({
+    members: initialMembers,
+    pendingInvites: initialPendingInvites,
+  });
+  const members = membersQuery.data?.members ?? initialMembers;
+  const pendingInvites =
+    membersQuery.data?.pendingInvites ?? initialPendingInvites;
+  const loading = membersQuery.isPending && !membersQuery.data;
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -94,22 +109,9 @@ export function MembersPage() {
   >(null);
   const [revoking, setRevoking] = useState(false);
 
-  const loadMembers = useCallback(async () => {
-    const response = await fetch("/api/members");
-    if (!response.ok) {
-      setLoading(false);
-      return;
-    }
-
-    const data = await response.json();
-    setMembers(data.members);
-    setPendingInvites(data.pendingInvites);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    loadMembers();
-  }, [loadMembers]);
+  async function refreshMembers() {
+    await queryClient.invalidateQueries({ queryKey: queryKeys.members });
+  }
 
   const filteredMembers = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -164,7 +166,7 @@ export function MembersPage() {
     }
 
     setRevokeTarget(null);
-    await loadMembers();
+    await refreshMembers();
   }
 
   function canRevokeMember(member: Member) {
@@ -502,7 +504,7 @@ export function MembersPage() {
       <InviteMemberDialog
         open={inviteOpen}
         onOpenChange={setInviteOpen}
-        onInvited={loadMembers}
+        onInvited={refreshMembers}
       />
 
       <Dialog

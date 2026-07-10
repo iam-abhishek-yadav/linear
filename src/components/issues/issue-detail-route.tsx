@@ -1,0 +1,78 @@
+"use client";
+
+import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
+import { IssueDetail } from "@/components/issues/issue-detail";
+import { IssueDetailSkeleton } from "@/components/issues/issue-detail-skeleton";
+import { useIssueDetail } from "@/hooks/use-issue-detail";
+import { fetchIssueDetail } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
+
+type IssueDetailRouteProps = {
+  taskId: string;
+};
+
+export function IssueDetailRoute({ taskId }: IssueDetailRouteProps) {
+  const { data, loading, error, refetch } = useIssueDetail(taskId);
+
+  if (data) {
+    return <IssueDetail initialData={data} />;
+  }
+
+  if (error === "not_found") {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
+        <p className="text-sm text-muted-foreground">Issue not found.</p>
+        <Link
+          href="/list"
+          className="text-sm text-foreground underline-offset-4 hover:underline"
+        >
+          Back to issues
+        </Link>
+      </div>
+    );
+  }
+
+  if (error === "failed") {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
+        <p className="text-sm text-muted-foreground">
+          Could not load this issue.
+        </p>
+        <button
+          type="button"
+          onClick={() => void refetch()}
+          className="text-sm text-foreground underline-offset-4 hover:underline"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <IssueDetailSkeleton />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-1 flex-col overflow-hidden">
+      <IssueDetailSkeleton />
+    </div>
+  );
+}
+
+export function usePrefetchIssueDetail() {
+  const queryClient = useQueryClient();
+
+  return (taskId: string) => {
+    if (!taskId) return;
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.issueDetail(taskId),
+      queryFn: () => fetchIssueDetail(taskId),
+    });
+  };
+}

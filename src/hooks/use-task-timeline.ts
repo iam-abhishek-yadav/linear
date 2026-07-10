@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { TaskActivityItem } from "@/components/issues/task-activity-feed";
 import type { TaskCommentItem } from "@/components/issues/task-comments";
 
@@ -19,6 +19,11 @@ export function useTaskTimeline(
   const [comments, setComments] = useState<TaskCommentItem[]>(
     initial?.comments ?? [],
   );
+
+  useEffect(() => {
+    setActivities(initial?.activities ?? []);
+    setComments(initial?.comments ?? []);
+  }, [initial?.activities, initial?.comments]);
 
   const appendActivity = useCallback((activity: TaskActivityItem) => {
     setActivities((prev) => [...prev, activity]);

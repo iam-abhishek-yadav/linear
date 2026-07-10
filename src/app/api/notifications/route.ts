@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { getNotifications, serializeNotification } from "@/lib/notifications";
+import { getOrgNotifications } from "@/lib/notifications";
 import { withApiRoute } from "@/lib/logger";
 
 export const GET = withApiRoute("notifications.list", async () => {
@@ -9,9 +9,5 @@ export const GET = withApiRoute("notifications.list", async () => {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const rows = await getNotifications(
-    session.user.id,
-    session.organization.id,
-  );
-  return NextResponse.json(rows.map(serializeNotification));
+  return NextResponse.json(await getOrgNotifications());
 });

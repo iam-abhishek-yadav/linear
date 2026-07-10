@@ -6,9 +6,30 @@ type PriorityIconProps = {
   className?: string;
 };
 
-const BAR_HEIGHTS = ["h-0.5", "h-1", "h-1.5"] as const;
+const BARS = [
+  { x: 2.5, height: 4 },
+  { x: 6.5, height: 6.5 },
+  { x: 10.5, height: 9 },
+] as const;
 
-/** Linear-style urgent: rounded square with exclamation */
+function NoPriorityIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      fill="none"
+      className={cn("size-3.5 text-muted-foreground/70", className)}
+      aria-hidden
+    >
+      <path
+        d="M3 5.5h10M3 8h10M3 10.5h10"
+        stroke="currentColor"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function UrgentIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -27,44 +48,60 @@ function UrgentIcon({ className }: { className?: string }) {
   );
 }
 
+function PriorityBarsIcon({
+  activeCount,
+  className,
+}: {
+  activeCount: 1 | 2 | 3;
+  className?: string;
+}) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      fill="none"
+      className={cn("size-3.5 text-foreground/85", className)}
+      aria-hidden
+    >
+      {BARS.map((bar, index) => (
+        <rect
+          key={bar.x}
+          x={bar.x}
+          y={13 - bar.height}
+          width={2}
+          height={bar.height}
+          rx={0.75}
+          fill="currentColor"
+          opacity={index < activeCount ? 1 : 0.22}
+        />
+      ))}
+    </svg>
+  );
+}
+
+function getActiveBarCount(priority: TaskPriority): 1 | 2 | 3 | null {
+  switch (priority) {
+    case "LOW":
+      return 1;
+    case "MEDIUM":
+      return 2;
+    case "HIGH":
+      return 3;
+    default:
+      return null;
+  }
+}
+
 export function PriorityIcon({ priority, className }: PriorityIconProps) {
   if (priority === "NONE") {
-    return (
-      <span
-        className={cn(
-          "flex items-center justify-center gap-[2px]",
-          className,
-        )}
-        aria-hidden
-      >
-        {[0, 1, 2].map((i) => (
-          <span
-            key={i}
-            className="size-[3px] rounded-full bg-muted-foreground/55"
-          />
-        ))}
-      </span>
-    );
+    return <NoPriorityIcon className={className} />;
   }
 
   if (priority === "URGENT") {
     return <UrgentIcon className={className} />;
   }
 
-  const count =
-    priority === "LOW" ? 1 : priority === "MEDIUM" ? 2 : 3;
-  const color =
-    priority === "HIGH"
-      ? "bg-orange-400"
-      : priority === "MEDIUM"
-        ? "bg-yellow-400"
-        : "bg-blue-400";
+  const activeCount = getActiveBarCount(priority);
+  if (!activeCount) return null;
 
-  return (
-    <span className={cn("flex h-3.5 items-end gap-0.5", className)}>
-      {BAR_HEIGHTS.slice(0, count).map((height, i) => (
-        <span key={i} className={cn("w-0.5 rounded-full", height, color)} />
-      ))}
-    </span>
-  );
+  return <PriorityBarsIcon activeCount={activeCount} className={className} />;
 }

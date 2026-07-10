@@ -3,9 +3,9 @@ import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
 
 const sizeClasses = {
-  xs: "size-4 text-[8px]",
-  sm: "size-5 text-[9px]",
-  md: "size-6 text-[10px]",
+  xs: "size-4 text-[9px]",
+  sm: "size-5 text-[10px]",
+  md: "size-6 text-[11px]",
 } as const;
 
 type UserAvatarProps = {

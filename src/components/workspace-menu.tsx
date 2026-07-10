@@ -17,13 +17,13 @@ export function WorkspaceMenu() {
       <div className="flex min-w-0 flex-1 items-center gap-2 px-1.5 py-1">
         <span
           className={cn(
-            "flex size-5 shrink-0 items-center justify-center rounded text-[9px] font-bold text-white",
+            "flex size-5 shrink-0 items-center justify-center rounded text-[10px] font-bold text-white",
             avatarColor,
           )}
         >
           {initials}
         </span>
-        <span className="truncate text-[13px] font-medium">{organization.name}</span>
+        <span className="truncate text-[14px] font-medium">{organization.name}</span>
       </div>
       <Button
         variant="ghost"

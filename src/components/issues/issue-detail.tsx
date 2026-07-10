@@ -355,7 +355,7 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
               <Link2 className="size-3.5" />
             </button>
             {copied && (
-              <span className="text-[11px] text-muted-foreground">Copied</span>
+              <span className="text-[12px] text-muted-foreground">Copied</span>
             )}
           </div>
         </div>
@@ -369,7 +369,7 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Issue title"
-              className="w-full bg-transparent text-[28px] font-semibold leading-tight outline-none placeholder:text-muted-foreground/50"
+              className="w-full bg-transparent text-[30px] font-semibold leading-tight outline-none placeholder:text-muted-foreground/50"
             />
 
             <textarea
@@ -377,7 +377,7 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add description…"
               rows={6}
-              className="mt-4 w-full resize-none bg-transparent text-[15px] leading-relaxed text-foreground/90 outline-none placeholder:text-muted-foreground/50"
+              className="mt-4 w-full resize-none bg-transparent text-[16px] leading-relaxed text-foreground/90 outline-none placeholder:text-muted-foreground/50"
             />
 
             <section className="mt-10 border-t border-white/[0.06] pt-6">
@@ -385,7 +385,7 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
                 <h2 className="text-sm font-medium text-foreground">Activity</h2>
                 <span
                   className={cn(
-                    "flex size-6 items-center justify-center rounded-full text-[10px] font-semibold text-white",
+                    "flex size-6 items-center justify-center rounded-full text-[11px] font-semibold text-white",
                     getAvatarColor(user.name),
                   )}
                 >

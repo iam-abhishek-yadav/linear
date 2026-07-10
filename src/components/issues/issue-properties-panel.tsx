@@ -22,7 +22,7 @@ function PanelSection({
 }) {
   return (
     <details open={defaultOpen} className="group rounded-lg border border-white/[0.06] bg-white/[0.02]">
-      <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2.5 text-[13px] font-medium text-foreground [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2.5 text-[14px] font-medium text-foreground [&::-webkit-details-marker]:hidden">
         {title}
         <ChevronDown className="size-3.5 text-muted-foreground/60 transition-transform group-open:rotate-180" />
       </summary>

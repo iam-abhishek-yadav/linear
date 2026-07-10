@@ -57,7 +57,7 @@ function MemberAvatar({ name }: { name: string }) {
   return (
     <span
       className={cn(
-        "flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white",
+        "flex size-7 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold text-white",
         getAvatarColor(name),
       )}
     >
@@ -69,14 +69,14 @@ function MemberAvatar({ name }: { name: string }) {
 function RoleBadge({ role }: { role: Member["role"] }) {
   if (role === "ADMIN") {
     return (
-      <Badge className="h-5 rounded border-0 bg-violet-500/20 px-1.5 text-[11px] font-medium text-violet-300">
+      <Badge className="h-5 rounded border-0 bg-violet-500/20 px-1.5 text-[12px] font-medium text-violet-300">
         Admin
       </Badge>
     );
   }
 
   return (
-    <Badge variant="outline" className="h-5 rounded px-1.5 text-[11px] font-medium">
+    <Badge variant="outline" className="h-5 rounded px-1.5 text-[12px] font-medium">
       Member
     </Badge>
   );
@@ -187,7 +187,7 @@ export function MembersPage({
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search by name or email"
-              className="h-8 w-full border-border/60 bg-black/20 pl-8 text-[13px] sm:w-56"
+              className="h-8 w-full border-border/60 bg-black/20 pl-8 text-[14px] sm:w-56"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -195,7 +195,7 @@ export function MembersPage({
               value={roleFilter}
               onValueChange={(value) => setRoleFilter(value ?? "all")}
             >
-              <SelectTrigger className="h-8 w-24 border-border/60 bg-black/20 text-[13px]">
+              <SelectTrigger className="h-8 w-24 border-border/60 bg-black/20 text-[14px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -207,7 +207,7 @@ export function MembersPage({
             <Button
               variant="outline"
               size="sm"
-              className="hidden h-8 border-border/60 bg-transparent text-[13px] sm:inline-flex"
+              className="hidden h-8 border-border/60 bg-transparent text-[14px] sm:inline-flex"
               disabled
             >
               Export CSV
@@ -215,7 +215,7 @@ export function MembersPage({
             {isAdmin && (
               <Button
                 size="sm"
-                className="h-8 bg-violet-600 text-[13px] text-white hover:bg-violet-500"
+                className="h-8 bg-violet-600 text-[14px] text-white hover:bg-violet-500"
                 onClick={() => setInviteOpen(true)}
               >
                 Invite
@@ -231,7 +231,7 @@ export function MembersPage({
         ) : (
           <div className="space-y-8">
             <section>
-              <h2 className="mb-3 text-[13px] font-medium text-muted-foreground">
+              <h2 className="mb-3 text-[14px] font-medium text-muted-foreground">
                 Active {filteredMembers.length}
               </h2>
 
@@ -275,10 +275,10 @@ export function MembersPage({
                         )}
                       </div>
                     </div>
-                    <p className="mt-2 truncate pl-10 text-[12px] text-muted-foreground">
+                    <p className="mt-2 truncate pl-10 text-[13px] text-muted-foreground">
                       {member.email}
                     </p>
-                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted-foreground">
+                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted-foreground">
                       <span>
                         Joined {formatRelativeDate(new Date(member.createdAt))}
                       </span>
@@ -295,7 +295,7 @@ export function MembersPage({
 
               {/* Desktop table */}
               <div className="hidden overflow-hidden rounded-lg border border-border/40 md:block">
-                <table className="w-full text-left text-[13px]">
+                <table className="w-full text-left text-[14px]">
                   <thead className="border-b border-border/40 bg-white/[0.02] text-muted-foreground">
                     <tr>
                       <th className="px-4 py-2.5 font-medium">Name</th>
@@ -372,7 +372,7 @@ export function MembersPage({
 
             {filteredInvites.length > 0 && (
               <section>
-                <h2 className="mb-3 text-[13px] font-medium text-muted-foreground">
+                <h2 className="mb-3 text-[14px] font-medium text-muted-foreground">
                   Pending {filteredInvites.length}
                 </h2>
 
@@ -389,7 +389,7 @@ export function MembersPage({
                           <div className="mt-1">
                             <Badge
                               variant="outline"
-                              className="h-5 rounded px-1.5 text-[11px] font-medium"
+                              className="h-5 rounded px-1.5 text-[12px] font-medium"
                             >
                               Invited
                             </Badge>
@@ -399,7 +399,7 @@ export function MembersPage({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 shrink-0 text-[12px] text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            className="h-7 shrink-0 text-[13px] text-destructive hover:bg-destructive/10 hover:text-destructive"
                             onClick={() =>
                               setRevokeTarget({
                                 type: "invite",
@@ -413,12 +413,12 @@ export function MembersPage({
                         )}
                       </div>
                       <div className="mt-2 flex min-w-0 items-center gap-2">
-                        <span className="min-w-0 truncate font-mono text-[11px] text-muted-foreground">
+                        <span className="min-w-0 truncate font-mono text-[12px] text-muted-foreground">
                           {invite.inviteUrl}
                         </span>
                         <InviteLinkCopy url={invite.inviteUrl} compact />
                       </div>
-                      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-muted-foreground">
+                      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[13px] text-muted-foreground">
                         <span>
                           Invited {formatRelativeDate(new Date(invite.createdAt))}
                         </span>
@@ -432,7 +432,7 @@ export function MembersPage({
 
                 {/* Desktop table */}
                 <div className="hidden overflow-hidden rounded-lg border border-border/40 md:block">
-                  <table className="w-full text-left text-[13px]">
+                  <table className="w-full text-left text-[14px]">
                     <thead className="border-b border-border/40 bg-white/[0.02] text-muted-foreground">
                       <tr>
                         <th className="px-4 py-2.5 font-medium">Email</th>
@@ -453,14 +453,14 @@ export function MembersPage({
                           <td className="px-4 py-3">
                             <Badge
                               variant="outline"
-                              className="h-5 rounded px-1.5 text-[11px] font-medium"
+                              className="h-5 rounded px-1.5 text-[12px] font-medium"
                             >
                               Invited
                             </Badge>
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex max-w-xs items-center gap-2">
-                              <span className="min-w-0 truncate font-mono text-[11px] text-muted-foreground">
+                              <span className="min-w-0 truncate font-mono text-[12px] text-muted-foreground">
                                 {invite.inviteUrl}
                               </span>
                               <InviteLinkCopy url={invite.inviteUrl} compact />
@@ -477,7 +477,7 @@ export function MembersPage({
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-7 text-[12px] text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                className="h-7 text-[13px] text-destructive hover:bg-destructive/10 hover:text-destructive"
                                 onClick={() =>
                                   setRevokeTarget({
                                     type: "invite",

@@ -142,11 +142,11 @@ function IssueRow({
         priority={task.priority}
         onChange={onPriorityChange}
       />
-      <span className="w-[52px] shrink-0 font-mono text-[12px] tracking-tight text-white/30">
+      <span className="w-[52px] shrink-0 font-mono text-[13px] tracking-tight text-white/30">
         {formatTaskIdentifier(task, allTasks, projectKey)}
       </span>
       <StatusIcon status={task.status} />
-      <span className="min-w-0 flex-1 truncate text-[13px] font-normal text-foreground/95">
+      <span className="min-w-0 flex-1 truncate text-[14px] font-normal text-foreground/95">
         {task.title}
       </span>
     </div>
@@ -181,9 +181,9 @@ function StatusGroup({
       <div className="group/header flex h-9 items-center gap-2 bg-white/[0.025] px-5">
         <ChevronDown className="size-3 text-muted-foreground/35" />
         <StatusIcon status={status} />
-        <span className="text-[13px] text-muted-foreground/75">{meta.label}</span>
+        <span className="text-[14px] text-muted-foreground/75">{meta.label}</span>
         {tasks.length > 0 && (
-          <span className="text-[13px] text-muted-foreground/40">
+          <span className="text-[14px] text-muted-foreground/40">
             {tasks.length}
           </span>
         )}
@@ -191,7 +191,7 @@ function StatusGroup({
           {archiveLink && (
             <Link
               href={archiveLink.href}
-              className="text-[12px] text-violet-400/90 transition-colors hover:text-violet-300"
+              className="text-[13px] text-violet-400/90 transition-colors hover:text-violet-300"
             >
               {archiveLink.count} more completed{" "}
               {archiveLink.count === 1 ? "issue" : "issues"}
@@ -317,11 +317,11 @@ function TaskListViewContent({
         <main className="flex-1 overflow-y-auto pb-14">
           {sorted.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
-              <p className="text-[13px] text-muted-foreground">{emptyMessage}</p>
+              <p className="text-[14px] text-muted-foreground">{emptyMessage}</p>
               <button
                 type="button"
                 onClick={() => openCreate("TODO")}
-                className="mt-3 text-[13px] text-violet-400 hover:text-violet-300"
+                className="mt-3 text-[14px] text-violet-400 hover:text-violet-300"
               >
                 Create an issue
               </button>

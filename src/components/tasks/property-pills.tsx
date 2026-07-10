@@ -24,7 +24,7 @@ const pillClass =
   "h-7 gap-1.5 rounded-md border border-border/50 bg-muted/20 px-2 text-xs font-normal text-muted-foreground hover:bg-muted/40 hover:text-foreground";
 
 const rowClass =
-  "h-8 w-full justify-start gap-2 rounded-md px-2 text-[13px] font-normal text-foreground hover:bg-white/[0.04]";
+  "h-8 w-full justify-start gap-2 rounded-md px-2 text-[14px] font-normal text-foreground hover:bg-white/[0.04]";
 
 export function StatusPill({
   value,
@@ -217,7 +217,7 @@ export function DueDatePill({
     return (
       <span
         className={cn(
-          "relative inline-flex h-8 w-full items-center gap-2 rounded-md px-2 text-[13px] transition-colors hover:bg-white/[0.04]",
+          "relative inline-flex h-8 w-full items-center gap-2 rounded-md px-2 text-[14px] transition-colors hover:bg-white/[0.04]",
           value && !overdue && "text-foreground",
           !value && "text-muted-foreground",
           overdue && "text-red-400",

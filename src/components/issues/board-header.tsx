@@ -31,11 +31,11 @@ export function BoardPageChrome({
     <header className="shrink-0">
       <div className="flex h-12 items-center gap-2 px-3 md:px-4">
         <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto overscroll-x-contain scrollbar-none">
-          <div className="flex shrink-0 items-center gap-1.5 text-[13px]">
+          <div className="flex shrink-0 items-center gap-1.5 text-[14px]">
             <SidebarTrigger />
             <span
               className={cn(
-                "flex size-[18px] shrink-0 items-center justify-center rounded-[4px] text-[8px] font-bold text-white",
+                "flex size-[18px] shrink-0 items-center justify-center rounded-[4px] text-[9px] font-bold text-white",
                 getAvatarColor(organization.name),
               )}
             >
@@ -63,7 +63,7 @@ export function BoardPageChrome({
           <Button
             size="sm"
             variant="ghost"
-            className="h-7 shrink-0 gap-1.5 px-2 text-[13px] text-muted-foreground hover:bg-white/[0.06] sm:px-3"
+            className="h-7 shrink-0 gap-1.5 px-2 text-[14px] text-muted-foreground hover:bg-white/[0.06] sm:px-3"
             onClick={onNewIssue}
           >
             <Plus className="size-3.5" />

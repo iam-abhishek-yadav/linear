@@ -87,11 +87,11 @@ export function IssuesPageChrome({
   return (
     <header className="shrink-0">
       <div className="flex h-11 items-center justify-between gap-2 px-3 md:px-5">
-        <div className="flex min-w-0 items-center gap-1.5 text-[13px]">
+        <div className="flex min-w-0 items-center gap-1.5 text-[14px]">
           <SidebarTrigger />
           <span
             className={cn(
-              "flex size-[18px] shrink-0 items-center justify-center rounded-[5px] text-[9px] font-semibold text-white",
+              "flex size-[18px] shrink-0 items-center justify-center rounded-[5px] text-[10px] font-semibold text-white",
               getAvatarColor(organization.name),
             )}
           >
@@ -128,7 +128,7 @@ export function IssuesPageChrome({
                     key={tab.href}
                     href={tab.href}
                     className={cn(
-                      "shrink-0 rounded-[6px] px-2.5 py-1 text-[13px] whitespace-nowrap transition-colors",
+                      "shrink-0 rounded-[6px] px-2.5 py-1 text-[14px] whitespace-nowrap transition-colors",
                       isActive
                         ? "bg-white/[0.07] text-foreground"
                         : "text-muted-foreground/70 hover:text-foreground/80",

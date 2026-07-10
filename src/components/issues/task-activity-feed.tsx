@@ -24,7 +24,7 @@ function ActivityAvatar({ name }: { name: string }) {
   return (
     <span
       className={cn(
-        "flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white",
+        "flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white",
         getAvatarColor(name),
       )}
     >
@@ -50,7 +50,7 @@ export function TaskActivityFeed({
         <li key={activity.id} className="flex items-start gap-3">
           <ActivityAvatar name={activity.user.name} />
           <div className="min-w-0 flex-1 pt-0.5">
-            <p className="text-[13px] leading-relaxed text-foreground/90">
+            <p className="text-[14px] leading-relaxed text-foreground/90">
               <span className="font-medium text-foreground">
                 {activity.user.name}
               </span>{" "}

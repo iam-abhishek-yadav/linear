@@ -19,7 +19,7 @@ function CommentAvatar({ name }: { name: string }) {
   return (
     <span
       className={cn(
-        "flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white",
+        "flex size-7 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold text-white",
         getAvatarColor(name),
       )}
     >
@@ -121,7 +121,7 @@ export function TaskComments({
                   <CommentAvatar name={comment.user.name} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-[13px] font-medium text-foreground">
+                      <span className="text-[14px] font-medium text-foreground">
                         {comment.user.name}
                       </span>
                       <span className="text-xs text-muted-foreground">
@@ -143,7 +143,7 @@ export function TaskComments({
                         </button>
                       )}
                     </div>
-                    <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-foreground/90">
+                    <p className="mt-1 whitespace-pre-wrap text-[14px] leading-relaxed text-foreground/90">
                       {comment.body}
                     </p>
                   </div>
@@ -170,7 +170,7 @@ export function TaskComments({
             placeholder="Leave a comment…"
             rows={embedded ? 2 : 3}
             className={cn(
-              "w-full resize-none rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-[13px] leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-white/[0.14]",
+              "w-full resize-none rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-[14px] leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-white/[0.14]",
               embedded && "min-h-[72px]",
             )}
           />

@@ -44,14 +44,14 @@ export function KanbanCardContent({
         tabIndex={onClick ? 0 : -1}
       >
         <div className="mb-2 flex items-center justify-between gap-2">
-          <span className="text-[11px] font-medium text-muted-foreground/80">
+          <span className="text-[12px] font-medium text-muted-foreground/80">
             {allTasks.length > 0
               ? formatTaskIdentifier(task, allTasks, projectKey)
               : projectKey}
           </span>
           <PriorityIcon priority={task.priority} />
         </div>
-        <p className="text-[13px] font-medium leading-snug text-foreground">
+        <p className="text-[14px] font-medium leading-snug text-foreground">
           {task.title}
         </p>
         {task.description && (
@@ -63,7 +63,7 @@ export function KanbanCardContent({
           {dueLabel ? (
             <span
               className={cn(
-                "inline-flex items-center gap-1 text-[11px]",
+                "inline-flex items-center gap-1 text-[12px]",
                 overdue ? "text-red-400" : "text-muted-foreground/60",
               )}
             >
@@ -76,7 +76,7 @@ export function KanbanCardContent({
           {assignee && (
             <span
               className={cn(
-                "flex size-5 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold text-white",
+                "flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white",
                 getAvatarColor(assignee.name),
               )}
               title={assignee.name}

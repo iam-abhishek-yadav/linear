@@ -26,7 +26,7 @@ export function InviteLinkCopy({ url, className, compact }: InviteLinkCopyProps)
         type="button"
         variant="outline"
         size="sm"
-        className={cn("h-7 shrink-0 text-[12px]", className)}
+        className={cn("h-7 shrink-0 text-[13px]", className)}
         onClick={handleCopy}
       >
         {copied ? (
@@ -47,10 +47,10 @@ export function InviteLinkCopy({ url, className, compact }: InviteLinkCopyProps)
   return (
     <div className={cn("space-y-2", className)}>
       <div className="rounded-lg border border-border/60 bg-black/30 p-3">
-        <p className="mb-2 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+        <p className="mb-2 text-[12px] font-medium tracking-wide text-muted-foreground uppercase">
           Invite link
         </p>
-        <p className="break-all font-mono text-[12px] leading-relaxed text-foreground">
+        <p className="break-all font-mono text-[13px] leading-relaxed text-foreground">
           {url}
         </p>
       </div>

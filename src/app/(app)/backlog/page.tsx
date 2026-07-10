@@ -1,21 +1,14 @@
-"use client";
+import { TaskListPageClient } from "@/components/list/task-list-page-client";
+import { getOrgMembers } from "@/lib/members";
 
-import { TaskListView } from "@/components/list/task-list-view";
-import { useTasks } from "@/hooks/use-tasks";
-
-export default function BacklogPage() {
-  const { tasks, loading, createTask, updateTask, deleteTask } = useTasks();
+export default async function BacklogPage() {
+  const members = await getOrgMembers();
 
   return (
-    <TaskListView
-      tasks={tasks}
-      allTasks={tasks}
-      loading={loading}
+    <TaskListPageClient
+      members={members}
       filterStatus={["BACKLOG"]}
       emptyMessage="No backlog issues"
-      onCreate={createTask}
-      onUpdate={updateTask}
-      onDelete={deleteTask}
     />
   );
 }

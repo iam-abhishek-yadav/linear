@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAssigneeFilter } from "@/hooks/use-assignee-filter";
 import type { TaskInput } from "@/hooks/use-tasks";
-import { useMembers } from "@/hooks/use-members";
+import type { Member } from "@/lib/members";
 import {
   getPriorityMeta,
   getStatusMeta,
@@ -40,6 +40,7 @@ import type { Task, TaskPriority, TaskStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type TaskListViewProps = {
+  members: Member[];
   tasks: Task[];
   allTasks: Task[];
   loading: boolean;
@@ -206,6 +207,7 @@ function StatusGroup({
 }
 
 function TaskListViewContent({
+  members,
   tasks,
   allTasks,
   loading,
@@ -219,7 +221,6 @@ function TaskListViewContent({
   onUpdate,
   onDelete,
 }: TaskListViewProps) {
-  const members = useMembers();
   const { selectedId, select, clear } = useAssigneeFilter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -378,16 +379,23 @@ function TaskListViewContent({
 }
 
 function TaskListViewFallback({
+  members,
   tabScope = "workspace",
   pageTitle = "Issues",
   assignedView = "all",
-}: Pick<TaskListViewProps, "tabScope" | "pageTitle" | "assignedView">) {
+}: Pick<TaskListViewProps, "members" | "tabScope" | "pageTitle" | "assignedView">) {
+  const { selectedId, select, clear } = useAssigneeFilter();
+
   return (
     <div className="flex flex-1 flex-col">
       <IssuesPageChrome
         scope={tabScope}
         title={pageTitle}
         assignedView={assignedView}
+        members={members}
+        selectedAssigneeId={tabScope === "assigned" ? null : selectedId}
+        onSelectAssignee={tabScope === "assigned" ? undefined : select}
+        onClearAssigneeFilter={tabScope === "assigned" ? undefined : clear}
       />
       <div className="flex flex-1 items-center justify-center">
         <Loader2 className="size-5 animate-spin text-muted-foreground" />
@@ -400,6 +408,7 @@ export function TaskListView(props: TaskListViewProps) {
   if (props.loading) {
     return (
       <TaskListViewFallback
+        members={props.members}
         tabScope={props.tabScope}
         pageTitle={props.pageTitle}
         assignedView={props.assignedView}
@@ -411,6 +420,7 @@ export function TaskListView(props: TaskListViewProps) {
     <Suspense
       fallback={
         <TaskListViewFallback
+          members={props.members}
           tabScope={props.tabScope}
           pageTitle={props.pageTitle}
           assignedView={props.assignedView}

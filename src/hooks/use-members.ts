@@ -1,14 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { Member } from "@/lib/members";
 
-export type Member = {
-  id: string;
-  name: string;
-  email: string;
-  role: "ADMIN" | "MEMBER";
-  isCurrentUser: boolean;
-};
+export type { Member };
 
 export function useMembers() {
   const [members, setMembers] = useState<Member[]>([]);

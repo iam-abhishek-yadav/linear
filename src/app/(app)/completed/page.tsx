@@ -1,22 +1,14 @@
-"use client";
+import { TaskListPageClient } from "@/components/list/task-list-page-client";
+import { getOrgMembers } from "@/lib/members";
 
-import { TaskListView } from "@/components/list/task-list-view";
-import { filterCompletedArchiveTasks } from "@/lib/task-visibility";
-import { useTasks } from "@/hooks/use-tasks";
-
-export default function CompletedPage() {
-  const { tasks, loading, createTask, updateTask, deleteTask } = useTasks();
+export default async function CompletedPage() {
+  const members = await getOrgMembers();
 
   return (
-    <TaskListView
-      tasks={filterCompletedArchiveTasks(tasks)}
-      allTasks={tasks}
-      loading={loading}
+    <TaskListPageClient
+      members={members}
       variant="completed"
       emptyMessage="No completed issues older than a day"
-      onCreate={createTask}
-      onUpdate={updateTask}
-      onDelete={deleteTask}
     />
   );
 }

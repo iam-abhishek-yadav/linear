@@ -8,7 +8,7 @@ import { withApiRoute } from "@/lib/logger";
 import { createAssignmentNotification } from "@/lib/notifications";
 import { recordTaskCreated } from "@/lib/task-activity";
 import { isAssigneeInOrganization } from "@/lib/task-access";
-import { getOrgTasks } from "@/lib/tasks";
+import { getOrgTasks, getOrganizationTaskWithTags } from "@/lib/tasks";
 import { createTaskSchema } from "@/lib/validations";
 
 export const GET = withApiRoute("tasks.list", async () => {
@@ -98,5 +98,6 @@ export const POST = withApiRoute("tasks.create", async (request: Request) => {
     return [created];
   });
 
-  return NextResponse.json(task, { status: 201 });
+  const taskWithTags = await getOrganizationTaskWithTags(organizationId, taskId);
+  return NextResponse.json(taskWithTags ?? task, { status: 201 });
 });

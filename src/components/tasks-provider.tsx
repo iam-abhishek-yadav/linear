@@ -21,17 +21,17 @@ import {
   type TaskInput,
 } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
-import type { Task, TaskStatus } from "@/lib/types";
+import type { TaskStatus, TaskWithTags } from "@/lib/types";
 
 export type { TaskInput };
 
 type TasksContextValue = {
-  tasks: Task[];
+  tasks: TaskWithTags[];
   loading: boolean;
-  setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
+  setTasks: React.Dispatch<React.SetStateAction<TaskWithTags[]>>;
   fetchTasks: () => Promise<void>;
-  createTask: (data: TaskInput) => Promise<Task>;
-  updateTask: (id: string, data: TaskInput) => Promise<Task>;
+  createTask: (data: TaskInput) => Promise<TaskWithTags>;
+  updateTask: (id: string, data: TaskInput) => Promise<TaskWithTags>;
   deleteTask: (id: string) => Promise<void>;
   persistReorder: (
     taskId: string,
@@ -46,7 +46,7 @@ export function TasksProvider({
   initialTasks,
   children,
 }: {
-  initialTasks: Task[];
+  initialTasks: TaskWithTags[];
   children: ReactNode;
 }) {
   const queryClient = useQueryClient();
@@ -64,8 +64,8 @@ export function TasksProvider({
   }, [queryClient]);
 
   const setTasks = useCallback(
-    (updater: React.SetStateAction<Task[]>) => {
-      queryClient.setQueryData<Task[]>(queryKeys.tasks, (current = []) =>
+    (updater: React.SetStateAction<TaskWithTags[]>) => {
+      queryClient.setQueryData<TaskWithTags[]>(queryKeys.tasks, (current = []) =>
         typeof updater === "function" ? updater(current) : updater,
       );
     },
@@ -75,7 +75,7 @@ export function TasksProvider({
   const createTaskMutation = useMutation({
     mutationFn: createTaskApi,
     onSuccess: (task) => {
-      queryClient.setQueryData<Task[]>(queryKeys.tasks, (current = []) => [
+      queryClient.setQueryData<TaskWithTags[]>(queryKeys.tasks, (current = []) => [
         ...current,
         task,
       ]);
@@ -86,7 +86,7 @@ export function TasksProvider({
     mutationFn: ({ id, data }: { id: string; data: TaskInput }) =>
       updateTaskApi(id, data),
     onSuccess: (updated) => {
-      queryClient.setQueryData<Task[]>(queryKeys.tasks, (current = []) =>
+      queryClient.setQueryData<TaskWithTags[]>(queryKeys.tasks, (current = []) =>
         current.map((task) => (task.id === updated.id ? updated : task)),
       );
       queryClient.invalidateQueries({
@@ -98,7 +98,7 @@ export function TasksProvider({
   const deleteTaskMutation = useMutation({
     mutationFn: deleteTaskApi,
     onSuccess: (_result, id) => {
-      queryClient.setQueryData<Task[]>(queryKeys.tasks, (current = []) =>
+      queryClient.setQueryData<TaskWithTags[]>(queryKeys.tasks, (current = []) =>
         current.filter((task) => task.id !== id),
       );
       queryClient.removeQueries({ queryKey: queryKeys.issueDetail(id) });
@@ -108,8 +108,12 @@ export function TasksProvider({
   const reorderMutation = useMutation({
     mutationFn: reorderTask,
     onSuccess: (updated) => {
-      queryClient.setQueryData<Task[]>(queryKeys.tasks, (current = []) =>
-        current.map((task) => (task.id === updated.id ? updated : task)),
+      queryClient.setQueryData<TaskWithTags[]>(queryKeys.tasks, (current = []) =>
+        current.map((task) =>
+          task.id === updated.id
+            ? { ...updated, tags: updated.tags ?? task.tags ?? [] }
+            : task,
+        ),
       );
     },
     onError: () => {

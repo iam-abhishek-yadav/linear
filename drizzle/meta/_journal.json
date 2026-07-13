@@ -92,6 +92,13 @@
       "when": 1783952086137,
       "tag": "0012_lovely_electro",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1783953843278,
+      "tag": "0013_rich_zaladane",
+      "breakpoints": true
     }
   ]
 }

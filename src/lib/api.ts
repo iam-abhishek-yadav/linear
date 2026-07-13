@@ -1,7 +1,7 @@
 import type { IssueDetailData } from "@/lib/issue-detail-data";
 import type { MembersPageData } from "@/lib/members";
 import type { NotificationItem } from "@/lib/notification-types";
-import type { Task } from "@/lib/types";
+import type { Task, TaskWithTags } from "@/lib/types";
 
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, init);
@@ -11,8 +11,8 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function fetchTasks(): Promise<Task[]> {
-  return fetchJson<Task[]>("/api/tasks");
+export async function fetchTasks(): Promise<TaskWithTags[]> {
+  return fetchJson<TaskWithTags[]>("/api/tasks");
 }
 
 export async function fetchMembersPage(): Promise<MembersPageData> {
@@ -41,8 +41,8 @@ export type TaskInput = {
   dueDate?: string | null;
 };
 
-export async function createTask(data: TaskInput): Promise<Task> {
-  return fetchJson<Task>("/api/tasks", {
+export async function createTask(data: TaskInput): Promise<TaskWithTags> {
+  return fetchJson<TaskWithTags>("/api/tasks", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -52,8 +52,8 @@ export async function createTask(data: TaskInput): Promise<Task> {
 export async function updateTask(
   id: string,
   data: TaskInput,
-): Promise<Task> {
-  return fetchJson<Task>(`/api/tasks/${id}`, {
+): Promise<TaskWithTags> {
+  return fetchJson<TaskWithTags>(`/api/tasks/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -68,8 +68,8 @@ export async function reorderTask(input: {
   taskId: string;
   status: Task["status"];
   position: number;
-}): Promise<Task> {
-  return fetchJson<Task>("/api/tasks/reorder", {
+}): Promise<TaskWithTags> {
+  return fetchJson<TaskWithTags>("/api/tasks/reorder", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),

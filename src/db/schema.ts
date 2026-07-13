@@ -296,6 +296,48 @@ export const memberInvites = pgTable(
   ],
 );
 
+export const tags = pgTable(
+  "Tag",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organizationId")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    color: text("color").notNull(),
+    createdAt: timestamp("createdAt", { precision: 3, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("Tag_organizationId_name_key").on(
+      table.organizationId,
+      table.name,
+    ),
+    index("Tag_organizationId_idx").on(table.organizationId),
+  ],
+);
+
+export const taskTags = pgTable(
+  "TaskTag",
+  {
+    taskId: text("taskId")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    tagId: text("tagId")
+      .notNull()
+      .references(() => tags.id, { onDelete: "cascade" }),
+    createdAt: timestamp("createdAt", { precision: 3, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("TaskTag_taskId_tagId_key").on(table.taskId, table.tagId),
+    index("TaskTag_taskId_idx").on(table.taskId),
+    index("TaskTag_tagId_idx").on(table.tagId),
+  ],
+);
+
 export type TaskActivity = typeof taskActivities.$inferSelect;
 export type TaskActivityType = (typeof taskActivityTypeEnum.enumValues)[number];
 export type Organization = typeof organizations.$inferSelect;
@@ -303,4 +345,6 @@ export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type OrgInvite = typeof orgInvites.$inferSelect;
 export type MemberInvite = typeof memberInvites.$inferSelect;
+export type Tag = typeof tags.$inferSelect;
+export type TaskTag = typeof taskTags.$inferSelect;
 export type PasswordResetOtp = typeof passwordResetOtps.$inferSelect;

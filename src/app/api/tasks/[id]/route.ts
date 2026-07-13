@@ -17,6 +17,7 @@ import {
   getOrganizationTask,
   isAssigneeInOrganization,
 } from "@/lib/task-access";
+import { getOrganizationTaskWithTags } from "@/lib/tasks";
 import { resolveCompletedAtUpdate } from "@/lib/task-visibility";
 import { updateTaskSchema } from "@/lib/validations";
 import { withApiRoute } from "@/lib/logger";
@@ -34,7 +35,7 @@ export const GET = withApiRoute(
   }
 
   const { id } = await context.params;
-  const task = await getOrganizationTask(session.organization.id, id);
+  const task = await getOrganizationTaskWithTags(session.organization.id, id);
 
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
@@ -164,7 +165,8 @@ export const PATCH = withApiRoute(
     return [updated];
   });
 
-  return NextResponse.json(task);
+  const taskWithTags = await getOrganizationTaskWithTags(organizationId, id);
+  return NextResponse.json(taskWithTags ?? task);
   },
 );
 

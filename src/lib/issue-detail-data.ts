@@ -8,6 +8,7 @@ import { logServerCall } from "@/lib/logger";
 import { getOrgMembers } from "@/lib/members";
 import { getTaskActivities, buildUserMapFromMembers } from "@/lib/task-activity";
 import { getTaskComments } from "@/lib/task-comments";
+import { getTagsForTask, type TaskTagSummary } from "@/lib/tags";
 import type { Task } from "@/lib/types";
 
 export type SerializedTask = Omit<Task, "createdAt" | "updatedAt" | "dueDate" | "completedAt"> & {
@@ -15,6 +16,7 @@ export type SerializedTask = Omit<Task, "createdAt" | "updatedAt" | "dueDate" | 
   updatedAt: string;
   dueDate: string | null;
   completedAt: string | null;
+  tags: TaskTagSummary[];
 };
 
 export type TaskNavItem = {
@@ -29,13 +31,17 @@ export type IssueDetailData = {
   comments: TaskCommentItem[];
 };
 
-function serializeTask(task: (typeof tasks.$inferSelect)): SerializedTask {
+function serializeTask(
+  task: typeof tasks.$inferSelect,
+  taskTags: TaskTagSummary[],
+): SerializedTask {
   return {
     ...task,
     dueDate: task.dueDate?.toISOString() ?? null,
     completedAt: task.completedAt?.toISOString() ?? null,
     createdAt: task.createdAt.toISOString(),
     updatedAt: task.updatedAt.toISOString(),
+    tags: taskTags,
   };
 }
 
@@ -45,7 +51,8 @@ export const getIssueDetailData = cache(
       const members = await getOrgMembers();
       const userMap = buildUserMapFromMembers(members);
 
-      const [taskRows, taskNav, activities, comments] = await Promise.all([
+      const [taskRows, taskNav, activities, comments, taskTags] =
+        await Promise.all([
         db
           .select()
           .from(tasks)
@@ -60,13 +67,14 @@ export const getIssueDetailData = cache(
           .orderBy(asc(tasks.createdAt)),
         getTaskActivities(taskId, userMap),
         getTaskComments(taskId),
+        getTagsForTask(taskId),
       ]);
 
       const task = taskRows[0];
       if (!task) return null;
 
       return {
-        task: serializeTask(task),
+        task: serializeTask(task, taskTags),
         tasks: taskNav.map((item) => ({
           id: item.id,
           createdAt: item.createdAt.toISOString(),

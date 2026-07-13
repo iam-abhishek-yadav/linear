@@ -7,7 +7,9 @@ import {
   PriorityRow,
   StatusRow,
 } from "@/components/tasks/property-pills";
+import { LabelsRow } from "@/components/tasks/labels-row";
 import type { Member } from "@/hooks/use-members";
+import type { TaskTagSummary } from "@/lib/tags";
 import type { Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -61,11 +63,13 @@ type IssuePropertiesPanelProps = {
   priority: Task["priority"];
   assigneeId: string | null;
   dueDate: string | null;
+  tags: TaskTagSummary[];
   members: Member[];
   onStatusChange: (status: Task["status"]) => void;
   onPriorityChange: (priority: Task["priority"]) => void;
   onAssigneeChange: (assigneeId: string | null) => void;
   onDueDateChange: (dueDate: string | null) => void;
+  onTagsChange: (tags: TaskTagSummary[]) => void | Promise<void>;
   className?: string;
 };
 
@@ -74,11 +78,13 @@ export function IssuePropertiesPanel({
   priority,
   assigneeId,
   dueDate,
+  tags,
   members,
   onStatusChange,
   onPriorityChange,
   onAssigneeChange,
   onDueDateChange,
+  onTagsChange,
   className,
 }: IssuePropertiesPanelProps) {
   return (
@@ -104,6 +110,9 @@ export function IssuePropertiesPanel({
         </PropertyRow>
         <PropertyRow label="Due date">
           <DueDateRow value={dueDate} onChange={onDueDateChange} />
+        </PropertyRow>
+        <PropertyRow label="Labels">
+          <LabelsRow value={tags} onChange={onTagsChange} />
         </PropertyRow>
       </PanelSection>
     </aside>

@@ -12,13 +12,14 @@ import {
   getProjectKey,
   isOverdue,
 } from "@/lib/task-utils";
-import type { Task } from "@/lib/types";
+import { TagList } from "@/components/tasks/tag-badge";
+import type { TaskWithTags } from "@/lib/types";
 import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
 
 type KanbanCardContentProps = {
-  task: Task;
-  allTasks?: Task[];
+  task: TaskWithTags;
+  allTasks?: TaskWithTags[];
   members?: Member[];
   onClick?: () => void;
 };
@@ -54,6 +55,9 @@ export function KanbanCardContent({
         <p className="text-[14px] font-medium leading-snug text-foreground">
           {task.title}
         </p>
+        {task.tags && task.tags.length > 0 && (
+          <TagList tags={task.tags} className="mt-2" limit={3} />
+        )}
         {task.description && (
           <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
             {task.description}
@@ -91,8 +95,8 @@ export function KanbanCardContent({
 }
 
 type KanbanCardProps = {
-  task: Task;
-  allTasks?: Task[];
+  task: TaskWithTags;
+  allTasks?: TaskWithTags[];
   members?: Member[];
   onClick: () => void;
 };

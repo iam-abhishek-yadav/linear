@@ -36,6 +36,7 @@ import { IssueDetailLink } from "@/components/issues/issue-detail-link";
 import { useMembersCache } from "@/hooks/use-members-cache";
 import { useTaskTimeline } from "@/hooks/use-task-timeline";
 import type { IssueDetailData, SerializedTask } from "@/lib/issue-detail-data";
+import type { TaskTagSummary } from "@/lib/tags";
 import { revalidateIssueCaches } from "@/lib/revalidate-issue";
 import { queryKeys } from "@/lib/query-keys";
 import { buildPropertyChangeActivity } from "@/lib/task-timeline";
@@ -73,6 +74,7 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
   const [dueDate, setDueDate] = useState<string | null>(
     toDateInputValue(task.dueDate),
   );
+  const [tags, setTags] = useState<TaskTagSummary[]>(task.tags ?? []);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<
@@ -113,6 +115,7 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
     setPriority(data.task.priority);
     setAssigneeId(data.task.assigneeId ?? null);
     setDueDate(toDateInputValue(data.task.dueDate));
+    setTags(data.task.tags ?? []);
     initializedRef.current = true;
   }, [data.task.id, data.task.updatedAt]);
 
@@ -124,6 +127,7 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
     setPriority(task.priority);
     setAssigneeId(task.assigneeId ?? null);
     setDueDate(toDateInputValue(task.dueDate));
+    setTags(task.tags ?? []);
   }, [task]);
 
   const save = useCallback(
@@ -225,6 +229,28 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
     }
 
     await save({ [field]: value });
+  }
+
+  async function handleTagsChange(nextTags: TaskTagSummary[]) {
+    const previous = tags;
+    setTags(nextTags);
+
+    const response = await fetch(`/api/tasks/${task.id}/tags`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tagIds: nextTags.map((tag) => tag.id) }),
+    });
+
+    if (!response.ok) {
+      setTags(previous);
+      return;
+    }
+
+    const data = await response.json();
+    const updatedTags = data.tags ?? nextTags;
+    setTags(updatedTags);
+    setTask((current) => ({ ...current, tags: updatedTags }));
+    await revalidateIssueCaches(queryClient, task.id);
   }
 
   function handleDeleteClick() {
@@ -400,11 +426,13 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
           priority={priority}
           assigneeId={assigneeId}
           dueDate={dueDate}
+          tags={tags}
           members={members}
           onStatusChange={(value) => handlePropertyChange("status", value)}
           onPriorityChange={(value) => handlePropertyChange("priority", value)}
           onAssigneeChange={(value) => handlePropertyChange("assigneeId", value)}
           onDueDateChange={(value) => handlePropertyChange("dueDate", value)}
+          onTagsChange={handleTagsChange}
         />
       </div>
 

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 import { TaskActivityFeed } from "@/components/issues/task-activity-feed";
 import type { TaskActivityItem } from "@/components/issues/task-activity-feed";
-import type { TaskCommentItem } from "@/components/issues/task-comments";
+import type { TaskCommentItem } from "@/lib/task-comments";
 import { useSession } from "@/components/session-provider";
 import { Button } from "@/components/ui/button";
 import { formatActivityTime } from "@/lib/task-activity-format";

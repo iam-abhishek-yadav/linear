@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { TaskActivityItem } from "@/components/issues/task-activity-feed";
-import type { TaskCommentItem } from "@/components/issues/task-comments";
+import type { TaskCommentItem } from "@/lib/task-comments";
 
 type TaskTimelineInitial = {
   activities: TaskActivityItem[];

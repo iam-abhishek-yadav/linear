@@ -1,5 +1,3 @@
-import type { Task } from "@/lib/types";
-
 const FALLBACK_PROJECT_KEY = "ML";
 
 /** Derive a short uppercase ticket prefix (e.g. "Acme Corp" -> "AC") from the org name. */
@@ -24,13 +22,6 @@ export function formatTaskIdentifier(
   );
   const index = sorted.findIndex((t) => t.id === task.id) + 1;
   return `${projectKey}-${index}`;
-}
-
-export function formatTaskDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
 }
 
 /** Normalize a task's due date into a `yyyy-mm-dd` value for a native date input. */

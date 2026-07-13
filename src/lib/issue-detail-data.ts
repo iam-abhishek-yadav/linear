@@ -1,7 +1,7 @@
 import { and, asc, eq } from "drizzle-orm";
 import { cache } from "react";
 import type { TaskActivityItem } from "@/components/issues/task-activity-feed";
-import type { TaskCommentItem } from "@/components/issues/task-comments";
+import type { TaskCommentItem } from "@/lib/task-comments";
 import { tasks } from "@/db/schema";
 import { db } from "@/lib/db";
 import { logServerCall } from "@/lib/logger";

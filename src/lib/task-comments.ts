@@ -5,6 +5,13 @@ import { db } from "@/lib/db";
 
 type DbExecutor = Pick<typeof db, "insert">;
 
+export type TaskCommentItem = {
+  id: string;
+  body: string;
+  createdAt: string;
+  user: { id: string; name: string };
+};
+
 export async function getTaskComments(taskId: string) {
   const rows = await db
     .select({

@@ -204,14 +204,6 @@ export function MembersPage({
                 <SelectItem value="member">Member</SelectItem>
               </SelectContent>
             </Select>
-            <Button
-              variant="outline"
-              size="sm"
-              className="hidden h-8 border-border/60 bg-transparent text-[14px] sm:inline-flex"
-              disabled
-            >
-              Export CSV
-            </Button>
             {isAdmin && (
               <Button
                 size="sm"

@@ -9,8 +9,6 @@ import {
   logInviteCreated,
 } from "@/lib/invite-utils";
 
-export { getAppUrl };
-
 export function getOrgInviteUrl(token: string) {
   return `${getAppUrl()}/register/${token}`;
 }

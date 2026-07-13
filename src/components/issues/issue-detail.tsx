@@ -11,7 +11,6 @@ import {
   Link2,
   Loader2,
   MoreHorizontal,
-  Star,
   Trash2,
 } from "lucide-react";
 import { IssueActivitySection } from "@/components/issues/issue-activity-section";
@@ -278,14 +277,6 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
                 {identifier} {title.trim() || "Untitled"}
               </span>
             </nav>
-            <button
-              type="button"
-              aria-label="Favorite issue"
-              className="ml-1 inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground/50"
-              disabled
-            >
-              <Star className="size-3.5" />
-            </button>
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={

@@ -295,25 +295,6 @@ export function DueDatePill({
   );
 }
 
-export function PropertyPill({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <span
-      className={cn(
-        "inline-flex h-7 items-center gap-1.5 rounded-md border border-border/50 bg-muted/20 px-2 text-xs text-muted-foreground",
-        className,
-      )}
-    >
-      {children}
-    </span>
-  );
-}
-
 export function StatusRow(
   props: Omit<React.ComponentProps<typeof StatusPill>, "variant">,
 ) {

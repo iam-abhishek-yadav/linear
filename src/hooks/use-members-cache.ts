@@ -8,7 +8,3 @@ export function useMembersCache() {
 }
 
 export type { Member };
-
-export function useMembers() {
-  return useMembersCache();
-}

@@ -24,12 +24,6 @@ export function filterMainViewTasks<T extends TaskWithCompletion>(tasks: T[]): T
   return tasks.filter((task) => !isStaleCompletedTask(task));
 }
 
-export function filterCompletedArchiveTasks<T extends TaskWithCompletion>(
-  tasks: T[],
-): T[] {
-  return tasks.filter(isStaleCompletedTask);
-}
-
 export function countStaleCompletedTasks<T extends TaskWithCompletion>(
   tasks: T[],
 ): number {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronDown, Loader2, Plus } from "lucide-react";
+import { Check, Loader2, Plus } from "lucide-react";
 import { TaskDialog } from "@/components/kanban/task-dialog";
 import {
   IssuesPageChrome,
@@ -172,7 +172,6 @@ function StatusGroup({
   return (
     <section className="border-t border-white/[0.05] first:border-t-0">
       <div className="group/header flex h-9 items-center gap-2 bg-white/[0.025] px-5">
-        <ChevronDown className="size-3 text-muted-foreground/35" />
         <StatusIcon status={status} />
         <span className="text-[14px] text-muted-foreground/75">{meta.label}</span>
         {tasks.length > 0 && (
@@ -209,7 +208,6 @@ function StatusGroup({
 function TaskListViewContent({
   tasks,
   allTasks,
-  loading,
   filterStatus,
   emptyMessage = "No issues yet",
   tabScope = "workspace",

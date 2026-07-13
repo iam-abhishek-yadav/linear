@@ -2,18 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Bell,
-  ChevronRight,
-  LayoutList,
-  PanelRight,
-  SlidersHorizontal,
-  Star,
-} from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { AssigneeFilter } from "@/components/issues/assignee-filter";
 import { useSession } from "@/components/session-provider";
 import { SidebarTrigger } from "@/components/sidebar-provider";
-import { Button } from "@/components/ui/button";
 import type { Member } from "@/hooks/use-members";
 import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
@@ -27,10 +19,7 @@ type ViewTab = {
   key: string;
 };
 
-function getViewTabs(
-  scope: IssuesTabScope,
-  assignedView: AssignedView,
-): ViewTab[] {
+function getViewTabs(scope: IssuesTabScope): ViewTab[] {
   if (scope === "assigned") {
     return [
       { href: "/my-issues", label: "All issues", key: "all" },
@@ -82,7 +71,7 @@ export function IssuesPageChrome({
 }) {
   const pathname = usePathname();
   const { organization } = useSession();
-  const tabs = getViewTabs(scope, assignedView);
+  const tabs = getViewTabs(scope);
 
   return (
     <header className="shrink-0">
@@ -102,19 +91,7 @@ export function IssuesPageChrome({
           </span>
           <ChevronRight className="hidden size-3 shrink-0 text-muted-foreground/35 sm:block" />
           <span className="truncate text-muted-foreground/75">{title}</span>
-          <button
-            type="button"
-            className="ml-0.5 hidden rounded p-1 text-muted-foreground/35 hover:bg-white/[0.05] hover:text-muted-foreground sm:block"
-          >
-            <Star className="size-3.5" />
-          </button>
         </div>
-        <button
-          type="button"
-          className="shrink-0 rounded-md p-1.5 text-muted-foreground/45 hover:bg-white/[0.05] hover:text-muted-foreground"
-        >
-          <Bell className="size-4" />
-        </button>
       </div>
 
       <div className="flex h-9 items-stretch border-b border-white/[0.06]">
@@ -152,30 +129,6 @@ export function IssuesPageChrome({
                 />
               )}
           </div>
-        </div>
-
-        <div className="flex shrink-0 items-center gap-0.5 border-l border-white/[0.06] bg-panel px-1.5 md:px-2">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="hidden size-7 rounded-[6px] text-muted-foreground/45 hover:bg-white/[0.05] hover:text-muted-foreground sm:inline-flex"
-          >
-            <SlidersHorizontal className="size-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="hidden size-7 rounded-[6px] text-muted-foreground/45 hover:bg-white/[0.05] hover:text-muted-foreground sm:inline-flex"
-          >
-            <LayoutList className="size-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="size-7 rounded-[6px] text-muted-foreground/45 hover:bg-white/[0.05] hover:text-muted-foreground"
-          >
-            <PanelRight className="size-3.5" />
-          </Button>
         </div>
       </div>
     </header>

@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { ChevronRight, LayoutGrid, List, Plus } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
 import { AssigneeFilter } from "@/components/issues/assignee-filter";
 import { useSession } from "@/components/session-provider";
 import { SidebarTrigger } from "@/components/sidebar-provider";

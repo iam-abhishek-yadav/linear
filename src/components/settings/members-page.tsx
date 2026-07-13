@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { MoreHorizontal, Search } from "lucide-react";
 import { InviteMemberDialog } from "@/components/settings/invite-member-dialog";
 import { InviteLinkCopy } from "@/components/settings/invite-link-copy";
+import { InviteSendEmailButton } from "@/components/settings/invite-send-email-button";
 import { useSession } from "@/components/session-provider";
 import { SidebarTrigger } from "@/components/sidebar-provider";
 import { useMembersPage } from "@/hooks/use-members-page";
@@ -409,6 +410,7 @@ export function MembersPage({
                           {invite.inviteUrl}
                         </span>
                         <InviteLinkCopy url={invite.inviteUrl} compact />
+                        <InviteSendEmailButton inviteId={invite.id} compact />
                       </div>
                       <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[13px] text-muted-foreground">
                         <span>
@@ -456,6 +458,7 @@ export function MembersPage({
                                 {invite.inviteUrl}
                               </span>
                               <InviteLinkCopy url={invite.inviteUrl} compact />
+                              <InviteSendEmailButton inviteId={invite.id} compact />
                             </div>
                           </td>
                           <td className="px-4 py-3 text-muted-foreground">

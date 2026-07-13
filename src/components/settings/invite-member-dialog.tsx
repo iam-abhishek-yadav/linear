@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { InviteLinkCopy } from "@/components/settings/invite-link-copy";
+import { InviteSendEmailButton } from "@/components/settings/invite-send-email-button";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -34,11 +35,13 @@ export function InviteMemberDialog({
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const [inviteId, setInviteId] = useState<string | null>(null);
 
   function reset() {
     setEmail("");
     setErrors({});
     setInviteUrl(null);
+    setInviteId(null);
     setLoading(false);
   }
 
@@ -69,6 +72,7 @@ export function InviteMemberDialog({
     }
 
     setInviteUrl(data.invite.inviteUrl);
+    setInviteId(data.invite.id);
     setLoading(false);
     onInvited();
   }
@@ -80,7 +84,7 @@ export function InviteMemberDialog({
           <DialogTitle>{inviteUrl ? "Invite created" : "Invite member"}</DialogTitle>
           <DialogDescription>
             {inviteUrl
-              ? "Share this link with your teammate via Slack, email, or any channel. Resend integration coming later."
+              ? "Share this link manually, or send it by email when you're ready."
               : "Enter their email to generate an invite link you can share manually."}
           </DialogDescription>
         </DialogHeader>
@@ -92,6 +96,7 @@ export function InviteMemberDialog({
               <span className="font-medium text-foreground">{email}</span>
             </p>
             <InviteLinkCopy url={inviteUrl} />
+            {inviteId && <InviteSendEmailButton inviteId={inviteId} />}
             <DialogFooter className="border-0 bg-transparent p-0">
               <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
                 Done

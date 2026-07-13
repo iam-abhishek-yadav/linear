@@ -1,7 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { tags, taskTags } from "@/db/schema";
-import { db } from "@/lib/db";
+import { db, isUniqueViolationError } from "@/lib/db";
 import { pickTagColor } from "@/lib/tag-colors";
 
 export type TaskTagSummary = {
@@ -69,36 +69,28 @@ export async function createOrgTag({
   const normalizedName = name.trim();
   const id = createId();
 
-  const [existing] = await db
-    .select({ id: tags.id })
-    .from(tags)
-    .where(
-      and(
-        eq(tags.organizationId, organizationId),
-        eq(tags.name, normalizedName),
-      ),
-    )
-    .limit(1);
+  try {
+    const [created] = await db
+      .insert(tags)
+      .values({
+        id,
+        organizationId,
+        name: normalizedName,
+        color: color ?? pickTagColor(normalizedName),
+      })
+      .returning({
+        id: tags.id,
+        name: tags.name,
+        color: tags.color,
+      });
 
-  if (existing) {
-    throw new Error("DUPLICATE_TAG");
+    return created;
+  } catch (error) {
+    if (isUniqueViolationError(error)) {
+      throw new Error("DUPLICATE_TAG");
+    }
+    throw error;
   }
-
-  const [created] = await db
-    .insert(tags)
-    .values({
-      id,
-      organizationId,
-      name: normalizedName,
-      color: color ?? pickTagColor(normalizedName),
-    })
-    .returning({
-      id: tags.id,
-      name: tags.name,
-      color: tags.color,
-    });
-
-  return created;
 }
 
 export async function setTaskTags({

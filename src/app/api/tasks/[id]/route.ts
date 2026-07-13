@@ -18,6 +18,7 @@ import {
   isAssigneeInOrganization,
 } from "@/lib/task-access";
 import { getOrganizationTaskWithTags } from "@/lib/tasks";
+import { getTagsForTask } from "@/lib/tags";
 import { resolveCompletedAtUpdate } from "@/lib/task-visibility";
 import { updateTaskSchema } from "@/lib/validations";
 import { withApiRoute } from "@/lib/logger";
@@ -165,8 +166,8 @@ export const PATCH = withApiRoute(
     return [updated];
   });
 
-  const taskWithTags = await getOrganizationTaskWithTags(organizationId, id);
-  return NextResponse.json(taskWithTags ?? task);
+  const tags = await getTagsForTask(id);
+  return NextResponse.json({ ...task, tags });
   },
 );
 

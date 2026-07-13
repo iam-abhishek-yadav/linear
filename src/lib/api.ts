@@ -1,6 +1,7 @@
 import type { IssueDetailData } from "@/lib/issue-detail-data";
 import type { MembersPageData } from "@/lib/members";
 import type { NotificationItem } from "@/lib/notification-types";
+import type { TaskTagSummary } from "@/lib/tags";
 import type { Task, TaskWithTags } from "@/lib/types";
 
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
@@ -21,6 +22,11 @@ export async function fetchMembersPage(): Promise<MembersPageData> {
 
 export async function fetchNotifications(): Promise<NotificationItem[]> {
   return fetchJson<NotificationItem[]>("/api/notifications");
+}
+
+export async function fetchTags(): Promise<TaskTagSummary[]> {
+  const { tags } = await fetchJson<{ tags: TaskTagSummary[] }>("/api/tags");
+  return tags;
 }
 
 export async function fetchIssueDetail(

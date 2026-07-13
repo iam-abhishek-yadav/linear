@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Plus, Tag } from "lucide-react";
 import { TagBadge } from "@/components/tasks/tag-badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { fetchTags } from "@/lib/api";
+import { queryKeys, STALE_TIME_MS } from "@/lib/query-keys";
 import type { TaskTagSummary } from "@/lib/tags";
 import { cn } from "@/lib/utils";
 
@@ -30,38 +33,21 @@ export function LabelsRow({
   variant?: "pill" | "row";
 }) {
   const [open, setOpen] = useState(false);
-  const [orgTags, setOrgTags] = useState<TaskTagSummary[]>([]);
-  const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [newLabel, setNewLabel] = useState("");
   const [createError, setCreateError] = useState<string | null>(null);
 
+  const queryClient = useQueryClient();
+  const tagsQuery = useQuery({
+    queryKey: queryKeys.tags,
+    queryFn: fetchTags,
+    enabled: open,
+    staleTime: STALE_TIME_MS,
+  });
+  const orgTags = tagsQuery.data ?? [];
+  const loading = tagsQuery.isPending && open;
+
   const selectedIds = new Set(value.map((tag) => tag.id));
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    let cancelled = false;
-
-    async function loadTags() {
-      setLoading(true);
-      const response = await fetch("/api/tags");
-      const data = await response.json();
-      if (!cancelled && response.ok) {
-        setOrgTags(data.tags ?? []);
-      }
-      if (!cancelled) {
-        setLoading(false);
-      }
-    }
-
-    void loadTags();
-    return () => {
-      cancelled = true;
-    };
-  }, [open]);
 
   async function toggleTag(tag: TaskTagSummary) {
     const next = selectedIds.has(tag.id)
@@ -94,7 +80,7 @@ export function LabelsRow({
     }
 
     const created: TaskTagSummary = data.tag;
-    setOrgTags((current) =>
+    queryClient.setQueryData<TaskTagSummary[]>(queryKeys.tags, (current = []) =>
       [...current, created].sort((a, b) => a.name.localeCompare(b.name)),
     );
     setNewLabel("");

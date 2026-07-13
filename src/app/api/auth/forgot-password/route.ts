@@ -3,6 +3,12 @@ import { isDbConnectionError } from "@/lib/db";
 import { withApiRoute } from "@/lib/logger";
 import { requestPasswordResetOtp } from "@/lib/password-reset";
 import { forgotPasswordSchema } from "@/lib/profile-validations";
+import { checkRateLimit } from "@/lib/rate-limit";
+
+const GENERIC_RESPONSE = {
+  success: true,
+  message: "If an account with that email exists, a reset code has been sent.",
+};
 
 export const POST = withApiRoute(
   "auth.forgotPassword",
@@ -19,28 +25,22 @@ export const POST = withApiRoute(
 
     const normalizedEmail = parsed.data.email.toLowerCase();
 
+    const rateLimit = checkRateLimit(`forgot-password:${normalizedEmail}`, {
+      maxAttempts: 5,
+      windowMs: 15 * 60 * 1000,
+    });
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(GENERIC_RESPONSE);
+    }
+
     try {
-      const result = await requestPasswordResetOtp(normalizedEmail);
+      // Whether the account exists, was just emailed, or is on its own
+      // hourly cooldown, the response is identical — distinguishing any of
+      // these cases would let a caller enumerate registered emails.
+      await requestPasswordResetOtp(normalizedEmail);
 
-      if ("rateLimited" in result && result.rateLimited) {
-        return NextResponse.json(
-          {
-            error: {
-              email: [
-                `A reset email was already sent. Try again after ${result.retryAt.toLocaleString()}.`,
-              ],
-            },
-            retryAt: result.retryAt.toISOString(),
-          },
-          { status: 429 },
-        );
-      }
-
-      return NextResponse.json({
-        success: true,
-        message:
-          "If an account with that email exists, a reset code has been sent.",
-      });
+      return NextResponse.json(GENERIC_RESPONSE);
     } catch (error) {
       if (isDbConnectionError(error)) {
         return NextResponse.json(

@@ -80,6 +80,12 @@ export function isDbConnectionError(error: unknown): boolean {
   return isRetryableDbError(error);
 }
 
+/** True for a Postgres unique-constraint violation (error code 23505). */
+export function isUniqueViolationError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  return (error as { code?: unknown }).code === "23505";
+}
+
 /**
  * Run a database operation, retrying once on transient connection errors.
  * Guards against a stale pooled connection turning a request into a hard 500.

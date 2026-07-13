@@ -9,6 +9,7 @@ import {
   List,
   LogOut,
   User,
+  UserCircle,
   Users,
 } from "lucide-react";
 import { useNotifications } from "@/components/notifications-provider";
@@ -16,6 +17,10 @@ import { useSession } from "@/components/session-provider";
 import { WorkspaceMenu } from "@/components/workspace-menu";
 import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
+
+const accountNav = [
+  { href: "/settings/profile", label: "Profile", icon: UserCircle },
+];
 
 const adminNav = [
   { href: "/settings/workspace", label: "Workspace", icon: Building2 },
@@ -122,9 +127,9 @@ export function AppSidebar() {
       </nav>
 
       <div className="border-t border-white/6 px-2 py-3">
-        <SectionLabel>Administration</SectionLabel>
+        <SectionLabel>Account</SectionLabel>
         <div className="space-y-0">
-          {adminNav.map((item) => (
+          {accountNav.map((item) => (
             <NavLink
               key={item.href}
               {...item}
@@ -133,23 +138,43 @@ export function AppSidebar() {
           ))}
         </div>
 
+        {user.role === "ADMIN" && (
+          <>
+            <SectionLabel>Administration</SectionLabel>
+            <div className="space-y-0">
+              {adminNav.map((item) => (
+                <NavLink
+                  key={item.href}
+                  {...item}
+                  active={pathname === item.href}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
         <div className="mt-3 flex items-center gap-2 border-t border-white/6 px-1 pt-3">
-          <span
-            className={cn(
-              "flex size-6 shrink-0 items-center justify-center rounded text-[11px] font-bold text-white",
-              avatarColor,
-            )}
+          <Link
+            href="/settings/profile"
+            className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-1 transition-colors hover:bg-white/4"
           >
-            {initials}
-          </span>
-          <div className="flex min-w-0 flex-1 flex-col gap-1 leading-none">
-            <p className="truncate text-[14px] font-medium text-foreground">
-              {user.name}
-            </p>
-            <p className="truncate text-[12px] text-muted-foreground/70">
-              {roleLabels[user.role]}
-            </p>
-          </div>
+            <span
+              className={cn(
+                "flex size-6 shrink-0 items-center justify-center rounded text-[11px] font-bold text-white",
+                avatarColor,
+              )}
+            >
+              {initials}
+            </span>
+            <div className="flex min-w-0 flex-1 flex-col gap-1 leading-none">
+              <p className="truncate text-[14px] font-medium text-foreground">
+                {user.name}
+              </p>
+              <p className="truncate text-[12px] text-muted-foreground/70">
+                {roleLabels[user.role]}
+              </p>
+            </div>
+          </Link>
           <button
             type="button"
             onClick={handleLogout}

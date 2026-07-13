@@ -76,6 +76,10 @@ function isRetryableDbError(error: unknown): boolean {
   return [...codes].some((code) => RETRYABLE_DB_ERROR_CODES.has(code));
 }
 
+export function isDbConnectionError(error: unknown): boolean {
+  return isRetryableDbError(error);
+}
+
 /**
  * Run a database operation, retrying once on transient connection errors.
  * Guards against a stale pooled connection turning a request into a hard 500.

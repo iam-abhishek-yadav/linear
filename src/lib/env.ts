@@ -7,7 +7,7 @@ const envSchema = z.object({
   RESEND_FROM_EMAIL: z
     .string()
     .min(1)
-    .default("Mini Linear <onboarding@resend.dev>"),
+    .default("Mini Linear <admin@builderonline.site>"),
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),

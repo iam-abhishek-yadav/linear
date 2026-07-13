@@ -127,3 +127,96 @@ export async function sendMemberInviteEmail({
 
   return data;
 }
+
+function buildPasswordResetOtpEmailHtml({
+  otp,
+  expiresAt,
+}: {
+  otp: string;
+  expiresAt: Date;
+}) {
+  const expiryLabel = expiresAt.toLocaleString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; color: #111827; max-width: 560px; margin: 0 auto; padding: 24px;">
+      <p style="margin: 0 0 16px; font-size: 16px;">Hi there,</p>
+      <p style="margin: 0 0 16px; font-size: 16px;">
+        Use this code to reset your Mini Linear password:
+      </p>
+      <p style="margin: 0 0 24px; font-size: 32px; font-weight: 700; letter-spacing: 0.2em; color: #7c3aed;">
+        ${otp}
+      </p>
+      <p style="margin: 0; font-size: 13px; color: #9ca3af;">
+        This code expires at ${expiryLabel}. If you didn't request a reset, you can ignore this email.
+      </p>
+    </div>
+  `.trim();
+}
+
+function buildPasswordResetOtpEmailText({
+  otp,
+  expiresAt,
+}: {
+  otp: string;
+  expiresAt: Date;
+}) {
+  const expiryLabel = expiresAt.toLocaleString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  return [
+    "Hi there,",
+    "",
+    "Use this code to reset your Mini Linear password:",
+    "",
+    otp,
+    "",
+    `This code expires at ${expiryLabel}. If you didn't request a reset, you can ignore this email.`,
+  ].join("\n");
+}
+
+export async function sendPasswordResetOtpEmail({
+  to,
+  otp,
+  expiresAt,
+}: {
+  to: string;
+  otp: string;
+  expiresAt: Date;
+}) {
+  if (!isEmailConfigured()) {
+    console.log("\n--- Password reset OTP ---");
+    console.log(`Email: ${to}`);
+    console.log(`OTP: ${otp}`);
+    console.log(`Expires: ${expiresAt.toISOString()}`);
+    console.log("--------------------------\n");
+    return;
+  }
+
+  const resend = getResendClient();
+  const from = getEnv().RESEND_FROM_EMAIL;
+
+  const { data, error } = await resend.emails.send({
+    from,
+    to,
+    subject: "Your Mini Linear password reset code",
+    html: buildPasswordResetOtpEmailHtml({ otp, expiresAt }),
+    text: buildPasswordResetOtpEmailText({ otp, expiresAt }),
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+}

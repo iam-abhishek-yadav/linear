@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { and, eq, gt, isNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import { users } from "@/db/schema";
+import { memberInvites, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createMemberInvite } from "@/lib/member-invites";
@@ -34,6 +34,30 @@ export const POST = withApiRoute("members.invites.create", async (request: Reque
   if (existingUser) {
     return NextResponse.json(
       { error: { email: ["A user with this email already exists"] } },
+      { status: 409 },
+    );
+  }
+
+  const [existingInvite] = await db
+    .select({ id: memberInvites.id })
+    .from(memberInvites)
+    .where(
+      and(
+        eq(memberInvites.organizationId, session.organization.id),
+        eq(memberInvites.email, normalizedEmail),
+        isNull(memberInvites.acceptedAt),
+        gt(memberInvites.expiresAt, new Date()),
+      ),
+    )
+    .limit(1);
+
+  if (existingInvite) {
+    return NextResponse.json(
+      {
+        error: {
+          email: ["This person already has a pending invite"],
+        },
+      },
       { status: 409 },
     );
   }

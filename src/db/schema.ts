@@ -197,6 +197,10 @@ export const users = pgTable(
     email: text("email").notNull(),
     name: text("name").notNull(),
     passwordHash: text("passwordHash").notNull(),
+    passwordChangedAt: timestamp("passwordChangedAt", {
+      precision: 3,
+      mode: "date",
+    }),
     role: userRoleEnum("role").notNull().default("MEMBER"),
     createdAt: timestamp("createdAt", { precision: 3, mode: "date" })
       .notNull()
@@ -209,6 +213,28 @@ export const users = pgTable(
   (table) => [
     uniqueIndex("User_email_key").on(table.email),
     index("User_organizationId_idx").on(table.organizationId),
+  ],
+);
+
+export const passwordResetOtps = pgTable(
+  "PasswordResetOtp",
+  {
+    id: text("id").primaryKey(),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    otpHash: text("otpHash").notNull(),
+    expiresAt: timestamp("expiresAt", { precision: 3, mode: "date" }).notNull(),
+    usedAt: timestamp("usedAt", { precision: 3, mode: "date" }),
+    createdAt: timestamp("createdAt", { precision: 3, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("PasswordResetOtp_userId_createdAt_idx").on(
+      table.userId,
+      table.createdAt,
+    ),
   ],
 );
 
@@ -277,3 +303,4 @@ export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type OrgInvite = typeof orgInvites.$inferSelect;
 export type MemberInvite = typeof memberInvites.$inferSelect;
+export type PasswordResetOtp = typeof passwordResetOtps.$inferSelect;

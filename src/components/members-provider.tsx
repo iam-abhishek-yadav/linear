@@ -16,14 +16,12 @@ export function MembersProvider({
   children: React.ReactNode;
 }) {
   const membersQuery = useQuery({
-    queryKey: queryKeys.members,
-    queryFn: fetchMembersPage,
-    select: (data) => data.members,
-    initialData: {
-      members: members.map((member) => ({ ...member, createdAt: "" })),
-      pendingInvites: [],
+    queryKey: queryKeys.orgMembers,
+    queryFn: async () => {
+      const data = await fetchMembersPage();
+      return data.members;
     },
-    initialDataUpdatedAt: Date.now(),
+    initialData: members,
   });
 
   return (

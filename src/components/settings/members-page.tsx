@@ -111,7 +111,10 @@ export function MembersPage({
   const [revoking, setRevoking] = useState(false);
 
   async function refreshMembers() {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.members });
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.membersPage }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.orgMembers }),
+    ]);
   }
 
   const filteredMembers = useMemo(() => {

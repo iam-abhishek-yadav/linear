@@ -78,6 +78,20 @@
       "when": 1783943276043,
       "tag": "0010_cute_demogoblin",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1783945388546,
+      "tag": "0011_milky_mongu",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1783952086137,
+      "tag": "0012_lovely_electro",
+      "breakpoints": true
     }
   ]
 }

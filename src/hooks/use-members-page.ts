@@ -7,7 +7,7 @@ import { queryKeys } from "@/lib/query-keys";
 
 export function useMembersPage(initialData?: MembersPageData) {
   return useQuery({
-    queryKey: queryKeys.members,
+    queryKey: queryKeys.membersPage,
     queryFn: fetchMembersPage,
     initialData,
   });

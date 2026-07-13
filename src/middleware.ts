@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SESSION_COOKIE } from "@/lib/auth-constants";
 
-const authRoutes = ["/login", "/register", "/join"];
+const authRoutes = ["/login", "/register", "/join", "/forgot-password"];
 const publicRoutes = ["/", ...authRoutes];
 const publicApiPrefixes = ["/api/auth", "/api/invites", "/api/members/invites", "/api/health"];
 

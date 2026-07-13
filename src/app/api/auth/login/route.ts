@@ -5,6 +5,7 @@ import { createSession, verifyPassword } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { loginSchema } from "@/lib/validations";
 import { withApiRoute } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export const POST = withApiRoute("auth.login", async (request: Request) => {
   const body = await request.json();
@@ -19,6 +20,14 @@ export const POST = withApiRoute("auth.login", async (request: Request) => {
 
   const { email, password } = parsed.data;
   const normalizedEmail = email.toLowerCase();
+
+  const rateLimit = checkRateLimit(`login:${normalizedEmail}`);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: { email: ["Too many attempts. Try again later."] } },
+      { status: 429 },
+    );
+  }
 
   const [result] = await db
     .select({

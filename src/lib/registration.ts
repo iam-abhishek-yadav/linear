@@ -35,7 +35,7 @@ async function resolveUniqueSlug(orgName: string) {
 
 export async function createOrganizationWithAdmin(
   input: WorkspaceRegistrationInput,
-  invite?: OrgInvite,
+  invite: OrgInvite,
 ) {
   const normalizedEmail = input.email.toLowerCase();
 
@@ -75,12 +75,10 @@ export async function createOrganizationWithAdmin(
       updatedAt: now,
     });
 
-    if (invite) {
-      await tx
-        .update(orgInvites)
-        .set({ acceptedAt: now })
-        .where(eq(orgInvites.id, invite.id));
-    }
+    await tx
+      .update(orgInvites)
+      .set({ acceptedAt: now })
+      .where(eq(orgInvites.id, invite.id));
   });
 
   await createSession(userId);

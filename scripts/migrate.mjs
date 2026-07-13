@@ -2,15 +2,13 @@ import "dotenv/config";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import pg from "pg";
+import {
+  createMigrationPool,
+  getMigrationConnectionString,
+} from "./db-connection.mjs";
 
-const connectionString = process.env.DATABASE_URL;
-
-if (!connectionString) {
-  console.error("DATABASE_URL is required");
-  process.exit(1);
-}
-
-const pool = new pg.Pool({ connectionString });
+const connectionString = getMigrationConnectionString();
+const pool = await createMigrationPool(pg, connectionString);
 const db = drizzle(pool);
 
 try {

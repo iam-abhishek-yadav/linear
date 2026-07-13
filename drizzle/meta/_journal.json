@@ -71,6 +71,13 @@
       "when": 1783602604400,
       "tag": "0009_violet_emma_frost",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1783943276043,
+      "tag": "0010_cute_demogoblin",
+      "breakpoints": true
     }
   ]
 }

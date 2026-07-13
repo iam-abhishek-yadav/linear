@@ -3,20 +3,19 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import pg from "pg";
+import {
+  createMigrationPool,
+  getMigrationConnectionString,
+} from "./db-connection.mjs";
 
-const connectionString = process.env.DATABASE_URL;
-
-if (!connectionString) {
-  console.error("DATABASE_URL is required");
-  process.exit(1);
-}
+const connectionString = getMigrationConnectionString();
 
 const migrationsFolder = "drizzle";
 const journal = JSON.parse(
   fs.readFileSync(path.join(migrationsFolder, "meta/_journal.json"), "utf8"),
 );
 
-const pool = new pg.Pool({ connectionString });
+const pool = await createMigrationPool(pg, connectionString);
 
 try {
   await pool.query(`CREATE SCHEMA IF NOT EXISTS drizzle`);

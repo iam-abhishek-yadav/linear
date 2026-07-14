@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight } from "lucide-react";
-import { AssigneeFilter } from "@/components/issues/assignee-filter";
+import { IssueFiltersMenu } from "@/components/issues/issue-filters-menu";
 import { useSession } from "@/components/session-provider";
 import { SidebarTrigger } from "@/components/sidebar-provider";
 import type { Member } from "@/hooks/use-members";
+import type { ViewFilters } from "@/lib/task-filters";
 import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
 
@@ -57,21 +58,43 @@ export function IssuesPageChrome({
   title = "Issues",
   assignedView = "all",
   members = [],
-  selectedAssigneeId = null,
+  filters,
+  isFiltering = false,
   onSelectAssignee,
-  onClearAssigneeFilter,
+  onClearAssignee,
+  onTogglePriority,
+  onClearPriorities,
+  onToggleTag,
+  onClearTags,
+  onClearAll,
 }: {
   scope?: IssuesTabScope;
   title?: string;
   assignedView?: AssignedView;
   members?: Member[];
-  selectedAssigneeId?: string | null;
+  filters?: ViewFilters;
+  isFiltering?: boolean;
   onSelectAssignee?: (id: string) => void;
-  onClearAssigneeFilter?: () => void;
+  onClearAssignee?: () => void;
+  onTogglePriority?: (priority: ViewFilters["priorities"][number]) => void;
+  onClearPriorities?: () => void;
+  onToggleTag?: (tagId: string) => void;
+  onClearTags?: () => void;
+  onClearAll?: () => void;
 }) {
   const pathname = usePathname();
   const { organization } = useSession();
   const tabs = getViewTabs(scope);
+  const showFilters =
+    scope !== "assigned" &&
+    filters &&
+    onSelectAssignee &&
+    onClearAssignee &&
+    onTogglePriority &&
+    onClearPriorities &&
+    onToggleTag &&
+    onClearTags &&
+    onClearAll;
 
   return (
     <header className="shrink-0">
@@ -94,42 +117,41 @@ export function IssuesPageChrome({
         </div>
       </div>
 
-      <div className="flex h-9 items-stretch border-b border-white/[0.06]">
-        <div className="flex min-w-0 flex-1 overflow-x-auto overscroll-x-contain scrollbar-none">
-          <div className="flex items-center gap-3 px-3 md:px-5">
-            <div className="flex shrink-0 items-center gap-0.5">
-              {tabs.map((tab) => {
-                const isActive = isTabActive(scope, tab, pathname, assignedView);
-                return (
-                  <Link
-                    key={tab.href}
-                    href={tab.href}
-                    className={cn(
-                      "shrink-0 rounded-[6px] px-2.5 py-1 text-[14px] whitespace-nowrap transition-colors",
-                      isActive
-                        ? "bg-white/[0.07] text-foreground"
-                        : "text-muted-foreground/70 hover:text-foreground/80",
-                    )}
-                  >
-                    {tab.label}
-                  </Link>
-                );
-              })}
-            </div>
-
-            {scope !== "assigned" &&
-              onSelectAssignee &&
-              onClearAssigneeFilter &&
-              members.length > 0 && (
-                <AssigneeFilter
-                  members={members}
-                  selectedId={selectedAssigneeId}
-                  onSelect={onSelectAssignee}
-                  onClear={onClearAssigneeFilter}
-                />
-              )}
-          </div>
+      <div className="flex h-9 items-center justify-between gap-2 border-b border-white/[0.06] px-3 md:px-5">
+        <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto overscroll-x-contain scrollbar-none">
+          {tabs.map((tab) => {
+            const isActive = isTabActive(scope, tab, pathname, assignedView);
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className={cn(
+                  "shrink-0 rounded-[6px] px-2.5 py-1 text-[14px] whitespace-nowrap transition-colors",
+                  isActive
+                    ? "bg-white/[0.07] text-foreground"
+                    : "text-muted-foreground/70 hover:text-foreground/80",
+                )}
+              >
+                {tab.label}
+              </Link>
+            );
+          })}
         </div>
+
+        {showFilters && (
+          <IssueFiltersMenu
+            members={members}
+            filters={filters}
+            isFiltering={isFiltering}
+            onSelectAssignee={onSelectAssignee}
+            onClearAssignee={onClearAssignee}
+            onTogglePriority={onTogglePriority}
+            onClearPriorities={onClearPriorities}
+            onToggleTag={onToggleTag}
+            onClearTags={onClearTags}
+            onClearAll={onClearAll}
+          />
+        )}
       </div>
     </header>
   );

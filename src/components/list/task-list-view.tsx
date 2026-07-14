@@ -19,7 +19,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useAssigneeFilter } from "@/hooks/use-assignee-filter";
+import { useViewFilters } from "@/hooks/use-view-filters";
 import type { TaskInput } from "@/hooks/use-tasks";
 import { useMembersContext } from "@/components/members-provider";
 import {
@@ -29,14 +29,14 @@ import {
   PRIORITIES,
 } from "@/lib/constants";
 import { formatTaskIdentifier, getProjectKey } from "@/lib/task-utils";
-import { filterByAssignee } from "@/lib/task-filters";
+import { applyTaskFilters } from "@/lib/task-filters";
 import { getTaskCompletedAt } from "@/lib/task-visibility";
-import type { Task, TaskPriority, TaskStatus } from "@/lib/types";
+import type { Task, TaskPriority, TaskStatus, TaskWithTags } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type TaskListViewProps = {
-  tasks: Task[];
-  allTasks: Task[];
+  tasks: TaskWithTags[];
+  allTasks: TaskWithTags[];
   loading: boolean;
   filterStatus?: TaskStatus[];
   emptyMessage?: string;
@@ -219,7 +219,17 @@ function TaskListViewContent({
   onDelete,
 }: TaskListViewProps) {
   const members = useMembersContext();
-  const { selectedId, select, clear } = useAssigneeFilter();
+  const {
+    filters,
+    isFiltering,
+    select,
+    clear,
+    togglePriority,
+    clearPriorities,
+    toggleTag,
+    clearTags,
+    clearAll,
+  } = useViewFilters();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -229,19 +239,17 @@ function TaskListViewContent({
     ? tasks.filter((t) => filterStatus.includes(t.status))
     : tasks;
 
-  const assigneeFiltered =
-    tabScope === "assigned"
-      ? visible
-      : filterByAssignee(visible, selectedId);
+  const filtered =
+    tabScope === "assigned" ? visible : applyTaskFilters(visible, filters);
 
   const sorted =
     variant === "completed"
-      ? [...assigneeFiltered].sort((a, b) => {
+      ? [...filtered].sort((a, b) => {
           const aTime = getTaskCompletedAt(a)?.getTime() ?? 0;
           const bTime = getTaskCompletedAt(b)?.getTime() ?? 0;
           return bTime - aTime;
         })
-      : [...assigneeFiltered].sort((a, b) => {
+      : [...filtered].sort((a, b) => {
           const order = filterStatus ?? LIST_STATUS_ORDER;
           const statusOrder = order.indexOf(a.status) - order.indexOf(b.status);
           if (statusOrder !== 0) return statusOrder;
@@ -284,9 +292,15 @@ function TaskListViewContent({
           title={pageTitle}
           assignedView={assignedView}
           members={members}
-          selectedAssigneeId={selectedId}
+          filters={filters}
+          isFiltering={isFiltering}
           onSelectAssignee={select}
-          onClearAssigneeFilter={clear}
+          onClearAssignee={clear}
+          onTogglePriority={togglePriority}
+          onClearPriorities={clearPriorities}
+          onToggleTag={toggleTag}
+          onClearTags={clearTags}
+          onClearAll={clearAll}
         />
 
         <main className="flex-1 overflow-y-auto pb-14">
@@ -368,7 +382,19 @@ function TaskListViewFallback({
   assignedView = "all",
 }: Pick<TaskListViewProps, "tabScope" | "pageTitle" | "assignedView">) {
   const members = useMembersContext();
-  const { selectedId, select, clear } = useAssigneeFilter();
+  const {
+    filters,
+    isFiltering,
+    select,
+    clear,
+    togglePriority,
+    clearPriorities,
+    toggleTag,
+    clearTags,
+    clearAll,
+  } = useViewFilters();
+
+  const showFilters = tabScope !== "assigned";
 
   return (
     <div className="flex flex-1 flex-col">
@@ -377,9 +403,15 @@ function TaskListViewFallback({
         title={pageTitle}
         assignedView={assignedView}
         members={members}
-        selectedAssigneeId={tabScope === "assigned" ? null : selectedId}
-        onSelectAssignee={tabScope === "assigned" ? undefined : select}
-        onClearAssigneeFilter={tabScope === "assigned" ? undefined : clear}
+        filters={showFilters ? filters : undefined}
+        isFiltering={showFilters && isFiltering}
+        onSelectAssignee={showFilters ? select : undefined}
+        onClearAssignee={showFilters ? clear : undefined}
+        onTogglePriority={showFilters ? togglePriority : undefined}
+        onClearPriorities={showFilters ? clearPriorities : undefined}
+        onToggleTag={showFilters ? toggleTag : undefined}
+        onClearTags={showFilters ? clearTags : undefined}
+        onClearAll={showFilters ? clearAll : undefined}
       />
       <div className="flex flex-1 items-center justify-center">
         <Loader2 className="size-5 animate-spin text-muted-foreground" />

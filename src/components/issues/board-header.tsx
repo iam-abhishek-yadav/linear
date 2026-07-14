@@ -1,30 +1,52 @@
 "use client";
 
 import { ChevronRight, Plus } from "lucide-react";
-import { AssigneeFilter } from "@/components/issues/assignee-filter";
+import { IssueFiltersMenu } from "@/components/issues/issue-filters-menu";
 import { useSession } from "@/components/session-provider";
 import { SidebarTrigger } from "@/components/sidebar-provider";
 import { Button } from "@/components/ui/button";
 import type { Member } from "@/hooks/use-members";
+import type { ViewFilters } from "@/lib/task-filters";
 import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
 
 type BoardPageChromeProps = {
   onNewIssue?: () => void;
   members?: Member[];
-  selectedAssigneeId?: string | null;
+  filters?: ViewFilters;
+  isFiltering?: boolean;
   onSelectAssignee?: (id: string) => void;
-  onClearAssigneeFilter?: () => void;
+  onClearAssignee?: () => void;
+  onTogglePriority?: (priority: ViewFilters["priorities"][number]) => void;
+  onClearPriorities?: () => void;
+  onToggleTag?: (tagId: string) => void;
+  onClearTags?: () => void;
+  onClearAll?: () => void;
 };
 
 export function BoardPageChrome({
   onNewIssue,
   members = [],
-  selectedAssigneeId = null,
+  filters,
+  isFiltering = false,
   onSelectAssignee,
-  onClearAssigneeFilter,
+  onClearAssignee,
+  onTogglePriority,
+  onClearPriorities,
+  onToggleTag,
+  onClearTags,
+  onClearAll,
 }: BoardPageChromeProps) {
   const { organization } = useSession();
+  const showFilters =
+    filters &&
+    onSelectAssignee &&
+    onClearAssignee &&
+    onTogglePriority &&
+    onClearPriorities &&
+    onToggleTag &&
+    onClearTags &&
+    onClearAll;
 
   return (
     <header className="shrink-0">
@@ -46,29 +68,36 @@ export function BoardPageChrome({
             <ChevronRight className="hidden size-3 shrink-0 text-muted-foreground/40 sm:block" />
             <span className="shrink-0 text-muted-foreground">Board</span>
           </div>
-
-          {onSelectAssignee &&
-            onClearAssigneeFilter &&
-            members.length > 0 && (
-              <AssigneeFilter
-                members={members}
-                selectedId={selectedAssigneeId}
-                onSelect={onSelectAssignee}
-                onClear={onClearAssigneeFilter}
-              />
-            )}
         </div>
-        {onNewIssue && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-7 shrink-0 gap-1.5 px-2 text-[14px] text-muted-foreground hover:bg-white/[0.06] sm:px-3"
-            onClick={onNewIssue}
-          >
-            <Plus className="size-3.5" />
-            <span className="hidden sm:inline">New issue</span>
-          </Button>
-        )}
+
+        <div className="flex shrink-0 items-center gap-0.5">
+          {showFilters && (
+            <IssueFiltersMenu
+              members={members}
+              filters={filters}
+              isFiltering={isFiltering}
+              onSelectAssignee={onSelectAssignee}
+              onClearAssignee={onClearAssignee}
+              onTogglePriority={onTogglePriority}
+              onClearPriorities={onClearPriorities}
+              onToggleTag={onToggleTag}
+              onClearTags={onClearTags}
+              onClearAll={onClearAll}
+            />
+          )}
+          {onNewIssue && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="size-7 shrink-0 px-0 text-muted-foreground hover:bg-white/[0.06]"
+              onClick={onNewIssue}
+              aria-label="New issue"
+              title="New issue"
+            >
+              <Plus className="size-3.5" />
+            </Button>
+          )}
+        </div>
       </div>
     </header>
   );

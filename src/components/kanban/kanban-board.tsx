@@ -23,10 +23,10 @@ import { KanbanCardContent } from "@/components/kanban/kanban-card";
 import { TaskDialog } from "@/components/kanban/task-dialog";
 import { BoardPageChrome } from "@/components/issues/board-header";
 import { useMembersContext } from "@/components/members-provider";
-import { useAssigneeFilter } from "@/hooks/use-assignee-filter";
+import { useViewFilters } from "@/hooks/use-view-filters";
 import { useTasks } from "@/hooks/use-tasks";
 import { COLUMNS } from "@/lib/constants";
-import { filterByAssignee } from "@/lib/task-filters";
+import { applyTaskFilters } from "@/lib/task-filters";
 import {
   countStaleCompletedTasks,
   filterMainViewTasks,
@@ -127,7 +127,17 @@ function KanbanBoardContent() {
     persistReorder,
   } = useTasks();
   const members = useMembersContext();
-  const { selectedId, select, clear } = useAssigneeFilter();
+  const {
+    filters,
+    isFiltering,
+    select,
+    clear,
+    togglePriority,
+    clearPriorities,
+    toggleTag,
+    clearTags,
+    clearAll,
+  } = useViewFilters();
 
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -148,9 +158,9 @@ function KanbanBoardContent() {
   );
 
   const staleCompletedCount = countStaleCompletedTasks(tasks);
-  const visibleTasks = filterByAssignee(
+  const visibleTasks = applyTaskFilters(
     filterMainViewTasks(tasks),
-    selectedId,
+    filters,
   );
   const grouped = groupByStatus(visibleTasks);
 
@@ -239,9 +249,15 @@ function KanbanBoardContent() {
       <BoardPageChrome
         onNewIssue={() => setNewDialogOpen(true)}
         members={members}
-        selectedAssigneeId={selectedId}
+        filters={filters}
+        isFiltering={isFiltering}
         onSelectAssignee={select}
-        onClearAssigneeFilter={clear}
+        onClearAssignee={clear}
+        onTogglePriority={togglePriority}
+        onClearPriorities={clearPriorities}
+        onToggleTag={toggleTag}
+        onClearTags={clearTags}
+        onClearAll={clearAll}
       />
       <DndContext
         sensors={sensors}

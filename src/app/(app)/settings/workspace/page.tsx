@@ -1,37 +1,21 @@
-import { SidebarTrigger } from "@/components/sidebar-provider";
-import { getCurrentUser } from "@/lib/auth";
-import { getAvatarColor, getInitials } from "@/lib/user-utils";
+import { redirect } from "next/navigation";
+import { WorkspacePage } from "@/components/settings/workspace-page";
+import { requireAdmin } from "@/lib/auth";
 
 export default async function WorkspaceSettingsPage() {
-  const session = await getCurrentUser();
+  const session = await requireAdmin();
 
   if (!session) {
-    return null;
+    redirect("/settings/profile");
   }
 
-  const { organization } = session;
-  const initials = getInitials(organization.name);
-  const avatarColor = getAvatarColor(organization.name);
-
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center gap-2 border-b border-border/40 px-8 py-6">
-        <SidebarTrigger />
-        <h1 className="text-2xl font-semibold tracking-tight">Workspace</h1>
-      </div>
-      <div className="space-y-6 px-8 py-6">
-        <div className="flex items-center gap-4">
-          <span
-            className={`flex size-12 items-center justify-center rounded-lg text-sm font-bold text-white ${avatarColor}`}
-          >
-            {initials}
-          </span>
-          <div>
-            <p className="text-lg font-medium">{organization.name}</p>
-            <p className="text-sm text-muted-foreground">{organization.slug}</p>
-          </div>
-        </div>
-      </div>
-    </div>
+    <WorkspacePage
+      initialOrganization={{
+        id: session.organization.id,
+        name: session.organization.name,
+        slug: session.organization.slug,
+      }}
+    />
   );
 }

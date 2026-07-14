@@ -15,6 +15,7 @@ import {
 import { useNotifications } from "@/components/notifications-provider";
 import { useSession } from "@/components/session-provider";
 import { WorkspaceMenu } from "@/components/workspace-menu";
+import { canManageMembers, isAdmin, ROLE_LABELS } from "@/lib/roles";
 import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
 
@@ -22,15 +23,13 @@ const accountNav = [
   { href: "/settings/profile", label: "Profile", icon: UserCircle },
 ];
 
-const adminNav = [
+const workspaceAdminNav = [
   { href: "/settings/workspace", label: "Workspace", icon: Building2 },
-  { href: "/settings/members", label: "Members", icon: Users },
 ];
 
-const roleLabels = {
-  ADMIN: "Admin",
-  MEMBER: "Member",
-} as const;
+const membersNav = [
+  { href: "/settings/members", label: "Members", icon: Users },
+];
 
 function NavLink({
   href,
@@ -138,17 +137,26 @@ export function AppSidebar() {
           ))}
         </div>
 
-        {user.role === "ADMIN" && (
+        {(isAdmin(user.role) || canManageMembers(user.role)) && (
           <>
             <SectionLabel>Administration</SectionLabel>
             <div className="space-y-0">
-              {adminNav.map((item) => (
-                <NavLink
-                  key={item.href}
-                  {...item}
-                  active={pathname === item.href}
-                />
-              ))}
+              {isAdmin(user.role) &&
+                workspaceAdminNav.map((item) => (
+                  <NavLink
+                    key={item.href}
+                    {...item}
+                    active={pathname === item.href}
+                  />
+                ))}
+              {canManageMembers(user.role) &&
+                membersNav.map((item) => (
+                  <NavLink
+                    key={item.href}
+                    {...item}
+                    active={pathname === item.href}
+                  />
+                ))}
             </div>
           </>
         )}
@@ -171,7 +179,7 @@ export function AppSidebar() {
                 {user.name}
               </p>
               <p className="truncate text-[12px] text-muted-foreground/70">
-                {roleLabels[user.role]}
+                {ROLE_LABELS[user.role]}
               </p>
             </div>
           </Link>

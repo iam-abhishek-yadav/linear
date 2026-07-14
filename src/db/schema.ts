@@ -168,7 +168,13 @@ export type NotificationType = (typeof notificationTypeEnum.enumValues)[number];
 export type TaskStatus = (typeof taskStatusEnum.enumValues)[number];
 export type TaskPriority = (typeof taskPriorityEnum.enumValues)[number];
 
-export const userRoleEnum = pgEnum("UserRole", ["ADMIN", "MEMBER"]);
+export const userRoleEnum = pgEnum("UserRole", [
+  "ADMIN",
+  "MANAGER",
+  "MEMBER",
+]);
+
+export type UserRole = (typeof userRoleEnum.enumValues)[number];
 
 export const organizations = pgTable(
   "Organization",

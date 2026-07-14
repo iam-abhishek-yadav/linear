@@ -110,3 +110,15 @@ export async function requireAdmin() {
   }
   return session;
 }
+
+/** Admin or manager — for members invites and the members settings page. */
+export async function requireMemberManager() {
+  const session = await requireUser();
+  if (
+    !session ||
+    (session.user.role !== "ADMIN" && session.user.role !== "MANAGER")
+  ) {
+    return null;
+  }
+  return session;
+}

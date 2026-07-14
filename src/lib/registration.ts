@@ -1,8 +1,9 @@
 import { createId } from "@paralleldrive/cuid2";
 import { eq } from "drizzle-orm";
 import { organizations, orgInvites, users } from "@/db/schema";
-import { createSession, hashPassword, slugifyOrgName } from "@/lib/auth";
+import { createSession, hashPassword } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { resolveUniqueSlug } from "@/lib/organization";
 import type { OrgInvite } from "@/db/schema";
 
 export type WorkspaceRegistrationInput = {
@@ -11,27 +12,6 @@ export type WorkspaceRegistrationInput = {
   email: string;
   password: string;
 };
-
-async function resolveUniqueSlug(orgName: string) {
-  const baseSlug = slugifyOrgName(orgName);
-  let slug = baseSlug || createId();
-  let suffix = 0;
-
-  while (true) {
-    const [existingOrg] = await db
-      .select({ id: organizations.id })
-      .from(organizations)
-      .where(eq(organizations.slug, slug))
-      .limit(1);
-
-    if (!existingOrg) {
-      return slug;
-    }
-
-    suffix += 1;
-    slug = `${baseSlug}-${suffix}`;
-  }
-}
 
 export async function createOrganizationWithAdmin(
   input: WorkspaceRegistrationInput,

@@ -1,16 +1,18 @@
 import { and, asc, eq, isNull } from "drizzle-orm";
 import { cache } from "react";
+import type { UserRole } from "@/db/schema";
 import { memberInvites, users } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { logServerCall } from "@/lib/logger";
 import { getMemberInviteUrl } from "@/lib/member-invites";
+import { canManageMembers } from "@/lib/roles";
 
 export type Member = {
   id: string;
   name: string;
   email: string;
-  role: "ADMIN" | "MEMBER";
+  role: UserRole;
   isCurrentUser: boolean;
 };
 
@@ -68,7 +70,7 @@ export const getOrgMembers = cache(() =>
 async function fetchMembersPageData(
   organizationId: string,
   currentUserId: string,
-  isAdmin: boolean,
+  includePendingInvites: boolean,
 ): Promise<MembersPageData> {
   const memberRows = await db
     .select({
@@ -82,7 +84,7 @@ async function fetchMembersPageData(
     .where(eq(users.organizationId, organizationId))
     .orderBy(asc(users.createdAt));
 
-  const pendingInvites = isAdmin
+  const pendingInvites = includePendingInvites
     ? await db
         .select({
           id: memberInvites.id,
@@ -131,7 +133,7 @@ export const getMembersPageData = cache(() =>
       fetchMembersPageData(
         session.organization.id,
         session.user.id,
-        session.user.role === "ADMIN",
+        canManageMembers(session.user.role),
       ),
     );
   }),

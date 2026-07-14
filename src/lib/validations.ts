@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { TASK_STATUSES } from "@/lib/constants";
+import { USER_ROLES } from "@/lib/roles";
 
 const taskStatusSchema = z.enum(TASK_STATUSES);
 
@@ -47,4 +48,12 @@ export const registerSchema = z.object({
 export const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
+});
+
+export const updateOrganizationSchema = z.object({
+  name: z.string().min(1, "Organization name is required").max(100),
+});
+
+export const updateMemberRoleSchema = z.object({
+  role: z.enum(USER_ROLES),
 });

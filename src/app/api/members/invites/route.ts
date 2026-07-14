@@ -1,14 +1,14 @@
 import { and, eq, gt, isNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { memberInvites, users } from "@/db/schema";
-import { requireAdmin } from "@/lib/auth";
+import { requireMemberManager } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createMemberInvite } from "@/lib/member-invites";
 import { createMemberInviteSchema } from "@/lib/member-validations";
 import { withApiRoute } from "@/lib/logger";
 
 export const POST = withApiRoute("members.invites.create", async (request: Request) => {
-  const session = await requireAdmin();
+  const session = await requireMemberManager();
   if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

@@ -63,7 +63,7 @@ Always check `src/db/schema.ts` before assuming table/column names.
 | Table | Notes |
 |-------|-------|
 | `Organization` | Workspace; unique `slug` |
-| `User` | Belongs to one org; `role`: `ADMIN` \| `MEMBER` |
+| `User` | Belongs to one org; `role`: `ADMIN` \| `MANAGER` \| `MEMBER` |
 | `Session` | Server-side session; cookie stores id only |
 | `Task` | Org-scoped; `status`, `priority`, `position`, `assigneeId` |
 | `TaskActivity` | Audit log for task changes |
@@ -145,7 +145,7 @@ Follow existing handlers (e.g. `src/app/api/tasks/route.ts`):
 5. Use transactions when writing task + activity + notifications together
 6. Return `NextResponse.json(...)`
 
-Admin-only: member revoke, invite create/revoke (`/settings/members`, `/api/members/*`).
+Admin-only: org rename/delete (`/settings/workspace`), member role changes. Admin or Manager: member invite/revoke (`/settings/members`, `/api/members/*`).
 
 ## Database workflow
 

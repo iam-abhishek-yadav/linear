@@ -35,13 +35,20 @@ import {
 } from "@/components/ui/select";
 import { formatRelativeDate, getAvatarColor, getInitials } from "@/lib/user-utils";
 import { queryKeys } from "@/lib/query-keys";
+import {
+  canManageMembers,
+  canRevokeMember as canActorRevokeMember,
+  isAdmin,
+  ROLE_LABELS,
+} from "@/lib/roles";
+import type { UserRole } from "@/db/schema";
 import { cn } from "@/lib/utils";
 
 type Member = {
   id: string;
   name: string;
   email: string;
-  role: "ADMIN" | "MEMBER";
+  role: UserRole;
   createdAt: string;
   isCurrentUser: boolean;
 };
@@ -72,6 +79,14 @@ function RoleBadge({ role }: { role: Member["role"] }) {
     return (
       <Badge className="h-5 rounded border-0 bg-violet-500/20 px-1.5 text-[12px] font-medium text-violet-300">
         Admin
+      </Badge>
+    );
+  }
+
+  if (role === "MANAGER") {
+    return (
+      <Badge className="h-5 rounded border-0 bg-sky-500/20 px-1.5 text-[12px] font-medium text-sky-300">
+        Manager
       </Badge>
     );
   }
@@ -109,6 +124,7 @@ export function MembersPage({
     | null
   >(null);
   const [revoking, setRevoking] = useState(false);
+  const [roleUpdatingId, setRoleUpdatingId] = useState<string | null>(null);
 
   async function refreshMembers() {
     await Promise.all([
@@ -128,6 +144,7 @@ export function MembersPage({
       const matchesRole =
         roleFilter === "all" ||
         (roleFilter === "admin" && member.role === "ADMIN") ||
+        (roleFilter === "manager" && member.role === "MANAGER") ||
         (roleFilter === "member" && member.role === "MEMBER");
 
       return matchesSearch && matchesRole;
@@ -145,7 +162,8 @@ export function MembersPage({
     );
   }, [pendingInvites, search]);
 
-  const isAdmin = user.role === "ADMIN";
+  const userIsAdmin = isAdmin(user.role);
+  const userCanManageMembers = canManageMembers(user.role);
 
   async function handleRevoke() {
     if (!revokeTarget) {
@@ -173,8 +191,35 @@ export function MembersPage({
     await refreshMembers();
   }
 
-  function canRevokeMember(member: Member) {
-    return isAdmin && member.role === "MEMBER" && !member.isCurrentUser;
+  async function handleRoleChange(memberId: string, role: UserRole) {
+    setRoleUpdatingId(memberId);
+
+    const response = await fetch(`/api/members/${memberId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role }),
+    });
+
+    setRoleUpdatingId(null);
+
+    if (!response.ok) {
+      const data = await response.json();
+      alert(data.error ?? "Failed to update role");
+      return;
+    }
+
+    await refreshMembers();
+  }
+
+  function memberCanBeRevoked(member: Member) {
+    return (
+      !member.isCurrentUser &&
+      canActorRevokeMember(user.role, member.role)
+    );
+  }
+
+  function memberHasActions(member: Member) {
+    return userIsAdmin || memberCanBeRevoked(member);
   }
 
   return (
@@ -205,10 +250,11 @@ export function MembersPage({
               <SelectContent>
                 <SelectItem value="all">All</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="manager">Manager</SelectItem>
                 <SelectItem value="member">Member</SelectItem>
               </SelectContent>
             </Select>
-            {isAdmin && (
+            {userCanManageMembers && (
               <Button
                 size="sm"
                 className="h-8 bg-violet-600 text-[14px] text-white hover:bg-violet-500"
@@ -245,27 +291,47 @@ export function MembersPage({
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
                         <RoleBadge role={member.role} />
-                        {isAdmin && canRevokeMember(member) && (
+                        {memberHasActions(member) && (
                           <DropdownMenu>
                             <DropdownMenuTrigger
                               className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
                               aria-label={`Actions for ${member.name}`}
+                              disabled={roleUpdatingId === member.id}
                             >
                               <MoreHorizontal className="size-3.5" />
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-40">
-                              <DropdownMenuItem
-                                variant="destructive"
-                                onClick={() =>
-                                  setRevokeTarget({
-                                    type: "member",
-                                    id: member.id,
-                                    name: member.name,
-                                  })
-                                }
-                              >
-                                Revoke access
-                              </DropdownMenuItem>
+                            <DropdownMenuContent align="end" className="w-44">
+                              {userIsAdmin &&
+                                (
+                                  ["ADMIN", "MANAGER", "MEMBER"] as UserRole[]
+                                ).map((role) => (
+                                  <DropdownMenuItem
+                                    key={role}
+                                    disabled={
+                                      member.role === role ||
+                                      roleUpdatingId === member.id
+                                    }
+                                    onClick={() =>
+                                      handleRoleChange(member.id, role)
+                                    }
+                                  >
+                                    Make {ROLE_LABELS[role].toLowerCase()}
+                                  </DropdownMenuItem>
+                                ))}
+                              {memberCanBeRevoked(member) && (
+                                <DropdownMenuItem
+                                  variant="destructive"
+                                  onClick={() =>
+                                    setRevokeTarget({
+                                      type: "member",
+                                      id: member.id,
+                                      name: member.name,
+                                    })
+                                  }
+                                >
+                                  Revoke access
+                                </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         )}
@@ -299,7 +365,9 @@ export function MembersPage({
                       <th className="px-4 py-2.5 font-medium">Status</th>
                       <th className="px-4 py-2.5 font-medium">Joined</th>
                       <th className="px-4 py-2.5 font-medium">Last seen</th>
-                      {isAdmin && <th className="px-4 py-2.5 font-medium" />}
+                      {(userIsAdmin || userCanManageMembers) && (
+                        <th className="px-4 py-2.5 font-medium" />
+                      )}
                     </tr>
                   </thead>
                   <tbody>
@@ -331,29 +399,49 @@ export function MembersPage({
                             <span className="text-muted-foreground">—</span>
                           )}
                         </td>
-                        {isAdmin && (
+                        {(userIsAdmin || userCanManageMembers) && (
                           <td className="px-4 py-3 text-right">
-                            {canRevokeMember(member) && (
+                            {memberHasActions(member) && (
                               <DropdownMenu>
                                 <DropdownMenuTrigger
                                   className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
                                   aria-label={`Actions for ${member.name}`}
+                                  disabled={roleUpdatingId === member.id}
                                 >
                                   <MoreHorizontal className="size-3.5" />
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-40">
-                                  <DropdownMenuItem
-                                    variant="destructive"
-                                    onClick={() =>
-                                      setRevokeTarget({
-                                        type: "member",
-                                        id: member.id,
-                                        name: member.name,
-                                      })
-                                    }
-                                  >
-                                    Revoke access
-                                  </DropdownMenuItem>
+                                <DropdownMenuContent align="end" className="w-44">
+                                  {userIsAdmin &&
+                                    (
+                                      ["ADMIN", "MANAGER", "MEMBER"] as UserRole[]
+                                    ).map((role) => (
+                                      <DropdownMenuItem
+                                        key={role}
+                                        disabled={
+                                          member.role === role ||
+                                          roleUpdatingId === member.id
+                                        }
+                                        onClick={() =>
+                                          handleRoleChange(member.id, role)
+                                        }
+                                      >
+                                        Make {ROLE_LABELS[role].toLowerCase()}
+                                      </DropdownMenuItem>
+                                    ))}
+                                  {memberCanBeRevoked(member) && (
+                                    <DropdownMenuItem
+                                      variant="destructive"
+                                      onClick={() =>
+                                        setRevokeTarget({
+                                          type: "member",
+                                          id: member.id,
+                                          name: member.name,
+                                        })
+                                      }
+                                    >
+                                      Revoke access
+                                    </DropdownMenuItem>
+                                  )}
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             )}
@@ -391,7 +479,7 @@ export function MembersPage({
                             </Badge>
                           </div>
                         </div>
-                        {isAdmin && (
+                        {userCanManageMembers && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -437,7 +525,9 @@ export function MembersPage({
                         <th className="px-4 py-2.5 font-medium">Invite link</th>
                         <th className="px-4 py-2.5 font-medium">Invited</th>
                         <th className="px-4 py-2.5 font-medium">Expires</th>
-                        {isAdmin && <th className="px-4 py-2.5 font-medium" />}
+                        {userCanManageMembers && (
+                          <th className="px-4 py-2.5 font-medium" />
+                        )}
                       </tr>
                     </thead>
                     <tbody>
@@ -470,7 +560,7 @@ export function MembersPage({
                           <td className="px-4 py-3 text-muted-foreground">
                             {formatRelativeDate(new Date(invite.expiresAt))}
                           </td>
-                          {isAdmin && (
+                          {userCanManageMembers && (
                             <td className="px-4 py-3 text-right">
                               <Button
                                 variant="ghost"

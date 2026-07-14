@@ -1,7 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { memberInvites, users } from "@/db/schema";
-import { requireAdmin } from "@/lib/auth";
+import { requireMemberManager } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { isEmailConfigured, sendMemberInviteEmail } from "@/lib/email";
 import { withApiRoute } from "@/lib/logger";
@@ -13,7 +13,7 @@ export const POST = withApiRoute(
     _request: Request,
     { params }: { params: Promise<{ id: string }> },
   ) => {
-    const session = await requireAdmin();
+    const session = await requireMemberManager();
     if (!session) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

@@ -1,0 +1,1 @@
+ALTER TYPE "public"."UserRole" ADD VALUE 'MANAGER' BEFORE 'MEMBER';

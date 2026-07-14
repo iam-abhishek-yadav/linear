@@ -90,7 +90,7 @@ export function IssuePropertiesPanel({
   return (
     <aside
       className={cn(
-        "w-[280px] shrink-0 overflow-y-auto border-l border-white/[0.06] bg-black/20 px-3 py-4",
+        "w-[280px] shrink-0 overflow-y-auto scrollbar-hidden border-l border-white/[0.06] bg-black/20 px-3 py-4",
         className,
       )}
     >

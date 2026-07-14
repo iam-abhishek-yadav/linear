@@ -46,8 +46,6 @@ import {
   toDateInputValue,
 } from "@/lib/task-utils";
 import type { Task } from "@/lib/types";
-import { getAvatarColor, getInitials } from "@/lib/user-utils";
-import { cn } from "@/lib/utils";
 
 export function IssueDetail({ initialData }: { initialData: IssueDetailData }) {
   return <IssueDetailView data={initialData} />;
@@ -395,7 +393,7 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
       </header>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <div className="min-w-0 flex-1 overflow-y-auto">
+        <div className="min-w-0 flex-1 overflow-y-auto scrollbar-hidden">
           <div className="mx-auto max-w-3xl px-8 py-6">
             <input
               ref={titleRef}
@@ -414,17 +412,7 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
             />
 
             <section className="mt-10 border-t border-white/[0.06] pt-6">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-sm font-medium text-foreground">Activity</h2>
-                <span
-                  className={cn(
-                    "flex size-6 items-center justify-center rounded-full text-[11px] font-semibold text-white",
-                    getAvatarColor(user.name),
-                  )}
-                >
-                  {getInitials(user.name)}
-                </span>
-              </div>
+              <h2 className="mb-4 text-sm font-medium text-foreground">Activity</h2>
               <IssueActivitySection
                 taskId={task.id}
                 activities={timeline.activities}

@@ -22,7 +22,7 @@ export function IssueDetailSkeleton() {
       </header>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <div className="min-w-0 flex-1 overflow-y-auto">
+        <div className="min-w-0 flex-1 overflow-y-auto scrollbar-hidden">
           <div className="mx-auto max-w-3xl px-8 py-6">
             <Shimmer className="h-9 w-2/3" />
             <div className="mt-4 space-y-2">

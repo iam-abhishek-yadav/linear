@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { taskComments } from "@/db/schema";
-import { requireUser } from "@/lib/auth";
+import { requireUserOrResponse } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getOrganizationTask } from "@/lib/task-access";
 import { withApiRoute } from "@/lib/logger";
@@ -13,10 +13,9 @@ type RouteContext = {
 export const DELETE = withApiRoute(
   "tasks.comments.delete",
   async (_request: Request, context: RouteContext) => {
-  const session = await requireUser();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireUserOrResponse();
+  if (guard.response) return guard.response;
+  const { session } = guard;
 
   const { id, commentId } = await context.params;
 

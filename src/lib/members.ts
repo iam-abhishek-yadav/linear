@@ -3,7 +3,7 @@ import { cache } from "react";
 import type { UserRole } from "@/db/schema";
 import { memberInvites, users } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { db, withDbRetry } from "@/lib/db";
 import { logServerCall } from "@/lib/logger";
 import { getMemberInviteUrl } from "@/lib/member-invites";
 import { canManageMembers } from "@/lib/roles";
@@ -130,10 +130,12 @@ export const getMembersPageData = cache(() =>
     }
 
     return logServerCall("getMembersPageData.query", () =>
-      fetchMembersPageData(
-        session.organization.id,
-        session.user.id,
-        canManageMembers(session.user.role),
+      withDbRetry(() =>
+        fetchMembersPageData(
+          session.organization.id,
+          session.user.id,
+          canManageMembers(session.user.role),
+        ),
       ),
     );
   }),

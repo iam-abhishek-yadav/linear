@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requireUserOrResponse } from "@/lib/auth";
 import { withApiRoute } from "@/lib/logger";
 import { getOrganizationTask } from "@/lib/task-access";
 import { setTaskTags } from "@/lib/tags";
 import { setTaskTagsSchema } from "@/lib/tag-validations";
+import { zodErrorResponse } from "@/lib/validations";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -12,10 +13,9 @@ type RouteContext = {
 export const PUT = withApiRoute(
   "tasks.tags.set",
   async (request: Request, context: RouteContext) => {
-    const session = await requireUser();
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const guard = await requireUserOrResponse();
+    if (guard.response) return guard.response;
+    const { session } = guard;
 
     const { id } = await context.params;
     const existing = await getOrganizationTask(session.organization.id, id);
@@ -28,10 +28,7 @@ export const PUT = withApiRoute(
     const parsed = setTaskTagsSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.flatten().fieldErrors },
-        { status: 400 },
-      );
+      return zodErrorResponse(parsed.error);
     }
 
     try {

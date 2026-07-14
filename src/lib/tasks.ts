@@ -2,7 +2,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { cache } from "react";
 import { tasks } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { db, withDbRetry } from "@/lib/db";
 import { logServerCall } from "@/lib/logger";
 import { attachTagsToTasks, getTagsForTask, getTagsForTaskIds } from "@/lib/tags";
 import type { TaskWithTags } from "@/lib/types";
@@ -26,7 +26,7 @@ export const getOrgTasks = cache(() =>
     }
 
     return logServerCall("getOrgTasks.query", () =>
-      queryOrgTasks(session.organization.id),
+      withDbRetry(() => queryOrgTasks(session.organization.id)),
     );
   }),
 );

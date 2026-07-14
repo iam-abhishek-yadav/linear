@@ -1,29 +1,35 @@
 import { and, eq, gt, isNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { memberInvites, users } from "@/db/schema";
-import { requireMemberManager } from "@/lib/auth";
+import { requireMemberManagerOrResponse } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createMemberInvite } from "@/lib/member-invites";
 import { createMemberInviteSchema } from "@/lib/member-validations";
+import { zodErrorResponse } from "@/lib/validations";
 import { withApiRoute } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export const POST = withApiRoute("members.invites.create", async (request: Request) => {
-  const session = await requireMemberManager();
-  if (!session) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const guard = await requireMemberManagerOrResponse();
+  if (guard.response) return guard.response;
+  const { session } = guard;
 
   const body = await request.json();
   const parsed = createMemberInviteSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.flatten().fieldErrors },
-      { status: 400 },
-    );
+    return zodErrorResponse(parsed.error);
   }
 
   const normalizedEmail = parsed.data.email.toLowerCase();
+
+  const rateLimit = checkRateLimit(`member-invite-create:${session.organization.id}`);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: { form: ["Too many invites sent. Try again later."] } },
+      { status: 429 },
+    );
+  }
 
   const [existingUser] = await db
     .select({ id: users.id })

@@ -1,7 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { memberInvites } from "@/db/schema";
-import { requireMemberManager } from "@/lib/auth";
+import { requireMemberManagerOrResponse } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { withApiRoute } from "@/lib/logger";
 
@@ -11,10 +11,9 @@ export const DELETE = withApiRoute(
     _request: Request,
     { params }: { params: Promise<{ id: string }> },
   ) => {
-  const session = await requireMemberManager();
-  if (!session) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const guard = await requireMemberManagerOrResponse();
+  if (guard.response) return guard.response;
+  const { session } = guard;
 
   const { id } = await params;
 

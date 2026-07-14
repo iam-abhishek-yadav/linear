@@ -2,7 +2,7 @@ import { and, eq, max } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
 import { NextResponse } from "next/server";
 import { tasks } from "@/db/schema";
-import { requireUser } from "@/lib/auth";
+import { requireUserOrResponse } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { withApiRoute } from "@/lib/logger";
 import { createAssignmentNotification } from "@/lib/notifications";
@@ -10,31 +10,26 @@ import { recordTaskCreated } from "@/lib/task-activity";
 import { isAssigneeInOrganization } from "@/lib/task-access";
 import { getOrgTasks } from "@/lib/tasks";
 import { getTagsForTask } from "@/lib/tags";
-import { createTaskSchema } from "@/lib/validations";
+import { createTaskSchema, zodErrorResponse } from "@/lib/validations";
 
 export const GET = withApiRoute("tasks.list", async () => {
-  const session = await requireUser();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireUserOrResponse();
+  if (guard.response) return guard.response;
+  const { session } = guard;
 
   return NextResponse.json(await getOrgTasks());
 });
 
 export const POST = withApiRoute("tasks.create", async (request: Request) => {
-  const session = await requireUser();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireUserOrResponse();
+  if (guard.response) return guard.response;
+  const { session } = guard;
 
   const body = await request.json();
   const parsed = createTaskSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.flatten().fieldErrors },
-      { status: 400 },
-    );
+    return zodErrorResponse(parsed.error);
   }
 
   const organizationId = session.organization.id;

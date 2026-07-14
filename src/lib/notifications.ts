@@ -8,7 +8,7 @@ import {
   type NotificationType,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { db, withDbRetry } from "@/lib/db";
 import { logServerCall } from "@/lib/logger";
 import type { NotificationItem } from "@/lib/notification-types";
 import { toIsoString } from "@/lib/serialize";
@@ -121,11 +121,15 @@ export async function cleanupExpiredNotifications(userId: string) {
     );
 }
 
+const CLEANUP_SAMPLE_RATE = 0.05;
+
 export async function getNotifications(
   userId: string,
   organizationId: string,
 ) {
-  await cleanupExpiredNotifications(userId);
+  if (Math.random() < CLEANUP_SAMPLE_RATE) {
+    await cleanupExpiredNotifications(userId);
+  }
 
   const actor = aliasedTable(users, "actor");
 
@@ -181,7 +185,9 @@ export const getOrgNotifications = cache(() =>
     }
 
     const rows = await logServerCall("getOrgNotifications.query", () =>
-      getNotifications(session.user.id, session.organization.id),
+      withDbRetry(() =>
+        getNotifications(session.user.id, session.organization.id),
+      ),
     );
 
     return rows.map(serializeNotification);

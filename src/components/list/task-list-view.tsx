@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Check, Loader2, Plus } from "lucide-react";
 import { TaskDialog } from "@/components/kanban/task-dialog";
 import {
@@ -28,7 +28,11 @@ import {
   LIST_STATUS_ORDER,
   PRIORITIES,
 } from "@/lib/constants";
-import { formatTaskIdentifier, getProjectKey } from "@/lib/task-utils";
+import {
+  buildTaskIdentifierIndex,
+  formatIdentifierFromIndex,
+  getProjectKey,
+} from "@/lib/task-utils";
 import { applyTaskFilters } from "@/lib/task-filters";
 import { getTaskCompletedAt } from "@/lib/task-visibility";
 import type { Task, TaskPriority, TaskStatus, TaskWithTags } from "@/lib/types";
@@ -103,13 +107,13 @@ function ListPriorityButton({
 
 function IssueRow({
   task,
-  allTasks,
+  identifierIndex,
   selected,
   onClick,
   onPriorityChange,
 }: {
   task: Task;
-  allTasks: Task[];
+  identifierIndex: Map<string, number>;
   selected: boolean;
   onClick: () => void;
   onPriorityChange: (priority: TaskPriority) => void;
@@ -138,7 +142,7 @@ function IssueRow({
         onChange={onPriorityChange}
       />
       <span className="w-[52px] shrink-0 font-mono text-[13px] tracking-tight text-white/30">
-        {formatTaskIdentifier(task, allTasks, projectKey)}
+        {formatIdentifierFromIndex(identifierIndex, task.id, projectKey)}
       </span>
       <StatusIcon status={task.status} />
       <span className="min-w-0 flex-1 truncate text-[14px] font-normal text-foreground/95">
@@ -151,7 +155,7 @@ function IssueRow({
 function StatusGroup({
   status,
   tasks,
-  allTasks,
+  identifierIndex,
   selectedTaskId,
   onTaskClick,
   onAddIssue,
@@ -159,7 +163,7 @@ function StatusGroup({
 }: {
   status: TaskStatus;
   tasks: Task[];
-  allTasks: Task[];
+  identifierIndex: Map<string, number>;
   selectedTaskId: string | null;
   onTaskClick: (task: Task) => void;
   onAddIssue: (status: TaskStatus) => void;
@@ -194,7 +198,7 @@ function StatusGroup({
           <IssueRow
             key={task.id}
             task={task}
-            allTasks={allTasks}
+            identifierIndex={identifierIndex}
             selected={selectedTaskId === task.id}
             onClick={() => onTaskClick(task)}
             onPriorityChange={(priority) => onPriorityChange(task, priority)}
@@ -257,6 +261,10 @@ function TaskListViewContent({
         });
 
   const statusesToShow = filterStatus ?? LIST_STATUS_ORDER;
+  const identifierIndex = useMemo(
+    () => buildTaskIdentifierIndex(allTasks),
+    [allTasks],
+  );
 
   function openCreate(status: TaskStatus = "TODO") {
     setEditingTask(null);
@@ -321,7 +329,7 @@ function TaskListViewContent({
                 <IssueRow
                   key={task.id}
                   task={task}
-                  allTasks={allTasks}
+                  identifierIndex={identifierIndex}
                   selected={selectedTaskId === task.id}
                   onClick={() => openTask(task)}
                   onPriorityChange={(priority) =>
@@ -340,7 +348,7 @@ function TaskListViewContent({
                     key={status}
                     status={status}
                     tasks={statusTasks}
-                    allTasks={allTasks}
+                    identifierIndex={identifierIndex}
                     selectedTaskId={selectedTaskId}
                     onTaskClick={openTask}
                     onAddIssue={openCreate}

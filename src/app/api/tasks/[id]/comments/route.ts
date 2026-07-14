@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requireUserOrResponse } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createCommentNotification } from "@/lib/notifications";
 import { createTaskComment, getTaskComments } from "@/lib/task-comments";
 import { getOrganizationTask } from "@/lib/task-access";
-import { createCommentSchema } from "@/lib/validations";
+import { createCommentSchema, zodErrorResponse } from "@/lib/validations";
 import { withApiRoute } from "@/lib/logger";
 
 type RouteContext = {
@@ -14,10 +14,9 @@ type RouteContext = {
 export const GET = withApiRoute(
   "tasks.comments.list",
   async (_request: Request, context: RouteContext) => {
-  const session = await requireUser();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireUserOrResponse();
+  if (guard.response) return guard.response;
+  const { session } = guard;
 
   const { id } = await context.params;
   const task = await getOrganizationTask(session.organization.id, id);
@@ -42,20 +41,16 @@ export const GET = withApiRoute(
 export const POST = withApiRoute(
   "tasks.comments.create",
   async (request: Request, context: RouteContext) => {
-  const session = await requireUser();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireUserOrResponse();
+  if (guard.response) return guard.response;
+  const { session } = guard;
 
   const { id } = await context.params;
   const body = await request.json();
   const parsed = createCommentSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.flatten().fieldErrors },
-      { status: 400 },
-    );
+    return zodErrorResponse(parsed.error);
   }
 
   const task = await getOrganizationTask(session.organization.id, id);

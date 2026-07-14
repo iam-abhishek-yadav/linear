@@ -19,7 +19,7 @@ function MyIssuesViewContent() {
   const { user } = useSession();
   const searchParams = useSearchParams();
   const assignedView = resolveAssignedView(searchParams.get("view"));
-  const { tasks, createTask, updateTask, deleteTask } = useTasks();
+  const { tasks, loading, createTask, updateTask, deleteTask } = useTasks();
 
   const myTasks = useMemo(
     () => tasks.filter((task) => task.assigneeId === user.id),
@@ -42,7 +42,7 @@ function MyIssuesViewContent() {
     <TaskListView
       tasks={visibleTasks}
       allTasks={myTasks}
-      loading={false}
+      loading={loading}
       filterStatus={filterStatus}
       variant={assignedView === "completed" ? "completed" : "default"}
       emptyMessage={

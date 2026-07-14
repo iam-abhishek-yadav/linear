@@ -29,6 +29,10 @@ export function useTaskTimeline(
     setActivities((prev) => [...prev, activity]);
   }, []);
 
+  const removeActivity = useCallback((activityId: string) => {
+    setActivities((prev) => prev.filter((activity) => activity.id !== activityId));
+  }, []);
+
   const addComment = useCallback((comment: TaskCommentItem) => {
     setComments((prev) => [...prev, comment]);
   }, []);
@@ -41,6 +45,7 @@ export function useTaskTimeline(
     activities,
     comments,
     appendActivity,
+    removeActivity,
     addComment,
     removeComment,
   };

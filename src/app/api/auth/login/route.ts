@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { organizations, users } from "@/db/schema";
 import { createSession, verifyPassword } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { loginSchema } from "@/lib/validations";
+import { loginSchema, zodErrorResponse } from "@/lib/validations";
 import { withApiRoute } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rate-limit";
 
@@ -12,10 +12,7 @@ export const POST = withApiRoute("auth.login", async (request: Request) => {
   const parsed = loginSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.flatten().fieldErrors },
-      { status: 400 },
-    );
+    return zodErrorResponse(parsed.error);
   }
 
   const { email, password } = parsed.data;

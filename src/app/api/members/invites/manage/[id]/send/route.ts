@@ -1,11 +1,14 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { memberInvites, users } from "@/db/schema";
-import { requireMemberManager } from "@/lib/auth";
+import { requireMemberManagerOrResponse } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { isEmailConfigured, sendMemberInviteEmail } from "@/lib/email";
-import { withApiRoute } from "@/lib/logger";
+import { createLogger, withApiRoute } from "@/lib/logger";
 import { getMemberInviteUrl } from "@/lib/member-invites";
+import { checkRateLimit } from "@/lib/rate-limit";
+
+const logger = createLogger("members.invites.send");
 
 export const POST = withApiRoute(
   "members.invites.sendEmail",
@@ -13,10 +16,9 @@ export const POST = withApiRoute(
     _request: Request,
     { params }: { params: Promise<{ id: string }> },
   ) => {
-    const session = await requireMemberManager();
-    if (!session) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const guard = await requireMemberManagerOrResponse();
+    if (guard.response) return guard.response;
+    const { session } = guard;
 
     if (!isEmailConfigured()) {
       return NextResponse.json(
@@ -54,6 +56,14 @@ export const POST = withApiRoute(
       return NextResponse.json({ error: "Invite has expired" }, { status: 410 });
     }
 
+    const rateLimit = checkRateLimit(`member-invite-send:${invite.email}`);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many attempts. Try again later." },
+        { status: 429 },
+      );
+    }
+
     try {
       await sendMemberInviteEmail({
         to: invite.email,
@@ -63,10 +73,15 @@ export const POST = withApiRoute(
         expiresAt: invite.expiresAt,
       });
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to send invite email";
+      logger.error("sendFailed", {
+        inviteId: id,
+        message: error instanceof Error ? error.message : String(error),
+      });
 
-      return NextResponse.json({ error: message }, { status: 502 });
+      return NextResponse.json(
+        { error: "Failed to send invite email" },
+        { status: 502 },
+      );
     }
 
     return NextResponse.json({ success: true });

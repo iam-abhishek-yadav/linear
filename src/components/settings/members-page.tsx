@@ -41,25 +41,11 @@ import {
   isAdmin,
   ROLE_LABELS,
 } from "@/lib/roles";
+import type { MemberWithMeta, PendingInvite } from "@/lib/members";
 import type { UserRole } from "@/db/schema";
 import { cn } from "@/lib/utils";
 
-type Member = {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  createdAt: string;
-  isCurrentUser: boolean;
-};
-
-type PendingInvite = {
-  id: string;
-  email: string;
-  inviteUrl: string;
-  createdAt: string;
-  expiresAt: string;
-};
+type Member = MemberWithMeta;
 
 function MemberAvatar({ name }: { name: string }) {
   return (
@@ -127,10 +113,7 @@ export function MembersPage({
   const [roleUpdatingId, setRoleUpdatingId] = useState<string | null>(null);
 
   async function refreshMembers() {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.membersPage }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.orgMembers }),
-    ]);
+    await queryClient.invalidateQueries({ queryKey: queryKeys.orgMembers });
   }
 
   const filteredMembers = useMemo(() => {

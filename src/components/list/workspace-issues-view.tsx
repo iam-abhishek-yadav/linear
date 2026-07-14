@@ -47,7 +47,7 @@ export function WorkspaceIssuesView() {
   const pathname = usePathname();
   const view = getWorkspaceView(pathname);
   const { filterStatus, emptyMessage, variant } = getViewConfig(view);
-  const { tasks, createTask, updateTask, deleteTask } = useTasks();
+  const { tasks, loading, createTask, updateTask, deleteTask } = useTasks();
 
   const visibleTasks =
     view === "completed"
@@ -58,7 +58,7 @@ export function WorkspaceIssuesView() {
     <TaskListView
       tasks={visibleTasks}
       allTasks={tasks}
-      loading={false}
+      loading={loading}
       filterStatus={filterStatus}
       emptyMessage={emptyMessage}
       variant={variant}

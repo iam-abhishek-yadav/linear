@@ -79,6 +79,7 @@ export function TasksProvider({
         ...current,
         task,
       ]);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.notifications });
     },
   });
 
@@ -92,6 +93,7 @@ export function TasksProvider({
       queryClient.invalidateQueries({
         queryKey: queryKeys.issueDetail(updated.id),
       });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.notifications });
     },
   });
 
@@ -115,6 +117,7 @@ export function TasksProvider({
             : task,
         ),
       );
+      void queryClient.invalidateQueries({ queryKey: queryKeys.notifications });
     },
     onError: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.tasks });

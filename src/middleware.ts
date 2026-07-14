@@ -4,7 +4,12 @@ import { SESSION_COOKIE } from "@/lib/auth-constants";
 
 const authRoutes = ["/login", "/register", "/join", "/forgot-password"];
 const publicRoutes = ["/", ...authRoutes];
-const publicApiPrefixes = ["/api/auth", "/api/invites", "/api/members/invites", "/api/health"];
+const publicApiPrefixes = ["/api/auth", "/api/invites", "/api/health"];
+
+function isPublicMemberInviteRoute(pathname: string) {
+  const match = pathname.match(/^\/api\/members\/invites\/([^/]+)(\/accept)?$/);
+  return match !== null && match[1] !== "manage";
+}
 
 function isPublicRoute(pathname: string) {
   return publicRoutes.some(
@@ -13,7 +18,10 @@ function isPublicRoute(pathname: string) {
 }
 
 function isPublicApi(pathname: string) {
-  return publicApiPrefixes.some((prefix) => pathname.startsWith(prefix));
+  return (
+    publicApiPrefixes.some((prefix) => pathname.startsWith(prefix)) ||
+    isPublicMemberInviteRoute(pathname)
+  );
 }
 
 export function middleware(request: NextRequest) {

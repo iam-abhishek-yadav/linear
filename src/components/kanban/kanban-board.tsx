@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
+  KeyboardSensor,
   MouseSensor,
   TouchSensor,
   defaultDropAnimationSideEffects,
@@ -15,7 +16,7 @@ import {
   type DragStartEvent,
   type DropAnimation,
 } from "@dnd-kit/core";
-import { arrayMove } from "@dnd-kit/sortable";
+import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { KanbanColumn } from "@/components/kanban/kanban-column";
@@ -27,6 +28,7 @@ import { useViewFilters } from "@/hooks/use-view-filters";
 import { useTasks } from "@/hooks/use-tasks";
 import { COLUMNS } from "@/lib/constants";
 import { applyTaskFilters } from "@/lib/task-filters";
+import { buildTaskIdentifierIndex } from "@/lib/task-utils";
 import {
   countStaleCompletedTasks,
   filterMainViewTasks,
@@ -144,6 +146,7 @@ function KanbanBoardContent() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newDialogOpen, setNewDialogOpen] = useState(false);
   const tasksRef = useRef(tasks);
+  const dragSnapshotRef = useRef<Task[] | null>(null);
 
   useEffect(() => {
     tasksRef.current = tasks;
@@ -155,6 +158,9 @@ function KanbanBoardContent() {
       // Press-and-hold so a normal finger swipe can scroll the column
       activationConstraint: { delay: 250, tolerance: 8 },
     }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
 
   const staleCompletedCount = countStaleCompletedTasks(tasks);
@@ -163,10 +169,12 @@ function KanbanBoardContent() {
     filters,
   );
   const grouped = groupByStatus(visibleTasks);
+  const identifierIndex = useMemo(() => buildTaskIdentifierIndex(tasks), [tasks]);
 
   function handleDragStart(event: DragStartEvent) {
     const task = tasksRef.current.find((t) => t.id === event.active.id);
     if (task) setActiveTask(task);
+    dragSnapshotRef.current = tasksRef.current;
   }
 
   function handleDragOver(event: DragOverEvent) {
@@ -221,11 +229,14 @@ function KanbanBoardContent() {
     }
 
     const activeId = active.id as string;
+    const snapshot = dragSnapshotRef.current;
 
     setTasks((current) => {
       const task = current.find((t) => t.id === activeId);
       if (task) {
-        persistReorder(activeId, task.status, task.position);
+        persistReorder(activeId, task.status, task.position).catch(() => {
+          if (snapshot) setTasks(snapshot);
+        });
       }
       return current;
     });
@@ -275,7 +286,7 @@ function KanbanBoardContent() {
                 id={col.id}
                 label={col.label}
                 tasks={grouped[col.id]}
-                allTasks={tasks}
+                identifierIndex={identifierIndex}
                 members={members}
                 onTaskClick={(task) => {
                   setEditingTask(task);
@@ -302,7 +313,7 @@ function KanbanBoardContent() {
             <div className="w-72 rotate-1 shadow-lg">
               <KanbanCardContent
                 task={activeTask}
-                allTasks={tasks}
+                identifierIndex={identifierIndex}
                 members={members}
               />
             </div>

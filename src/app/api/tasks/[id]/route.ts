@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { tasks } from "@/db/schema";
-import { requireAdmin, requireUser } from "@/lib/auth";
+import { requireAdminOrResponse, requireUserOrResponse } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
   createAssignmentNotification,
@@ -20,7 +20,7 @@ import {
 import { getOrganizationTaskWithTags } from "@/lib/tasks";
 import { getTagsForTask } from "@/lib/tags";
 import { resolveCompletedAtUpdate } from "@/lib/task-visibility";
-import { updateTaskSchema } from "@/lib/validations";
+import { updateTaskSchema, zodErrorResponse } from "@/lib/validations";
 import { withApiRoute } from "@/lib/logger";
 
 type RouteContext = {
@@ -30,10 +30,9 @@ type RouteContext = {
 export const GET = withApiRoute(
   "tasks.get",
   async (_request: Request, context: RouteContext) => {
-  const session = await requireUser();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireUserOrResponse();
+  if (guard.response) return guard.response;
+  const { session } = guard;
 
   const { id } = await context.params;
   const task = await getOrganizationTaskWithTags(session.organization.id, id);
@@ -49,20 +48,16 @@ export const GET = withApiRoute(
 export const PATCH = withApiRoute(
   "tasks.update",
   async (request: Request, context: RouteContext) => {
-  const session = await requireUser();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireUserOrResponse();
+  if (guard.response) return guard.response;
+  const { session } = guard;
 
   const { id } = await context.params;
   const body = await request.json();
   const parsed = updateTaskSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.flatten().fieldErrors },
-      { status: 400 },
-    );
+    return zodErrorResponse(parsed.error);
   }
 
   const organizationId = session.organization.id;
@@ -174,10 +169,9 @@ export const PATCH = withApiRoute(
 export const DELETE = withApiRoute(
   "tasks.delete",
   async (_request: Request, context: RouteContext) => {
-  const session = await requireAdmin();
-  if (!session) {
-    return NextResponse.json({ error: "Admin access required" }, { status: 403 });
-  }
+  const guard = await requireAdminOrResponse();
+  if (guard.response) return guard.response;
+  const { session } = guard;
 
   const { id } = await context.params;
   const organizationId = session.organization.id;

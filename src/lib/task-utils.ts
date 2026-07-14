@@ -24,6 +24,26 @@ export function formatTaskIdentifier(
   return `${projectKey}-${index}`;
 }
 
+export function buildTaskIdentifierIndex(
+  allTasks: { id: string; createdAt: Date | string }[],
+): Map<string, number> {
+  const sorted = [...allTasks].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  );
+  const index = new Map<string, number>();
+  sorted.forEach((task, i) => index.set(task.id, i + 1));
+  return index;
+}
+
+export function formatIdentifierFromIndex(
+  index: Map<string, number>,
+  taskId: string,
+  projectKey: string,
+): string {
+  const num = index.get(taskId);
+  return num ? `${projectKey}-${num}` : projectKey;
+}
+
 /** Normalize a task's due date into a `yyyy-mm-dd` value for a native date input. */
 export function toDateInputValue(
   date: Date | string | null | undefined,

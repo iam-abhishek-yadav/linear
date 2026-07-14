@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { hashPassword } from "@/lib/auth";
-import { isDbConnectionError } from "@/lib/db";
 import { withApiRoute } from "@/lib/logger";
 import { resetPasswordWithOtp } from "@/lib/password-reset";
 import { resetPasswordSchema } from "@/lib/profile-validations";
+import { zodErrorResponse } from "@/lib/validations";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 export const POST = withApiRoute(
@@ -13,10 +13,7 @@ export const POST = withApiRoute(
     const parsed = resetPasswordSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.flatten().fieldErrors },
-        { status: 400 },
-      );
+      return zodErrorResponse(parsed.error);
     }
 
     const normalizedEmail = parsed.data.email.toLowerCase();
@@ -37,41 +34,24 @@ export const POST = withApiRoute(
       );
     }
 
-    try {
-      const result = await resetPasswordWithOtp({
-        email: normalizedEmail,
-        otp: parsed.data.otp,
-        newPassword: parsed.data.newPassword,
-        hashPassword,
-      });
+    const result = await resetPasswordWithOtp({
+      email: normalizedEmail,
+      otp: parsed.data.otp,
+      newPassword: parsed.data.newPassword,
+      hashPassword,
+    });
 
-      if (!result.success) {
-        return NextResponse.json(
-          {
-            error: {
-              form: ["Invalid or expired reset code. Request a new one."],
-            },
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          error: {
+            form: ["Invalid or expired reset code. Request a new one."],
           },
-          { status: 400 },
-        );
-      }
-
-      return NextResponse.json({ success: true });
-    } catch (error) {
-      if (isDbConnectionError(error)) {
-        return NextResponse.json(
-          {
-            error: {
-              form: [
-                "Unable to reach the database right now. Check that Postgres is running and DATABASE_URL is correct, then try again.",
-              ],
-            },
-          },
-          { status: 503 },
-        );
-      }
-
-      throw error;
+        },
+        { status: 400 },
+      );
     }
+
+    return NextResponse.json({ success: true });
   },
 );

@@ -6,7 +6,6 @@ export const queryKeys = {
   tasks: ["tasks"] as const,
   tags: ["tags"] as const,
   orgMembers: ["org-members"] as const,
-  membersPage: ["members-page"] as const,
   notifications: ["notifications"] as const,
   issueDetail: (taskId: string) => ["issues", taskId, "detail"] as const,
 };

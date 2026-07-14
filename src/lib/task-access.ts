@@ -2,6 +2,8 @@ import { and, eq } from "drizzle-orm";
 import { tasks, users } from "@/db/schema";
 import { db } from "@/lib/db";
 
+type DbExecutor = Pick<typeof db, "select">;
+
 /** Load a task only if it belongs to the given organization. */
 export async function getOrganizationTask(
   organizationId: string,
@@ -13,6 +15,23 @@ export async function getOrganizationTask(
     .where(
       and(eq(tasks.id, taskId), eq(tasks.organizationId, organizationId)),
     )
+    .limit(1);
+
+  return task ?? null;
+}
+
+export async function getOrganizationTaskForUpdate(
+  executor: DbExecutor,
+  organizationId: string,
+  taskId: string,
+) {
+  const [task] = await executor
+    .select()
+    .from(tasks)
+    .where(
+      and(eq(tasks.id, taskId), eq(tasks.organizationId, organizationId)),
+    )
+    .for("update")
     .limit(1);
 
   return task ?? null;

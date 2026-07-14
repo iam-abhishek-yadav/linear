@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { isDbConnectionError } from "@/lib/db";
 import { withApiRoute } from "@/lib/logger";
 import { requestPasswordResetOtp } from "@/lib/password-reset";
 import { forgotPasswordSchema } from "@/lib/profile-validations";
+import { zodErrorResponse } from "@/lib/validations";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 const GENERIC_RESPONSE = {
@@ -17,10 +17,7 @@ export const POST = withApiRoute(
     const parsed = forgotPasswordSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.flatten().fieldErrors },
-        { status: 400 },
-      );
+      return zodErrorResponse(parsed.error);
     }
 
     const normalizedEmail = parsed.data.email.toLowerCase();
@@ -33,29 +30,8 @@ export const POST = withApiRoute(
     if (!rateLimit.allowed) {
       return NextResponse.json(GENERIC_RESPONSE);
     }
+    await requestPasswordResetOtp(normalizedEmail);
 
-    try {
-      // Whether the account exists, was just emailed, or is on its own
-      // hourly cooldown, the response is identical — distinguishing any of
-      // these cases would let a caller enumerate registered emails.
-      await requestPasswordResetOtp(normalizedEmail);
-
-      return NextResponse.json(GENERIC_RESPONSE);
-    } catch (error) {
-      if (isDbConnectionError(error)) {
-        return NextResponse.json(
-          {
-            error: {
-              form: [
-                "Unable to reach the database right now. Check that Postgres is running and DATABASE_URL is correct, then try again.",
-              ],
-            },
-          },
-          { status: 503 },
-        );
-      }
-
-      throw error;
-    }
+    return NextResponse.json(GENERIC_RESPONSE);
   },
 );

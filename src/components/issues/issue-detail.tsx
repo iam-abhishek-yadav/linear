@@ -119,63 +119,69 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
     initializedRef.current = true;
   }, [data.task.id, data.task.updatedAt]);
 
-  useEffect(() => {
-    if (!initializedRef.current) return;
-    setTitle(task.title);
-    setDescription(task.description ?? "");
-    setStatus(task.status);
-    setPriority(task.priority);
-    setAssigneeId(task.assigneeId ?? null);
-    setDueDate(toDateInputValue(task.dueDate));
-    setTags(task.tags ?? []);
-  }, [task]);
+  type SaveFields = {
+    title?: string;
+    description?: string;
+    status?: Task["status"];
+    priority?: Task["priority"];
+    assigneeId?: string | null;
+    dueDate?: string | null;
+  };
+
+  const savingRef = useRef(false);
+  const pendingFieldsRef = useRef<SaveFields | null>(null);
+  const pendingWaitersRef = useRef<
+    Array<{ resolve: () => void; reject: (error: unknown) => void }>
+  >([]);
 
   const save = useCallback(
-    async (fields: {
-      title?: string;
-      description?: string;
-      status?: Task["status"];
-      priority?: Task["priority"];
-      assigneeId?: string | null;
-      dueDate?: string | null;
-    }) => {
-      if (saving) return;
+    async (fields: SaveFields) => {
+      if (savingRef.current) {
+        pendingFieldsRef.current = { ...pendingFieldsRef.current, ...fields };
+        return new Promise<void>((resolve, reject) => {
+          pendingWaitersRef.current.push({ resolve, reject });
+        });
+      }
 
+      savingRef.current = true;
       setSaving(true);
+
       try {
         const response = await fetch(`/api/tasks/${task.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: fields.title ?? title.trim(),
-            description:
-              fields.description ?? (description.trim() || undefined),
-            status: fields.status ?? status,
-            priority: fields.priority ?? priority,
-            assigneeId:
-              fields.assigneeId !== undefined ? fields.assigneeId : assigneeId,
-            dueDate: fields.dueDate !== undefined ? fields.dueDate : dueDate,
-          }),
+          body: JSON.stringify(fields),
         });
         if (!response.ok) throw new Error("Failed to update task");
         const updated: SerializedTask = await response.json();
         setTask(updated);
         await revalidateIssueCaches(queryClient, task.id);
+      } catch (error) {
+        pendingFieldsRef.current = null;
+        const waiters = pendingWaitersRef.current;
+        pendingWaitersRef.current = [];
+        for (const waiter of waiters) waiter.reject(error);
+        throw error;
       } finally {
+        savingRef.current = false;
         setSaving(false);
       }
+
+      const pending = pendingFieldsRef.current;
+      if (!pending) return;
+
+      pendingFieldsRef.current = null;
+      const waiters = pendingWaitersRef.current;
+      pendingWaitersRef.current = [];
+
+      try {
+        await save(pending);
+        for (const waiter of waiters) waiter.resolve();
+      } catch (error) {
+        for (const waiter of waiters) waiter.reject(error);
+      }
     },
-    [
-      assigneeId,
-      description,
-      dueDate,
-      priority,
-      queryClient,
-      saving,
-      status,
-      task.id,
-      title,
-    ],
+    [queryClient, task.id],
   );
 
   const handleIssueChange = useCallback(async () => {
@@ -228,7 +234,17 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
       timeline.appendActivity(activity);
     }
 
-    await save({ [field]: value });
+    try {
+      await save({ [field]: value });
+    } catch {
+      if (field === "status") setStatus(previous.status);
+      if (field === "priority") setPriority(previous.priority);
+      if (field === "assigneeId") setAssigneeId(previous.assigneeId);
+      if (field === "dueDate") setDueDate(previous.dueDate);
+      if (activity) {
+        timeline.removeActivity(activity.id);
+      }
+    }
   }
 
   async function handleTagsChange(nextTags: TaskTagSummary[]) {

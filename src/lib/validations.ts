@@ -1,6 +1,14 @@
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import { TASK_STATUSES } from "@/lib/constants";
 import { USER_ROLES } from "@/lib/roles";
+
+export function zodErrorResponse(error: z.ZodError) {
+  return NextResponse.json(
+    { error: z.flattenError(error).fieldErrors },
+    { status: 400 },
+  );
+}
 
 const taskStatusSchema = z.enum(TASK_STATUSES);
 
@@ -18,7 +26,6 @@ export const updateTaskSchema = z.object({
   description: z.string().max(5000).nullable().optional(),
   status: taskStatusSchema.optional(),
   priority: z.enum(["NONE", "LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
-  position: z.number().int().min(0).optional(),
   assigneeId: z.string().min(1).nullish(),
   dueDate: z.coerce.date().nullish(),
 });

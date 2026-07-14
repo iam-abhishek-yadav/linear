@@ -2,11 +2,14 @@ import { and, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import type { UserRole } from "@/db/schema";
 import { users } from "@/db/schema";
-import { requireAdmin, requireMemberManager } from "@/lib/auth";
+import {
+  requireAdminOrResponse,
+  requireMemberManagerOrResponse,
+} from "@/lib/auth";
 import { db } from "@/lib/db";
 import { withApiRoute } from "@/lib/logger";
 import { canRevokeMember } from "@/lib/roles";
-import { updateMemberRoleSchema } from "@/lib/validations";
+import { updateMemberRoleSchema, zodErrorResponse } from "@/lib/validations";
 
 export const PATCH = withApiRoute(
   "members.updateRole",
@@ -14,20 +17,16 @@ export const PATCH = withApiRoute(
     request: Request,
     { params }: { params: Promise<{ id: string }> },
   ) => {
-    const session = await requireAdmin();
-    if (!session) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const guard = await requireAdminOrResponse();
+    if (guard.response) return guard.response;
+    const { session } = guard;
 
     const { id } = await params;
     const body = await request.json();
     const parsed = updateMemberRoleSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.flatten().fieldErrors },
-        { status: 400 },
-      );
+      return zodErrorResponse(parsed.error);
     }
 
     const nextRole = parsed.data.role as UserRole;
@@ -88,10 +87,9 @@ export const DELETE = withApiRoute(
     _request: Request,
     { params }: { params: Promise<{ id: string }> },
   ) => {
-    const session = await requireMemberManager();
-    if (!session) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const guard = await requireMemberManagerOrResponse();
+    if (guard.response) return guard.response;
+    const { session } = guard;
 
     const { id } = await params;
 

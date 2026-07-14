@@ -1,17 +1,17 @@
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { users } from "@/db/schema";
-import { requireUser } from "@/lib/auth";
+import { requireUserOrResponse } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { withApiRoute } from "@/lib/logger";
 import { getPasswordChangeRetryAt } from "@/lib/password-reset";
 import { updateProfileSchema } from "@/lib/profile-validations";
+import { zodErrorResponse } from "@/lib/validations";
 
 export const GET = withApiRoute("profile.get", async () => {
-  const session = await requireUser();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireUserOrResponse();
+  if (guard.response) return guard.response;
+  const { session } = guard;
 
   const passwordChangeRetryAt = getPasswordChangeRetryAt(
     session.user.passwordChangedAt,
@@ -29,19 +29,15 @@ export const GET = withApiRoute("profile.get", async () => {
 });
 
 export const PATCH = withApiRoute("profile.update", async (request: Request) => {
-  const session = await requireUser();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireUserOrResponse();
+  if (guard.response) return guard.response;
+  const { session } = guard;
 
   const body = await request.json();
   const parsed = updateProfileSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.flatten().fieldErrors },
-      { status: 400 },
-    );
+    return zodErrorResponse(parsed.error);
   }
 
   if (parsed.data.name === undefined) {

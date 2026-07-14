@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { cache } from "react";
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 import { organizations, sessions, users } from "@/db/schema";
 import { SESSION_COOKIE } from "@/lib/auth-constants";
 import { db, withDbRetry } from "@/lib/db";
@@ -121,4 +122,46 @@ export async function requireMemberManager() {
     return null;
   }
   return session;
+}
+
+type Session = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>;
+type AuthGuardResult =
+  | { session: Session; response?: undefined }
+  | { session?: undefined; response: NextResponse };
+
+const UNAUTHORIZED = () =>
+  NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+export async function requireUserOrResponse(): Promise<AuthGuardResult> {
+  const session = await requireUser();
+  if (!session) return { response: UNAUTHORIZED() };
+  return { session };
+}
+
+export async function requireAdminOrResponse(): Promise<AuthGuardResult> {
+  const session = await requireUser();
+  if (!session) return { response: UNAUTHORIZED() };
+  if (session.user.role !== "ADMIN") {
+    return {
+      response: NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 },
+      ),
+    };
+  }
+  return { session };
+}
+
+export async function requireMemberManagerOrResponse(): Promise<AuthGuardResult> {
+  const session = await requireUser();
+  if (!session) return { response: UNAUTHORIZED() };
+  if (session.user.role !== "ADMIN" && session.user.role !== "MANAGER") {
+    return {
+      response: NextResponse.json(
+        { error: "Admin or manager access required" },
+        { status: 403 },
+      ),
+    };
+  }
+  return { session };
 }

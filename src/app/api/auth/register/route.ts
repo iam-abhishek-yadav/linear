@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getValidOrgInvite } from "@/lib/invites";
 import { createOrganizationWithAdmin } from "@/lib/registration";
-import { registerSchema } from "@/lib/validations";
+import { registerSchema, zodErrorResponse } from "@/lib/validations";
 import { withApiRoute } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rate-limit";
 
@@ -10,10 +10,7 @@ export const POST = withApiRoute("auth.register", async (request: Request) => {
   const parsed = registerSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.flatten().fieldErrors },
-      { status: 400 },
-    );
+    return zodErrorResponse(parsed.error);
   }
 
   const { token, orgName, name, email, password } = parsed.data;

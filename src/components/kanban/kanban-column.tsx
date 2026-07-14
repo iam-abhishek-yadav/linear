@@ -15,7 +15,7 @@ type KanbanColumnProps = {
   id: Task["status"];
   label: string;
   tasks: Task[];
-  allTasks: Task[];
+  identifierIndex: Map<string, number>;
   members: Member[];
   onTaskClick: (task: Task) => void;
   footer?: React.ReactNode;
@@ -25,7 +25,7 @@ export function KanbanColumn({
   id,
   label,
   tasks,
-  allTasks,
+  identifierIndex,
   members,
   onTaskClick,
   footer,
@@ -57,7 +57,7 @@ export function KanbanColumn({
                 <KanbanCard
                   key={task.id}
                   task={task}
-                  allTasks={allTasks}
+                  identifierIndex={identifierIndex}
                   members={members}
                   onClick={() => onTaskClick(task)}
                 />

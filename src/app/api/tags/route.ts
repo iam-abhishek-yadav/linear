@@ -1,33 +1,29 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requireUserOrResponse } from "@/lib/auth";
 import { withApiRoute } from "@/lib/logger";
 import { createOrgTag, getOrgTags } from "@/lib/tags";
 import { createTagSchema } from "@/lib/tag-validations";
+import { zodErrorResponse } from "@/lib/validations";
 
 export const GET = withApiRoute("tags.list", async () => {
-  const session = await requireUser();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireUserOrResponse();
+  if (guard.response) return guard.response;
+  const { session } = guard;
 
   const tags = await getOrgTags(session.organization.id);
   return NextResponse.json({ tags });
 });
 
 export const POST = withApiRoute("tags.create", async (request: Request) => {
-  const session = await requireUser();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireUserOrResponse();
+  if (guard.response) return guard.response;
+  const { session } = guard;
 
   const body = await request.json();
   const parsed = createTagSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.flatten().fieldErrors },
-      { status: 400 },
-    );
+    return zodErrorResponse(parsed.error);
   }
 
   try {

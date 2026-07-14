@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { users } from "@/db/schema";
-import { hashPassword, requireUser, verifyPassword } from "@/lib/auth";
+import { hashPassword, requireUserOrResponse, verifyPassword } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { withApiRoute } from "@/lib/logger";
 import {
@@ -9,23 +9,20 @@ import {
   PASSWORD_CHANGE_COOLDOWN_MS,
 } from "@/lib/password-reset";
 import { changePasswordSchema } from "@/lib/profile-validations";
+import { zodErrorResponse } from "@/lib/validations";
 
 export const POST = withApiRoute(
   "profile.changePassword",
   async (request: Request) => {
-    const session = await requireUser();
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const guard = await requireUserOrResponse();
+    if (guard.response) return guard.response;
+    const { session } = guard;
 
     const body = await request.json();
     const parsed = changePasswordSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.flatten().fieldErrors },
-        { status: 400 },
-      );
+      return zodErrorResponse(parsed.error);
     }
 
     const passwordChangeRetryAt = getPasswordChangeRetryAt(

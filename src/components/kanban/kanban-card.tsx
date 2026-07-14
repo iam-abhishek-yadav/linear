@@ -8,7 +8,7 @@ import { PriorityIcon } from "@/components/tasks/priority-icon";
 import type { Member } from "@/hooks/use-members";
 import {
   formatDueDate,
-  formatTaskIdentifier,
+  formatIdentifierFromIndex,
   getProjectKey,
   isOverdue,
 } from "@/lib/task-utils";
@@ -19,14 +19,14 @@ import { cn } from "@/lib/utils";
 
 type KanbanCardContentProps = {
   task: TaskWithTags;
-  allTasks?: TaskWithTags[];
+  identifierIndex?: Map<string, number>;
   members?: Member[];
   onClick?: () => void;
 };
 
 export function KanbanCardContent({
   task,
-  allTasks = [],
+  identifierIndex,
   members = [],
   onClick,
 }: KanbanCardContentProps) {
@@ -46,8 +46,8 @@ export function KanbanCardContent({
       >
         <div className="mb-2 flex items-center justify-between gap-2">
           <span className="text-[12px] font-medium text-muted-foreground/80">
-            {allTasks.length > 0
-              ? formatTaskIdentifier(task, allTasks, projectKey)
+            {identifierIndex
+              ? formatIdentifierFromIndex(identifierIndex, task.id, projectKey)
               : projectKey}
           </span>
           <PriorityIcon priority={task.priority} />
@@ -96,12 +96,17 @@ export function KanbanCardContent({
 
 type KanbanCardProps = {
   task: TaskWithTags;
-  allTasks?: TaskWithTags[];
+  identifierIndex?: Map<string, number>;
   members?: Member[];
   onClick: () => void;
 };
 
-export function KanbanCard({ task, allTasks, members, onClick }: KanbanCardProps) {
+export function KanbanCard({
+  task,
+  identifierIndex,
+  members,
+  onClick,
+}: KanbanCardProps) {
   const {
     attributes,
     listeners,
@@ -125,7 +130,7 @@ export function KanbanCard({ task, allTasks, members, onClick }: KanbanCardProps
     >
       <KanbanCardContent
         task={task}
-        allTasks={allTasks}
+        identifierIndex={identifierIndex}
         members={members}
         onClick={onClick}
       />

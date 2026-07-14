@@ -15,7 +15,8 @@ import { useMembersCache } from "@/hooks/use-members-cache";
 import { useTasks } from "@/hooks/use-tasks";
 import { COLUMNS } from "@/lib/constants";
 import {
-  formatTaskIdentifier,
+  buildTaskIdentifierIndex,
+  formatIdentifierFromIndex,
   getProjectKey,
 } from "@/lib/task-utils";
 
@@ -84,13 +85,20 @@ export function GlobalSearch() {
   }, [open]);
 
   const issueItems = useMemo(() => {
+    if (!open) return [];
+
+    const identifierIndex = buildTaskIdentifierIndex(tasks);
     const sorted = [...tasks].sort(
       (a, b) =>
         new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
     );
 
     return sorted.map((task) => {
-      const identifier = formatTaskIdentifier(task, tasks, projectKey);
+      const identifier = formatIdentifierFromIndex(
+        identifierIndex,
+        task.id,
+        projectKey,
+      );
       const statusLabel =
         COLUMNS.find((column) => column.id === task.status)?.label ??
         task.status;
@@ -116,7 +124,7 @@ export function GlobalSearch() {
           .join(" "),
       };
     });
-  }, [memberById, projectKey, tasks]);
+  }, [open, memberById, projectKey, tasks]);
 
   const visibleIssues = useMemo(() => {
     const normalized = query.trim().toLowerCase();

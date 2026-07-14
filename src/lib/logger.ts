@@ -1,3 +1,6 @@
+import { NextResponse } from "next/server";
+import { isDbConnectionError } from "@/lib/db";
+
 type LogLevel = "debug" | "info" | "warn" | "error";
 
 type LogFields = Record<string, unknown>;
@@ -192,8 +195,25 @@ export function withApiRoute<TContext = unknown>(
       timer.end({ status: response.status });
       return response;
     } catch (error) {
-      timer.fail(error);
-      throw error;
+      if (isDbConnectionError(error)) {
+        timer.fail(error, { status: 503 });
+        return NextResponse.json(
+          {
+            error: {
+              form: [
+                "Unable to reach the database right now. Check that Postgres is running and DATABASE_URL is correct, then try again.",
+              ],
+            },
+          },
+          { status: 503 },
+        );
+      }
+
+      timer.fail(error, { status: 500 });
+      return NextResponse.json(
+        { error: "Something went wrong. Please try again." },
+        { status: 500 },
+      );
     }
   };
 }

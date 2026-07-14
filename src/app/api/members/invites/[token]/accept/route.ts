@@ -9,7 +9,9 @@ import {
 import { db } from "@/lib/db";
 import { getValidMemberInvite } from "@/lib/member-invites";
 import { acceptMemberInviteSchema } from "@/lib/member-validations";
+import { zodErrorResponse } from "@/lib/validations";
 import { withApiRoute } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export const POST = withApiRoute(
   "members.invites.accept",
@@ -22,14 +24,19 @@ export const POST = withApiRoute(
   const parsed = acceptMemberInviteSchema.safeParse({ ...body, token });
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.flatten().fieldErrors },
-      { status: 400 },
-    );
+    return zodErrorResponse(parsed.error);
   }
 
   const { name, email, password } = parsed.data;
   const normalizedEmail = email.toLowerCase();
+
+  const rateLimit = checkRateLimit(`member-invite-accept:${token}`);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: { form: ["Too many attempts. Try again later."] } },
+      { status: 429 },
+    );
+  }
 
   const invite = await getValidMemberInvite(token);
 

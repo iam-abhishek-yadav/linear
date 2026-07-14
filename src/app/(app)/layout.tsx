@@ -7,7 +7,7 @@ import { SessionProvider } from "@/components/session-provider";
 import { TasksProvider } from "@/components/tasks-provider";
 import { getCurrentUser } from "@/lib/auth";
 import { logPageRender } from "@/lib/logger";
-import { getOrgMembers } from "@/lib/members";
+import { getMembersPageData } from "@/lib/members";
 import { getOrgNotifications } from "@/lib/notifications";
 import { getOrgTasks } from "@/lib/tasks";
 
@@ -23,8 +23,8 @@ export default async function AppLayout({
       redirect("/login");
     }
 
-    const [members, tasks, notifications] = await Promise.all([
-      getOrgMembers(),
+    const [membersPageData, tasks, notifications] = await Promise.all([
+      getMembersPageData(),
       getOrgTasks(),
       getOrgNotifications(),
     ]);
@@ -32,7 +32,10 @@ export default async function AppLayout({
     return (
       <QueryProvider>
         <SessionProvider value={session}>
-          <MembersProvider members={members}>
+          <MembersProvider
+            members={membersPageData.members}
+            pendingInvites={membersPageData.pendingInvites}
+          >
             <TasksProvider initialTasks={tasks}>
               <NotificationsProvider initialNotifications={notifications}>
                 <AppShell>{children}</AppShell>

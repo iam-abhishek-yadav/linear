@@ -15,13 +15,16 @@ import {
 import { useNotifications } from "@/components/notifications-provider";
 import { useSession } from "@/components/session-provider";
 import { WorkspaceMenu } from "@/components/workspace-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { canManageMembers, isAdmin, ROLE_LABELS } from "@/lib/roles";
 import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
-
-const accountNav = [
-  { href: "/settings/profile", label: "Profile", icon: UserCircle },
-];
 
 const workspaceAdminNav = [
   { href: "/settings/workspace", label: "Workspace", icon: Building2 },
@@ -126,17 +129,6 @@ export function AppSidebar() {
       </nav>
 
       <div className="border-t border-white/6 px-2 py-3">
-        <SectionLabel>Account</SectionLabel>
-        <div className="space-y-0">
-          {accountNav.map((item) => (
-            <NavLink
-              key={item.href}
-              {...item}
-              active={pathname === item.href}
-            />
-          ))}
-        </div>
-
         {(isAdmin(user.role) || canManageMembers(user.role)) && (
           <>
             <SectionLabel>Administration</SectionLabel>
@@ -161,36 +153,50 @@ export function AppSidebar() {
           </>
         )}
 
-        <div className="mt-3 flex items-center gap-2 border-t border-white/6 px-1 pt-3">
-          <Link
-            href="/settings/profile"
-            className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-1 transition-colors hover:bg-white/4"
-          >
-            <span
-              className={cn(
-                "flex size-6 shrink-0 items-center justify-center rounded text-[11px] font-bold text-white",
-                avatarColor,
-              )}
+        <div
+          className={cn(
+            (isAdmin(user.role) || canManageMembers(user.role)) &&
+              "mt-3 border-t border-white/6 pt-3",
+          )}
+        >
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex w-full items-center gap-2 rounded-md px-1 py-1 text-left outline-none transition-colors hover:bg-white/4 focus-visible:bg-white/4 data-popup-open:bg-white/4">
+              <span
+                className={cn(
+                  "flex size-6 shrink-0 items-center justify-center rounded text-[11px] font-bold text-white",
+                  avatarColor,
+                )}
+              >
+                {initials}
+              </span>
+              <div className="flex min-w-0 flex-1 flex-col gap-1 leading-none">
+                <p className="truncate text-[14px] font-medium text-foreground">
+                  {user.name}
+                </p>
+                <p className="truncate text-[12px] text-muted-foreground/70">
+                  {ROLE_LABELS[user.role]}
+                </p>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              side="top"
+              align="start"
+              sideOffset={8}
+              className="w-52"
             >
-              {initials}
-            </span>
-            <div className="flex min-w-0 flex-1 flex-col gap-1 leading-none">
-              <p className="truncate text-[14px] font-medium text-foreground">
-                {user.name}
-              </p>
-              <p className="truncate text-[12px] text-muted-foreground/70">
-                {ROLE_LABELS[user.role]}
-              </p>
-            </div>
-          </Link>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground/60 hover:bg-white/4 hover:text-foreground"
-            aria-label="Sign out"
-          >
-            <LogOut className="size-3.5" />
-          </button>
+              <DropdownMenuItem
+                onClick={() => router.push("/settings/profile")}
+              >
+                <UserCircle className="size-3.5" />
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive" onClick={handleLogout}>
+                <LogOut className="size-3.5" />
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </aside>

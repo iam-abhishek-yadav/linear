@@ -107,7 +107,9 @@ export function InboxView() {
   }, [tasks, projectKey]);
 
   function openNotification(notification: NotificationItem) {
-    if (!notification.read) markRead(notification.id);
+    if (!notification.read) {
+      void markRead(notification.id);
+    }
     prefetchIssueDetail(notification.task.id);
     router.push(`/issues/${notification.task.id}`);
   }

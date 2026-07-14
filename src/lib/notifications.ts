@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { aliasedTable, and, desc, eq, isNull } from "drizzle-orm";
+import { aliasedTable, and, desc, eq, isNotNull, isNull, lt } from "drizzle-orm";
 import { cache } from "react";
 import {
   notifications,
@@ -12,6 +12,8 @@ import { db } from "@/lib/db";
 import { logServerCall } from "@/lib/logger";
 import type { NotificationItem } from "@/lib/notification-types";
 import { toIsoString } from "@/lib/serialize";
+
+const NOTIFICATION_RETENTION_MS = 24 * 60 * 60 * 1000;
 
 type DbExecutor = Pick<typeof db, "insert">;
 
@@ -105,10 +107,26 @@ export async function createStatusChangeNotification(
   });
 }
 
+export async function cleanupExpiredNotifications(userId: string) {
+  const cutoff = new Date(Date.now() - NOTIFICATION_RETENTION_MS);
+
+  await db
+    .delete(notifications)
+    .where(
+      and(
+        eq(notifications.userId, userId),
+        isNotNull(notifications.readAt),
+        lt(notifications.readAt, cutoff),
+      ),
+    );
+}
+
 export async function getNotifications(
   userId: string,
   organizationId: string,
 ) {
+  await cleanupExpiredNotifications(userId);
+
   const actor = aliasedTable(users, "actor");
 
   const rows = await db

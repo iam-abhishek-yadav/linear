@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import { CommandPalette } from "@/components/command-palette";
+import { CreateIssueDialog } from "@/components/create-issue-dialog";
+import { GlobalSearch } from "@/components/global-search";
 import { SidebarProvider, useSidebar } from "@/components/sidebar-provider";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +39,8 @@ function ShellContent({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <CommandPalette />
+      <GlobalSearch />
+      <CreateIssueDialog />
     </div>
   );
 }

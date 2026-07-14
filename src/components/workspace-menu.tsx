@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { PenSquare, Search } from "lucide-react";
+import { openCreateIssue } from "@/components/create-issue-dialog";
+import { openGlobalSearch } from "@/components/global-search";
 import { useSession } from "@/components/session-provider";
 import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
@@ -26,22 +27,22 @@ export function WorkspaceMenu() {
       </div>
       <button
         type="button"
-        onClick={() => {
-          window.dispatchEvent(new Event("command-palette:toggle"));
-        }}
+        onClick={openGlobalSearch}
         className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground/60 hover:bg-white/[0.04] hover:text-foreground"
-        aria-label="Open command palette"
-        title="Search (⌘K)"
+        aria-label="Search issues"
+        title="Search (/)"
       >
         <Search className="size-3.5" />
       </button>
-      <Link
-        href="/list"
+      <button
+        type="button"
+        onClick={openCreateIssue}
         className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground/60 hover:bg-white/[0.04] hover:text-foreground"
-        aria-label="All issues"
+        aria-label="Create new issue"
+        title="Create issue"
       >
         <PenSquare className="size-3.5" />
-      </Link>
+      </button>
     </div>
   );
 }

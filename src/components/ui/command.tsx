@@ -36,6 +36,7 @@ function CommandDialog({
   showCloseButton = false,
   open,
   onOpenChange,
+  shouldFilter,
 }: {
   title?: string;
   description?: string;
@@ -44,6 +45,7 @@ function CommandDialog({
   children: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  shouldFilter?: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -58,7 +60,10 @@ function CommandDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <Command className="rounded-xl border-0 **:[[cmdk-group-heading]]:text-muted-foreground">
+        <Command
+          shouldFilter={shouldFilter}
+          className="rounded-xl border-0 **:[[cmdk-group-heading]]:text-muted-foreground"
+        >
           {children}
         </Command>
       </DialogContent>

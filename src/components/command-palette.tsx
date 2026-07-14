@@ -9,11 +9,13 @@ import {
   LayoutGrid,
   List,
   PenSquare,
+  Search,
   User,
   UserCircle,
   Users,
 } from "lucide-react";
-import { TaskDialog } from "@/components/kanban/task-dialog";
+import { openCreateIssue } from "@/components/create-issue-dialog";
+import { openGlobalSearch } from "@/components/global-search";
 import { useSession } from "@/components/session-provider";
 import {
   CommandDialog,
@@ -23,9 +25,8 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
+  CommandShortcut,
 } from "@/components/ui/command";
-import { useTasks } from "@/hooks/use-tasks";
-import type { TaskInput } from "@/hooks/use-tasks";
 import { canManageMembers, isAdmin } from "@/lib/roles";
 
 type NavCommand = {
@@ -39,9 +40,7 @@ type NavCommand = {
 export function CommandPalette() {
   const router = useRouter();
   const { user } = useSession();
-  const { createTask } = useTasks();
   const [open, setOpen] = useState(false);
-  const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -55,15 +54,9 @@ export function CommandPalette() {
       setOpen((current) => !current);
     }
 
-    function onToggle() {
-      setOpen((current) => !current);
-    }
-
     window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("command-palette:toggle", onToggle);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("command-palette:toggle", onToggle);
     };
   }, []);
 
@@ -141,55 +134,51 @@ export function CommandPalette() {
     router.push(href);
   }
 
-  async function handleCreate(data: TaskInput) {
-    const task = await createTask(data);
-    setCreateOpen(false);
-    router.push(`/issues/${task.id}`);
-  }
-
   return (
-    <>
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Type a command or search..." />
-        <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
+    <CommandDialog open={open} onOpenChange={setOpen}>
+      <CommandInput placeholder="Type a command or search..." />
+      <CommandList>
+        <CommandEmpty>No results found.</CommandEmpty>
 
-          <CommandGroup heading="Actions">
+        <CommandGroup heading="Actions">
+          <CommandItem
+            value="create new issue"
+            onSelect={() => {
+              setOpen(false);
+              window.setTimeout(() => openCreateIssue(), 0);
+            }}
+          >
+            <PenSquare />
+            <span>Create new issue</span>
+          </CommandItem>
+          <CommandItem
+            value="search issues global"
+            onSelect={() => {
+              setOpen(false);
+              window.setTimeout(() => openGlobalSearch(), 0);
+            }}
+          >
+            <Search />
+            <span>Search issues</span>
+            <CommandShortcut>/</CommandShortcut>
+          </CommandItem>
+        </CommandGroup>
+
+        <CommandSeparator />
+
+        <CommandGroup heading="Navigation">
+          {navigation.map((item) => (
             <CommandItem
-              value="create new issue"
-              onSelect={() => {
-                setOpen(false);
-                setCreateOpen(true);
-              }}
+              key={item.id}
+              value={`${item.label} ${item.keywords ?? ""}`}
+              onSelect={() => runNavigation(item.href)}
             >
-              <PenSquare />
-              <span>Create new issue</span>
+              <item.icon />
+              <span>{item.label}</span>
             </CommandItem>
-          </CommandGroup>
-
-          <CommandSeparator />
-
-          <CommandGroup heading="Navigation">
-            {navigation.map((item) => (
-              <CommandItem
-                key={item.id}
-                value={`${item.label} ${item.keywords ?? ""}`}
-                onSelect={() => runNavigation(item.href)}
-              >
-                <item.icon />
-                <span>{item.label}</span>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </CommandList>
-      </CommandDialog>
-
-      <TaskDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        defaultStatus="TODO"
-        onSave={handleCreate}
-      />
-    </>
+          ))}
+        </CommandGroup>
+      </CommandList>
+    </CommandDialog>
   );
 }

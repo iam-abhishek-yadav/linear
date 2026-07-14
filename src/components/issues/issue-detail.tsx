@@ -457,7 +457,7 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
               . This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="border-0 bg-transparent p-0">
+          <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialog(null)}>
               Cancel
             </Button>
@@ -486,7 +486,7 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
               this issue for you.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="border-0 bg-transparent p-0">
+          <DialogFooter>
             <Button onClick={() => setDeleteDialog(null)}>Got it</Button>
           </DialogFooter>
         </DialogContent>

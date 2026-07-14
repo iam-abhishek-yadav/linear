@@ -97,7 +97,7 @@ export function InviteMemberDialog({
             </p>
             <InviteLinkCopy url={inviteUrl} />
             {inviteId && <InviteSendEmailButton inviteId={inviteId} />}
-            <DialogFooter className="border-0 bg-transparent p-0">
+            <DialogFooter>
               <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
                 Done
               </Button>
@@ -120,7 +120,7 @@ export function InviteMemberDialog({
                 <FieldError errors={errors.email?.map((message) => ({ message }))} />
               </Field>
             </FieldGroup>
-            <DialogFooter className="mt-4 border-0 bg-transparent p-0">
+            <DialogFooter className="mt-4">
               <Button
                 type="button"
                 variant="outline"

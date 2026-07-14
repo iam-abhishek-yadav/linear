@@ -605,7 +605,7 @@ export function MembersPage({
               ) : null}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="border-0 bg-transparent p-0">
+          <DialogFooter>
             <Button variant="outline" onClick={() => setRevokeTarget(null)}>
               Cancel
             </Button>

@@ -224,7 +224,7 @@ export function WorkspacePage({
           {deleteError && (
             <p className="text-sm text-destructive">{deleteError}</p>
           )}
-          <DialogFooter className="border-0 bg-transparent p-0">
+          <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteOpen(false)}>
               Cancel
             </Button>

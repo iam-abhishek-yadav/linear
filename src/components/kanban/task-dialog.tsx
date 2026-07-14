@@ -259,7 +259,7 @@ export function TaskDialog({
               . This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="border-0 bg-transparent p-0">
+          <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialog(null)}>
               Cancel
             </Button>
@@ -288,7 +288,7 @@ export function TaskDialog({
               this issue for you.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="border-0 bg-transparent p-0">
+          <DialogFooter>
             <Button onClick={() => setDeleteDialog(null)}>Got it</Button>
           </DialogFooter>
         </DialogContent>

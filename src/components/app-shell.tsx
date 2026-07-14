@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
+import { CommandPalette } from "@/components/command-palette";
 import { SidebarProvider, useSidebar } from "@/components/sidebar-provider";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +36,7 @@ function ShellContent({ children }: { children: React.ReactNode }) {
       <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl bg-panel shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
         {children}
       </main>
+      <CommandPalette />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { PenSquare } from "lucide-react";
+import { PenSquare, Search } from "lucide-react";
 import { useSession } from "@/components/session-provider";
 import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
@@ -24,9 +24,21 @@ export function WorkspaceMenu() {
         </span>
         <span className="truncate text-[14px] font-medium">{organization.name}</span>
       </div>
+      <button
+        type="button"
+        onClick={() => {
+          window.dispatchEvent(new Event("command-palette:toggle"));
+        }}
+        className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground/60 hover:bg-white/[0.04] hover:text-foreground"
+        aria-label="Open command palette"
+        title="Search (⌘K)"
+      >
+        <Search className="size-3.5" />
+      </button>
       <Link
         href="/list"
         className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground/60 hover:bg-white/[0.04] hover:text-foreground"
+        aria-label="All issues"
       >
         <PenSquare className="size-3.5" />
       </Link>

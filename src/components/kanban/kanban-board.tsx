@@ -19,12 +19,11 @@ import {
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { KanbanColumn } from "@/components/kanban/kanban-column";
 import { KanbanCardContent } from "@/components/kanban/kanban-card";
 import { TaskDialog } from "@/components/kanban/task-dialog";
 import { BoardPageChrome } from "@/components/issues/board-header";
-import { usePrefetchIssueDetail } from "@/components/issues/issue-detail-route";
+import { useOpenIssue } from "@/hooks/use-open-issue";
 import { useMembersContext } from "@/components/members-provider";
 import { useViewFilters } from "@/hooks/use-view-filters";
 import { useTasks } from "@/hooks/use-tasks";
@@ -143,8 +142,7 @@ function KanbanBoardContent() {
 
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [newDialogOpen, setNewDialogOpen] = useState(false);
-  const router = useRouter();
-  const prefetchIssueDetail = usePrefetchIssueDetail();
+  const openIssue = useOpenIssue();
   const tasksRef = useRef(tasks);
   const dragSnapshotRef = useRef<Task[] | null>(null);
 
@@ -289,8 +287,7 @@ function KanbanBoardContent() {
                 identifierIndex={identifierIndex}
                 members={members}
                 onTaskClick={(task) => {
-                  prefetchIssueDetail(task.id);
-                  router.push(`/issues/${task.id}`);
+                  openIssue(task.id);
                 }}
                 footer={
                   col.id === "DONE" && staleCompletedCount > 0 ? (

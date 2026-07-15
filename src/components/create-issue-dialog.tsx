@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { TaskDialog } from "@/components/kanban/task-dialog";
+import { useOpenIssue } from "@/hooks/use-open-issue";
 import { useTasks } from "@/hooks/use-tasks";
 import type { TaskInput } from "@/hooks/use-tasks";
 
@@ -13,7 +13,7 @@ export function openCreateIssue() {
 }
 
 export function CreateIssueDialog() {
-  const router = useRouter();
+  const openIssue = useOpenIssue();
   const { createTask } = useTasks();
   const [open, setOpen] = useState(false);
 
@@ -29,7 +29,7 @@ export function CreateIssueDialog() {
   async function handleCreate(data: TaskInput) {
     const task = await createTask(data);
     setOpen(false);
-    router.push(`/issues/${task.id}`);
+    openIssue(task.id);
   }
 
   return (

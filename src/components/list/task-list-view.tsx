@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Check, Loader2, Plus } from "lucide-react";
 import { TaskDialog } from "@/components/kanban/task-dialog";
 import {
@@ -9,7 +9,7 @@ import {
   type AssignedView,
   type IssuesTabScope,
 } from "@/components/issues/issues-header";
-import { usePrefetchIssueDetail } from "@/components/issues/issue-detail-route";
+import { useOpenIssue } from "@/hooks/use-open-issue";
 import { useSession } from "@/components/session-provider";
 import { PriorityIcon } from "@/components/tasks/priority-icon";
 import { StatusIcon } from "@/components/tasks/status-icon";
@@ -223,9 +223,8 @@ function TaskListViewContent({
   onCreate,
   onUpdate,
 }: TaskListViewProps) {
-  const router = useRouter();
+  const openIssue = useOpenIssue();
   const pathname = usePathname();
-  const prefetchIssueDetail = usePrefetchIssueDetail();
   const members = useMembersContext();
   const {
     filters,
@@ -275,8 +274,7 @@ function TaskListViewContent({
   }
 
   function openTask(task: Task) {
-    prefetchIssueDetail(task.id);
-    router.push(`/issues/${task.id}`);
+    openIssue(task.id);
   }
 
   async function handlePriorityChange(task: Task, priority: TaskPriority) {

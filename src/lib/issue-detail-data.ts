@@ -29,6 +29,8 @@ export type IssueDetailData = {
   tasks: TaskNavItem[];
   activities: TaskActivityItem[];
   comments: TaskCommentItem[];
+  /** True when seeded from the tasks list; full detail still loading. */
+  partial?: boolean;
 };
 
 function serializeTask(

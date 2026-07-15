@@ -14,6 +14,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { IssueActivitySection } from "@/components/issues/issue-activity-section";
+import { ActivityTimelineSkeleton } from "@/components/issues/issue-detail-skeleton";
 import { IssuePropertiesPanel } from "@/components/issues/issue-properties-panel";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,11 +48,28 @@ import {
 } from "@/lib/task-utils";
 import type { Task } from "@/lib/types";
 
-export function IssueDetail({ initialData }: { initialData: IssueDetailData }) {
-  return <IssueDetailView data={initialData} />;
+export function IssueDetail({
+  initialData,
+  isLoadingTimeline = false,
+}: {
+  initialData: IssueDetailData;
+  isLoadingTimeline?: boolean;
+}) {
+  return (
+    <IssueDetailView
+      data={initialData}
+      isLoadingTimeline={isLoadingTimeline}
+    />
+  );
 }
 
-function IssueDetailView({ data }: { data: IssueDetailData }) {
+function IssueDetailView({
+  data,
+  isLoadingTimeline = false,
+}: {
+  data: IssueDetailData;
+  isLoadingTimeline?: boolean;
+}) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user, organization } = useSession();
@@ -411,16 +429,27 @@ function IssueDetailView({ data }: { data: IssueDetailData }) {
               className="mt-4 w-full resize-none bg-transparent text-[16px] leading-relaxed text-foreground/90 outline-none placeholder:text-muted-foreground/50"
             />
 
-            <section className="mt-10 border-t border-white/[0.06] pt-6">
-              <h2 className="mb-4 text-sm font-medium text-foreground">Activity</h2>
-              <IssueActivitySection
-                taskId={task.id}
-                activities={timeline.activities}
-                comments={timeline.comments}
-                onAddComment={timeline.addComment}
-                onRemoveComment={timeline.removeComment}
-                onChange={handleIssueChange}
-              />
+            <section className="mt-10 border-t border-white/6 pt-6">
+              <div className="mb-4 flex items-center gap-2">
+                <h2 className="text-sm font-medium text-foreground">Activity</h2>
+                {isLoadingTimeline && (
+                  <span className="text-[12px] text-muted-foreground/70">
+                    Loading…
+                  </span>
+                )}
+              </div>
+              {isLoadingTimeline ? (
+                <ActivityTimelineSkeleton />
+              ) : (
+                <IssueActivitySection
+                  taskId={task.id}
+                  activities={timeline.activities}
+                  comments={timeline.comments}
+                  onAddComment={timeline.addComment}
+                  onRemoveComment={timeline.removeComment}
+                  onChange={handleIssueChange}
+                />
+              )}
             </section>
           </div>
         </div>

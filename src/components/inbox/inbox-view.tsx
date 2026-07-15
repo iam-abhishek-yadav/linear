@@ -1,8 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { usePrefetchIssueDetail } from "@/components/issues/issue-detail-route";
+import { useOpenIssue } from "@/hooks/use-open-issue";
 import { CheckCheck, ChevronRight, Inbox, Loader2 } from "lucide-react";
 import {
   useNotifications,
@@ -89,8 +88,7 @@ function NotificationRow({
 }
 
 export function InboxView() {
-  const router = useRouter();
-  const prefetchIssueDetail = usePrefetchIssueDetail();
+  const openIssue = useOpenIssue();
   const { organization } = useSession();
   const { notifications, loading, unreadCount, markRead, markAllRead } =
     useNotifications();
@@ -110,8 +108,7 @@ export function InboxView() {
     if (!notification.read) {
       void markRead(notification.id);
     }
-    prefetchIssueDetail(notification.task.id);
-    router.push(`/issues/${notification.task.id}`);
+    openIssue(notification.task.id);
   }
 
   return (

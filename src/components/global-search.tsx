@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useSession } from "@/components/session-provider";
 import {
   CommandDialog,
@@ -11,6 +10,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { useOpenIssue } from "@/hooks/use-open-issue";
 import { useMembersCache } from "@/hooks/use-members-cache";
 import { useTasks } from "@/hooks/use-tasks";
 import { COLUMNS } from "@/lib/constants";
@@ -41,7 +41,7 @@ function isTypingTarget(target: EventTarget | null) {
 }
 
 export function GlobalSearch() {
-  const router = useRouter();
+  const openIssue = useOpenIssue();
   const { organization } = useSession();
   const { tasks } = useTasks();
   const members = useMembersCache();
@@ -137,9 +137,9 @@ export function GlobalSearch() {
       .slice(0, 30);
   }, [issueItems, query]);
 
-  function openIssue(id: string) {
+  function handleOpenIssue(id: string) {
     setOpen(false);
-    router.push(`/issues/${id}`);
+    openIssue(id);
   }
 
   return (
@@ -164,7 +164,7 @@ export function GlobalSearch() {
             <CommandItem
               key={issue.id}
               value={issue.value}
-              onSelect={() => openIssue(issue.id)}
+              onSelect={() => handleOpenIssue(issue.id)}
             >
               <span className="w-16 shrink-0 font-mono text-[12px] text-muted-foreground">
                 {issue.identifier}

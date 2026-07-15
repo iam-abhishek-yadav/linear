@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePrefetchIssueDetail } from "@/components/issues/issue-detail-route";
+import { useQueryClient } from "@tanstack/react-query";
+import { seedIssueDetailFromTasksCache } from "@/lib/issue-detail-prefill";
+import { usePrefetchIssueDetail } from "@/hooks/use-open-issue";
 
 type IssueDetailLinkProps = {
   taskId: string;
@@ -16,13 +18,19 @@ export function IssueDetailLink({
   children,
   onClick,
 }: IssueDetailLinkProps) {
+  const queryClient = useQueryClient();
   const prefetchIssueDetail = usePrefetchIssueDetail();
+
+  function handleClick() {
+    seedIssueDetailFromTasksCache(queryClient, taskId);
+    onClick?.();
+  }
 
   return (
     <Link
       href={`/issues/${taskId}`}
       className={className}
-      onClick={onClick}
+      onClick={handleClick}
       onMouseEnter={() => prefetchIssueDetail(taskId)}
       onFocus={() => prefetchIssueDetail(taskId)}
     >

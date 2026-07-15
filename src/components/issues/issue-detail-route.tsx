@@ -1,12 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useQueryClient } from "@tanstack/react-query";
 import { IssueDetail } from "@/components/issues/issue-detail";
 import { IssueDetailSkeleton } from "@/components/issues/issue-detail-skeleton";
 import { useIssueDetail } from "@/hooks/use-issue-detail";
-import { fetchIssueDetail } from "@/lib/api";
-import { queryKeys } from "@/lib/query-keys";
 
 type IssueDetailRouteProps = {
   taskId: string;
@@ -16,7 +13,12 @@ export function IssueDetailRoute({ taskId }: IssueDetailRouteProps) {
   const { data, loading, error, refetch } = useIssueDetail(taskId);
 
   if (data) {
-    return <IssueDetail initialData={data} />;
+    return (
+      <IssueDetail
+        initialData={data}
+        isLoadingTimeline={Boolean(data.partial)}
+      />
+    );
   }
 
   if (error === "not_found") {
@@ -50,14 +52,6 @@ export function IssueDetailRoute({ taskId }: IssueDetailRouteProps) {
     );
   }
 
-  if (loading) {
-    return (
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <IssueDetailSkeleton />
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       <IssueDetailSkeleton />
@@ -65,14 +59,4 @@ export function IssueDetailRoute({ taskId }: IssueDetailRouteProps) {
   );
 }
 
-export function usePrefetchIssueDetail() {
-  const queryClient = useQueryClient();
-
-  return (taskId: string) => {
-    if (!taskId) return;
-    void queryClient.prefetchQuery({
-      queryKey: queryKeys.issueDetail(taskId),
-      queryFn: () => fetchIssueDetail(taskId),
-    });
-  };
-}
+export { usePrefetchIssueDetail } from "@/hooks/use-open-issue";

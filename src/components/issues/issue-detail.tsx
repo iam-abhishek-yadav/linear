@@ -35,6 +35,7 @@ import { useSession } from "@/components/session-provider";
 import { SidebarTrigger } from "@/components/sidebar-provider";
 import { IssueDetailLink } from "@/components/issues/issue-detail-link";
 import { useMembersCache } from "@/hooks/use-members-cache";
+import { usePrefetchIssueDetail } from "@/hooks/use-open-issue";
 import { useTaskTimeline } from "@/hooks/use-task-timeline";
 import type { IssueDetailData, SerializedTask } from "@/lib/issue-detail-data";
 import type { TaskTagSummary } from "@/lib/tags";
@@ -74,13 +75,26 @@ function IssueDetailView({
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const prefetchIssue = usePrefetchIssueDetail();
   const { user, organization } = useSession();
   const members = useMembersCache();
   const titleRef = useRef<HTMLInputElement>(null);
   const initializedRef = useRef(false);
+  const storeTasks = useTasksStore((state) => state.tasks);
 
   const [task, setTask] = useState(data.task);
-  const [taskNav] = useState(data.tasks);
+
+  const taskNav = useMemo(
+    () =>
+      (storeTasks.length > 0 ? storeTasks : [data.task]).map((item) => ({
+        id: item.id,
+        createdAt:
+          typeof item.createdAt === "string"
+            ? item.createdAt
+            : item.createdAt.toISOString(),
+      })),
+    [storeTasks, data.task],
+  );
 
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description ?? "");
@@ -124,6 +138,11 @@ function IssueDetailView({
     currentIndex >= 0 && currentIndex < sortedTasks.length - 1
       ? sortedTasks[currentIndex + 1]
       : null;
+
+  useEffect(() => {
+    if (prevTask) prefetchIssue(prevTask.id);
+    if (nextTask) prefetchIssue(nextTask.id);
+  }, [prevTask?.id, nextTask?.id, prefetchIssue]);
 
   useEffect(() => {
     setTask(data.task);
@@ -298,7 +317,7 @@ function IssueDetailView({
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete task");
-      queryClient.removeQueries({ queryKey: queryKeys.issueDetail(task.id) });
+      queryClient.removeQueries({ queryKey: queryKeys.issueTimeline(task.id) });
       useTasksStore.getState().setTasks((current) =>
         current.filter((item) => item.id !== task.id),
       );

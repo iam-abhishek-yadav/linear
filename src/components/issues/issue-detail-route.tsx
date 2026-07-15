@@ -10,13 +10,14 @@ type IssueDetailRouteProps = {
 };
 
 export function IssueDetailRoute({ taskId }: IssueDetailRouteProps) {
-  const { data, loading, error, refetch } = useIssueDetail(taskId);
+  const { data, loading, isLoadingTimeline, error, refetch } =
+    useIssueDetail(taskId);
 
   if (data) {
     return (
       <IssueDetail
         initialData={data}
-        isLoadingTimeline={Boolean(data.partial)}
+        isLoadingTimeline={isLoadingTimeline}
       />
     );
   }

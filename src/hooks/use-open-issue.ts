@@ -3,9 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
-import { fetchIssueDetail } from "@/lib/api";
-import { seedIssueDetailFromTasksCache } from "@/lib/issue-detail-prefill";
-import { queryKeys } from "@/lib/query-keys";
+import { prefetchIssueTimeline } from "@/lib/prefetch-issue";
 
 export function useOpenIssue() {
   const router = useRouter();
@@ -13,11 +11,7 @@ export function useOpenIssue() {
 
   return useCallback(
     (taskId: string) => {
-      seedIssueDetailFromTasksCache(queryClient, taskId);
-      void queryClient.prefetchQuery({
-        queryKey: queryKeys.issueDetail(taskId),
-        queryFn: () => fetchIssueDetail(taskId),
-      });
+      prefetchIssueTimeline(queryClient, taskId);
       router.push(`/issues/${taskId}`);
     },
     [queryClient, router],
@@ -29,12 +23,7 @@ export function usePrefetchIssueDetail() {
 
   return useCallback(
     (taskId: string) => {
-      if (!taskId) return;
-      seedIssueDetailFromTasksCache(queryClient, taskId);
-      void queryClient.prefetchQuery({
-        queryKey: queryKeys.issueDetail(taskId),
-        queryFn: () => fetchIssueDetail(taskId),
-      });
+      prefetchIssueTimeline(queryClient, taskId);
     },
     [queryClient],
   );

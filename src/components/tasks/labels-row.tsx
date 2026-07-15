@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { fetchTags } from "@/lib/api";
-import { queryKeys, STALE_TIME_MS } from "@/lib/query-keys";
+import { queryKeys, TAGS_STALE_MS } from "@/lib/query-keys";
 import type { TaskTagSummary } from "@/lib/tags";
 import { cn } from "@/lib/utils";
 
@@ -42,7 +42,7 @@ export function LabelsRow({
     queryKey: queryKeys.tags,
     queryFn: fetchTags,
     enabled: open,
-    staleTime: STALE_TIME_MS,
+    staleTime: TAGS_STALE_MS,
   });
   const orgTags = tagsQuery.data ?? [];
   const loading = tagsQuery.isPending && open;

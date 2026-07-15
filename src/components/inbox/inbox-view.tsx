@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useOpenIssue } from "@/hooks/use-open-issue";
+import { useOpenIssue, usePrefetchIssueDetail } from "@/hooks/use-open-issue";
 import { CheckCheck, ChevronRight, Inbox, Loader2 } from "lucide-react";
 import {
   useNotifications,
@@ -23,10 +23,12 @@ function NotificationRow({
   notification,
   identifier,
   onOpen,
+  onPrefetch,
 }: {
   notification: NotificationItem;
   identifier: string | null;
   onOpen: () => void;
+  onPrefetch: () => void;
 }) {
   const actorName = getActorDisplayName(notification.actor);
 
@@ -34,6 +36,8 @@ function NotificationRow({
     <button
       type="button"
       onClick={onOpen}
+      onPointerEnter={onPrefetch}
+      onFocus={onPrefetch}
       className={cn(
         "group flex w-full items-center gap-3 border-b border-white/[0.05] px-5 py-3 text-left transition-colors",
         notification.read
@@ -89,6 +93,7 @@ function NotificationRow({
 
 export function InboxView() {
   const openIssue = useOpenIssue();
+  const prefetchIssue = usePrefetchIssueDetail();
   const { organization } = useSession();
   const { notifications, loading, unreadCount, markRead, markAllRead } =
     useNotifications();
@@ -175,6 +180,7 @@ export function InboxView() {
                 notification={notification}
                 identifier={taskIdentifiers.get(notification.task.id) ?? null}
                 onOpen={() => openNotification(notification)}
+                onPrefetch={() => prefetchIssue(notification.task.id)}
               />
             ))}
           </div>

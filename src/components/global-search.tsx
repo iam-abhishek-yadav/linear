@@ -10,7 +10,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { useOpenIssue } from "@/hooks/use-open-issue";
+import { useOpenIssue, usePrefetchIssueDetail } from "@/hooks/use-open-issue";
 import { useMembersCache } from "@/hooks/use-members-cache";
 import { useTasks } from "@/hooks/use-tasks";
 import { COLUMNS } from "@/lib/constants";
@@ -42,6 +42,7 @@ function isTypingTarget(target: EventTarget | null) {
 
 export function GlobalSearch() {
   const openIssue = useOpenIssue();
+  const prefetchIssue = usePrefetchIssueDetail();
   const { organization } = useSession();
   const { tasks } = useTasks();
   const members = useMembersCache();
@@ -165,6 +166,7 @@ export function GlobalSearch() {
               key={issue.id}
               value={issue.value}
               onSelect={() => handleOpenIssue(issue.id)}
+              onMouseEnter={() => prefetchIssue(issue.id)}
             >
               <span className="w-16 shrink-0 font-mono text-[12px] text-muted-foreground">
                 {issue.identifier}

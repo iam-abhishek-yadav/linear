@@ -8,7 +8,9 @@ export async function revalidateIssueCaches(
   taskId: string,
 ) {
   await Promise.all([
-    queryClient.invalidateQueries({ queryKey: queryKeys.issueDetail(taskId) }),
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.issueTimeline(taskId),
+    }),
     useTasksStore.getState().refresh().catch(() => undefined),
     useNotificationsStore.getState().refresh(),
   ]);

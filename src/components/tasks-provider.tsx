@@ -41,7 +41,7 @@ export function useTasksContext() {
     async (id: string, data: TaskInput) => {
       const updated = await useTasksStore.getState().updateTask(id, data);
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.issueDetail(updated.id),
+        queryKey: queryKeys.issueTimeline(updated.id),
       });
       void useNotificationsStore.getState().refresh();
       return updated;
@@ -51,7 +51,7 @@ export function useTasksContext() {
 
   const deleteTask = useCallback(async (id: string) => {
     await useTasksStore.getState().deleteTask(id);
-    queryClient.removeQueries({ queryKey: queryKeys.issueDetail(id) });
+    queryClient.removeQueries({ queryKey: queryKeys.issueTimeline(id) });
   }, [queryClient]);
 
   const persistReorder = useCallback(

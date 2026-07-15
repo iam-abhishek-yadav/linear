@@ -15,7 +15,7 @@ import { UnassignedAvatar, UserAvatar } from "@/components/user-avatar";
 import type { Member } from "@/hooks/use-members";
 import { fetchTags } from "@/lib/api";
 import { PRIORITIES } from "@/lib/constants";
-import { queryKeys } from "@/lib/query-keys";
+import { queryKeys, TAGS_STALE_MS } from "@/lib/query-keys";
 import { UNASSIGNED_ASSIGNEE_ID, type ViewFilters } from "@/lib/task-filters";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +49,7 @@ export function IssueFiltersMenu({
     queryKey: queryKeys.tags,
     queryFn: fetchTags,
     enabled: open,
+    staleTime: TAGS_STALE_MS,
   });
   const tags = tagsQuery.data ?? [];
 

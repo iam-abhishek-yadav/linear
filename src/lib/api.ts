@@ -1,4 +1,5 @@
 import type { IssueDetailData } from "@/lib/issue-detail-data";
+import type { IssueTimelineData } from "@/lib/issue-timeline-data";
 import type { MembersPageData } from "@/lib/members";
 import type { NotificationItem } from "@/lib/notification-types";
 import type { ProjectSummary } from "@/lib/projects";
@@ -35,6 +36,21 @@ export async function fetchProjects(): Promise<ProjectSummary[]> {
     "/api/projects",
   );
   return projects;
+}
+
+export async function fetchTask(taskId: string): Promise<TaskWithTags | null> {
+  const response = await fetch(`/api/tasks/${taskId}`);
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error("Failed to load task");
+  return response.json() as Promise<TaskWithTags>;
+}
+
+export async function fetchIssueTimeline(
+  taskId: string,
+): Promise<IssueTimelineData> {
+  const response = await fetch(`/api/tasks/${taskId}/timeline`);
+  if (!response.ok) throw new Error("Failed to load issue timeline");
+  return response.json() as Promise<IssueTimelineData>;
 }
 
 export async function fetchIssueDetail(

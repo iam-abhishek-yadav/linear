@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -7,11 +8,17 @@ import { CommandPalette } from "@/components/command-palette";
 import { CreateIssueDialog } from "@/components/create-issue-dialog";
 import { GlobalSearch } from "@/components/global-search";
 import { SidebarProvider, useSidebar } from "@/components/sidebar-provider";
+import { prefetchTags } from "@/lib/prefetch-tags";
 import { cn } from "@/lib/utils";
 
 function ShellContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { open, setOpen } = useSidebar();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    prefetchTags(queryClient);
+  }, [queryClient]);
 
   useEffect(() => {
     setOpen(false);

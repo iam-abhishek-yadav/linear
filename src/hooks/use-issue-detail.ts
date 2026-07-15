@@ -1,50 +1,70 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchIssueDetail } from "@/lib/api";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { fetchTask } from "@/lib/api";
 import { buildIssueDetailFromTask } from "@/lib/issue-detail-prefill";
 import type { IssueDetailData } from "@/lib/issue-detail-data";
-import { queryKeys } from "@/lib/query-keys";
+import { queryKeys, STALE_TIME_MS } from "@/lib/query-keys";
+import { useIssueTimeline } from "@/hooks/use-issue-timeline";
 import { useTasksStore } from "@/stores/tasks-store";
 
-function getPrefillFromTasksStore(taskId: string): IssueDetailData | undefined {
-  const tasks = useTasksStore.getState().tasks;
-  const task = tasks.find((item) => item.id === taskId);
-  if (!task) {
-    return undefined;
-  }
-  return buildIssueDetailFromTask(task, tasks, true);
-}
-
 export function useIssueDetail(taskId: string) {
-  const queryClient = useQueryClient();
+  const tasks = useTasksStore((state) => state.tasks);
+  const taskFromStore = useMemo(
+    () => tasks.find((item) => item.id === taskId),
+    [tasks, taskId],
+  );
 
-  const query = useQuery({
-    queryKey: queryKeys.issueDetail(taskId),
-    queryFn: () => fetchIssueDetail(taskId),
-    enabled: Boolean(taskId),
-    staleTime: 0,
-    placeholderData: () => {
-      const existing = queryClient.getQueryData<IssueDetailData>(
-        queryKeys.issueDetail(taskId),
-      );
-      if (existing) return existing;
-      return getPrefillFromTasksStore(taskId);
-    },
+  const coldTaskQuery = useQuery({
+    queryKey: queryKeys.task(taskId),
+    queryFn: () => fetchTask(taskId),
+    enabled: !taskFromStore && Boolean(taskId),
+    staleTime: STALE_TIME_MS,
   });
 
+  const task = taskFromStore ?? coldTaskQuery.data ?? null;
+  const timelineQuery = useIssueTimeline(taskId, { enabled: Boolean(task) });
+
+  const data = useMemo((): IssueDetailData | null => {
+    if (!task) return null;
+
+    const navTasks = tasks.length > 0 ? tasks : [task];
+    const base = buildIssueDetailFromTask(task, navTasks, true);
+
+    return {
+      ...base,
+      activities: timelineQuery.data?.activities ?? [],
+      comments: timelineQuery.data?.comments ?? [],
+      partial: !timelineQuery.data,
+    };
+  }, [task, tasks, timelineQuery.data]);
+
   const error =
-    query.isError
+    coldTaskQuery.isError || timelineQuery.isError
       ? ("failed" as const)
-      : query.isSuccess && query.data === null
+      : coldTaskQuery.isSuccess && coldTaskQuery.data === null
         ? ("not_found" as const)
         : null;
 
+  const loading =
+    !task &&
+    (coldTaskQuery.isPending || (Boolean(taskId) && !coldTaskQuery.isFetched));
+
+  const isLoadingTimeline =
+    Boolean(task) && timelineQuery.isPending && !timelineQuery.data;
+
   return {
-    data: query.data ?? null,
-    loading: query.isPending && !query.data && !query.isPlaceholderData,
-    isFetching: query.isFetching,
+    data,
+    loading,
+    isLoadingTimeline,
+    isFetching: timelineQuery.isFetching,
     error,
-    refetch: query.refetch,
+    refetch: async () => {
+      await Promise.all([
+        coldTaskQuery.refetch(),
+        timelineQuery.refetch(),
+      ]);
+    },
   };
 }

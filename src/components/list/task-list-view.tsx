@@ -9,7 +9,7 @@ import {
   type AssignedView,
   type IssuesTabScope,
 } from "@/components/issues/issues-header";
-import { useOpenIssue } from "@/hooks/use-open-issue";
+import { useOpenIssue, usePrefetchIssueDetail } from "@/hooks/use-open-issue";
 import { useSession } from "@/components/session-provider";
 import { PriorityIcon } from "@/components/tasks/priority-icon";
 import { StatusIcon } from "@/components/tasks/status-icon";
@@ -121,6 +121,7 @@ function IssueRow({
   onPriorityChange: (priority: TaskPriority) => void;
 }) {
   const { organization } = useSession();
+  const prefetchIssue = usePrefetchIssueDetail();
   const projectKey = getProjectKey(organization.name);
 
   return (
@@ -128,6 +129,8 @@ function IssueRow({
       role="button"
       tabIndex={0}
       onClick={onClick}
+      onPointerEnter={() => prefetchIssue(task.id)}
+      onFocus={() => prefetchIssue(task.id)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();

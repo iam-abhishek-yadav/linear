@@ -1,5 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
+import { useNotificationsStore } from "@/stores/notifications-store";
+import { useTasksStore } from "@/stores/tasks-store";
 
 export async function revalidateIssueCaches(
   queryClient: QueryClient,
@@ -7,7 +9,7 @@ export async function revalidateIssueCaches(
 ) {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: queryKeys.issueDetail(taskId) }),
-    queryClient.invalidateQueries({ queryKey: queryKeys.tasks }),
-    queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
+    useTasksStore.getState().refresh().catch(() => undefined),
+    useNotificationsStore.getState().refresh(),
   ]);
 }

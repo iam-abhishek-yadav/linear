@@ -1,46 +1,14 @@
 "use client";
 
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  type ReactNode,
-} from "react";
-import {
-  createTask as createTaskApi,
-  deleteTask as deleteTaskApi,
-  fetchTasks,
-  reorderTask,
-  updateTask as updateTaskApi,
-  type TaskInput,
-} from "@/lib/api";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCallback, type ReactNode } from "react";
+import type { TaskInput } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
+import { useNotificationsStore } from "@/stores/notifications-store";
+import { useTasksStore } from "@/stores/tasks-store";
 import type { TaskStatus, TaskWithTags } from "@/lib/types";
 
 export type { TaskInput };
-
-type TasksContextValue = {
-  tasks: TaskWithTags[];
-  loading: boolean;
-  setTasks: React.Dispatch<React.SetStateAction<TaskWithTags[]>>;
-  fetchTasks: () => Promise<void>;
-  createTask: (data: TaskInput) => Promise<TaskWithTags>;
-  updateTask: (id: string, data: TaskInput) => Promise<TaskWithTags>;
-  deleteTask: (id: string) => Promise<void>;
-  persistReorder: (
-    taskId: string,
-    status: TaskStatus,
-    position: number,
-  ) => Promise<void>;
-};
-
-const TasksContext = createContext<TasksContextValue | null>(null);
 
 export function TasksProvider({
   initialTasks,
@@ -49,115 +17,59 @@ export function TasksProvider({
   initialTasks: TaskWithTags[];
   children: ReactNode;
 }) {
+  useTasksStore.getState().hydrate(initialTasks);
+  return children;
+}
+
+export function useTasksContext() {
   const queryClient = useQueryClient();
+  const tasks = useTasksStore((state) => state.tasks);
+  const loading = useTasksStore((state) => state.loading);
+  const setTasks = useTasksStore((state) => state.setTasks);
+  const refresh = useTasksStore((state) => state.refresh);
 
-  const tasksQuery = useQuery({
-    queryKey: queryKeys.tasks,
-    queryFn: fetchTasks,
-    initialData: initialTasks,
-  });
+  const createTask = useCallback(
+    async (data: TaskInput) => {
+      const task = await useTasksStore.getState().createTask(data);
+      void useNotificationsStore.getState().refresh();
+      return task;
+    },
+    [],
+  );
 
-  const tasks = tasksQuery.data ?? [];
-
-  const fetchTasksFn = useCallback(async () => {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.tasks });
-  }, [queryClient]);
-
-  const setTasks = useCallback(
-    (updater: React.SetStateAction<TaskWithTags[]>) => {
-      queryClient.setQueryData<TaskWithTags[]>(queryKeys.tasks, (current = []) =>
-        typeof updater === "function" ? updater(current) : updater,
-      );
+  const updateTask = useCallback(
+    async (id: string, data: TaskInput) => {
+      const updated = await useTasksStore.getState().updateTask(id, data);
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.issueDetail(updated.id),
+      });
+      void useNotificationsStore.getState().refresh();
+      return updated;
     },
     [queryClient],
   );
 
-  const createTaskMutation = useMutation({
-    mutationFn: createTaskApi,
-    onSuccess: (task) => {
-      queryClient.setQueryData<TaskWithTags[]>(queryKeys.tasks, (current = []) => [
-        ...current,
-        task,
-      ]);
-      void queryClient.invalidateQueries({ queryKey: queryKeys.notifications });
-    },
-  });
+  const deleteTask = useCallback(async (id: string) => {
+    await useTasksStore.getState().deleteTask(id);
+    queryClient.removeQueries({ queryKey: queryKeys.issueDetail(id) });
+  }, [queryClient]);
 
-  const updateTaskMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: TaskInput }) =>
-      updateTaskApi(id, data),
-    onSuccess: (updated) => {
-      queryClient.setQueryData<TaskWithTags[]>(queryKeys.tasks, (current = []) =>
-        current.map((task) => (task.id === updated.id ? updated : task)),
-      );
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.issueDetail(updated.id),
-      });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.notifications });
+  const persistReorder = useCallback(
+    async (taskId: string, status: TaskStatus, position: number) => {
+      await useTasksStore.getState().persistReorder(taskId, status, position);
+      void useNotificationsStore.getState().refresh();
     },
-  });
-
-  const deleteTaskMutation = useMutation({
-    mutationFn: deleteTaskApi,
-    onSuccess: (_result, id) => {
-      queryClient.setQueryData<TaskWithTags[]>(queryKeys.tasks, (current = []) =>
-        current.filter((task) => task.id !== id),
-      );
-      queryClient.removeQueries({ queryKey: queryKeys.issueDetail(id) });
-    },
-  });
-
-  const reorderMutation = useMutation({
-    mutationFn: reorderTask,
-    onSuccess: (updated) => {
-      queryClient.setQueryData<TaskWithTags[]>(queryKeys.tasks, (current = []) =>
-        current.map((task) =>
-          task.id === updated.id
-            ? { ...updated, tags: updated.tags ?? task.tags ?? [] }
-            : task,
-        ),
-      );
-      void queryClient.invalidateQueries({ queryKey: queryKeys.notifications });
-    },
-    onError: () => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.tasks });
-    },
-  });
-
-  const value = useMemo<TasksContextValue>(
-    () => ({
-      tasks,
-      loading: tasksQuery.isPending,
-      setTasks,
-      fetchTasks: fetchTasksFn,
-      createTask: (data) => createTaskMutation.mutateAsync(data),
-      updateTask: (id, data) => updateTaskMutation.mutateAsync({ id, data }),
-      deleteTask: (id) => deleteTaskMutation.mutateAsync(id),
-      persistReorder: async (taskId, status, position) => {
-        await reorderMutation.mutateAsync({ taskId, status, position });
-      },
-    }),
-    [
-      tasks,
-      tasksQuery.isPending,
-      setTasks,
-      fetchTasksFn,
-      createTaskMutation,
-      updateTaskMutation,
-      deleteTaskMutation,
-      reorderMutation,
-    ],
+    [],
   );
 
-  return (
-    <TasksContext.Provider value={value}>{children}</TasksContext.Provider>
-  );
-}
-
-export function useTasksContext() {
-  const context = useContext(TasksContext);
-  if (!context) {
-    throw new Error("useTasksContext must be used within TasksProvider");
-  }
-  return context;
+  return {
+    tasks,
+    loading,
+    setTasks,
+    fetchTasks: refresh,
+    createTask,
+    updateTask,
+    deleteTask,
+    persistReorder,
+  };
 }

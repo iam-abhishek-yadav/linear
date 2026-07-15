@@ -1,6 +1,5 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { MoreHorizontal, Plus } from "lucide-react";
 import { ProjectFormDialog } from "@/components/settings/project-form-dialog";
@@ -19,11 +18,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { fetchProjects } from "@/lib/api";
 import type { ProjectSummary } from "@/lib/projects";
-import { queryKeys } from "@/lib/query-keys";
 import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
+import { useProjectsStore } from "@/stores/projects-store";
 
 function MemberAvatars({
   members,
@@ -69,22 +67,17 @@ export function WorkspaceProjectsSection({
 }: {
   initialProjects: ProjectSummary[];
 }) {
-  const queryClient = useQueryClient();
-  const projectsQuery = useQuery({
-    queryKey: queryKeys.projects,
-    queryFn: fetchProjects,
-    initialData: initialProjects,
-  });
-  const projects = projectsQuery.data ?? initialProjects;
+  const projects = useProjectsStore((state) => state.projects);
+  const hydrate = useProjectsStore((state) => state.hydrate);
+  const refresh = useProjectsStore((state) => state.refresh);
+  const removeProject = useProjectsStore((state) => state.removeProject);
+
+  hydrate(initialProjects);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ProjectSummary | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ProjectSummary | null>(null);
   const [deleting, setDeleting] = useState(false);
-
-  async function refreshProjects() {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.projects });
-  }
 
   async function handleDelete() {
     if (!deleteTarget) return;
@@ -99,8 +92,8 @@ export function WorkspaceProjectsSection({
       return;
     }
 
+    removeProject(deleteTarget.id);
     setDeleteTarget(null);
-    await refreshProjects();
   }
 
   return (
@@ -169,14 +162,14 @@ export function WorkspaceProjectsSection({
       <ProjectFormDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
-        onSaved={refreshProjects}
+        onSaved={() => void refresh()}
       />
       <ProjectFormDialog
         open={Boolean(editTarget)}
         onOpenChange={(open) => {
           if (!open) setEditTarget(null);
         }}
-        onSaved={refreshProjects}
+        onSaved={() => void refresh()}
         project={editTarget}
       />
 

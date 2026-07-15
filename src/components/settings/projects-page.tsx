@@ -1,11 +1,11 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { MoreHorizontal, Plus, Search } from "lucide-react";
 import { ProjectFormDialog } from "@/components/settings/project-form-dialog";
 import { ProjectsEmptyState } from "@/components/settings/projects-empty-state";
 import { SidebarTrigger } from "@/components/sidebar-provider";
+import { useSession } from "@/components/session-provider";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,13 +22,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { fetchProjects } from "@/lib/api";
 import type { ProjectSummary } from "@/lib/projects";
-import { queryKeys } from "@/lib/query-keys";
 import { canManageMembers } from "@/lib/roles";
 import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
-import { useSession } from "@/components/session-provider";
+import { useProjectsStore } from "@/stores/projects-store";
 
 function MemberAvatars({
   members,
@@ -76,24 +74,19 @@ export function ProjectsPage({
 }) {
   const { user } = useSession();
   const userCanManage = canManageMembers(user.role);
-  const queryClient = useQueryClient();
-  const projectsQuery = useQuery({
-    queryKey: queryKeys.projects,
-    queryFn: fetchProjects,
-    initialData: initialProjects,
-  });
-  const projects = projectsQuery.data ?? initialProjects;
-  const loading = projectsQuery.isPending && !projectsQuery.data;
+  const projects = useProjectsStore((state) => state.projects);
+  const loading = useProjectsStore((state) => state.loading);
+  const hydrate = useProjectsStore((state) => state.hydrate);
+  const refresh = useProjectsStore((state) => state.refresh);
+  const removeProject = useProjectsStore((state) => state.removeProject);
+
+  hydrate(initialProjects);
 
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ProjectSummary | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ProjectSummary | null>(null);
   const [deleting, setDeleting] = useState(false);
-
-  async function refreshProjects() {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.projects });
-  }
 
   const filteredProjects = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -123,8 +116,8 @@ export function ProjectsPage({
       return;
     }
 
+    removeProject(deleteTarget.id);
     setDeleteTarget(null);
-    await refreshProjects();
   }
 
   const isEmpty = projects.length === 0;
@@ -176,7 +169,7 @@ export function ProjectsPage({
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto">
-        {loading ? (
+        {loading && !projects.length ? (
           <p className="px-4 py-4 text-sm text-muted-foreground md:px-8">
             Loading projects...
           </p>
@@ -239,14 +232,14 @@ export function ProjectsPage({
           <ProjectFormDialog
             open={createOpen}
             onOpenChange={setCreateOpen}
-            onSaved={refreshProjects}
+            onSaved={() => void refresh()}
           />
           <ProjectFormDialog
             open={Boolean(editTarget)}
             onOpenChange={(open) => {
               if (!open) setEditTarget(null);
             }}
-            onSaved={refreshProjects}
+            onSaved={() => void refresh()}
             project={editTarget}
           />
 

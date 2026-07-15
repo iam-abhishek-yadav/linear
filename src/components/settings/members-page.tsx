@@ -1,6 +1,5 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { MoreHorizontal, Search } from "lucide-react";
 import { InviteMemberDialog } from "@/components/settings/invite-member-dialog";
@@ -34,7 +33,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatRelativeDate, getAvatarColor, getInitials } from "@/lib/user-utils";
-import { queryKeys } from "@/lib/query-keys";
 import {
   canManageMembers,
   canRevokeMember as canActorRevokeMember,
@@ -44,6 +42,7 @@ import {
 import type { MemberWithMeta, PendingInvite } from "@/lib/members";
 import type { UserRole } from "@/db/schema";
 import { cn } from "@/lib/utils";
+import { useMembersStore } from "@/stores/members-store";
 
 type Member = MemberWithMeta;
 
@@ -91,7 +90,6 @@ export function MembersPage({
   initialMembers: Member[];
   initialPendingInvites: PendingInvite[];
 }) {
-  const queryClient = useQueryClient();
   const { user } = useSession();
   const membersQuery = useMembersPage({
     members: initialMembers,
@@ -113,7 +111,7 @@ export function MembersPage({
   const [roleUpdatingId, setRoleUpdatingId] = useState<string | null>(null);
 
   async function refreshMembers() {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.orgMembers });
+    await useMembersStore.getState().refresh();
   }
 
   const filteredMembers = useMemo(() => {

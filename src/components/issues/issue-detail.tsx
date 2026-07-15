@@ -47,6 +47,8 @@ import {
   toDateInputValue,
 } from "@/lib/task-utils";
 import type { Task } from "@/lib/types";
+import { useTasksStore } from "@/stores/tasks-store";
+import { useNotificationsStore } from "@/stores/notifications-store";
 
 export function IssueDetail({
   initialData,
@@ -297,7 +299,10 @@ function IssueDetailView({
       });
       if (!response.ok) throw new Error("Failed to delete task");
       queryClient.removeQueries({ queryKey: queryKeys.issueDetail(task.id) });
-      await queryClient.invalidateQueries({ queryKey: queryKeys.tasks });
+      useTasksStore.getState().setTasks((current) =>
+        current.filter((item) => item.id !== task.id),
+      );
+      void useNotificationsStore.getState().refresh();
       router.push("/board");
     } finally {
       setDeleting(false);

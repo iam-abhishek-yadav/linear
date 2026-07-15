@@ -2,6 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import type { IssueDetailData } from "@/lib/issue-detail-data";
 import { queryKeys } from "@/lib/query-keys";
 import type { TaskWithTags } from "@/lib/types";
+import { useTasksStore } from "@/stores/tasks-store";
 
 function toIso(value: Date | string | null | undefined): string | null {
   if (!value) return null;
@@ -32,7 +33,7 @@ export function buildIssueDetailFromTask(
   };
 }
 
-/** Seed issue detail cache from the tasks list for instant paint. */
+/** Seed issue detail cache from the Zustand tasks store for instant paint. */
 export function seedIssueDetailFromTasksCache(
   queryClient: QueryClient,
   taskId: string,
@@ -44,7 +45,7 @@ export function seedIssueDetailFromTasksCache(
     return true;
   }
 
-  const tasks = queryClient.getQueryData<TaskWithTags[]>(queryKeys.tasks) ?? [];
+  const tasks = useTasksStore.getState().tasks;
   const task = tasks.find((item) => item.id === taskId);
   if (!task) {
     return false;

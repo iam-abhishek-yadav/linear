@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { IssueDetailLink } from "@/components/issues/issue-detail-link";
 import { ChevronRight, Loader2, Maximize2, Trash2 } from "lucide-react";
 import {
@@ -23,8 +22,7 @@ import {
 import { useSession } from "@/components/session-provider";
 import { Switch } from "@/components/ui/switch";
 import { useMembersCache } from "@/hooks/use-members-cache";
-import { fetchProjects } from "@/lib/api";
-import { queryKeys, STALE_TIME_MS } from "@/lib/query-keys";
+import { useProjects } from "@/hooks/use-projects";
 import { getProjectKey, toDateInputValue } from "@/lib/task-utils";
 import type { Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -66,13 +64,7 @@ export function TaskDialog({
   const [dueDate, setDueDate] = useState<string | null>(null);
   const [createMore, setCreateMore] = useState(false);
   const members = useMembersCache();
-  const projectsQuery = useQuery({
-    queryKey: queryKeys.projects,
-    queryFn: fetchProjects,
-    enabled: open,
-    staleTime: STALE_TIME_MS,
-  });
-  const projects = projectsQuery.data ?? [];
+  const { projects } = useProjects();
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<

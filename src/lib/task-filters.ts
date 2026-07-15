@@ -3,15 +3,18 @@ import type { Task } from "@/lib/types";
 import type { TaskTagSummary } from "@/lib/tags";
 
 export const UNASSIGNED_ASSIGNEE_ID = "unassigned";
+export const NO_PROJECT_ID = "none";
 
 export type ViewFilters = {
   assigneeId: string | null;
+  projectId: string | null;
   priorities: TaskPriority[];
   tagIds: string[];
 };
 
 export const EMPTY_VIEW_FILTERS: ViewFilters = {
   assigneeId: null,
+  projectId: null,
   priorities: [],
   tagIds: [],
 };
@@ -23,6 +26,16 @@ export function parseAssigneeFilter(value: string | null): string | null {
 }
 
 export function serializeAssigneeFilter(id: string | null): string | null {
+  return id || null;
+}
+
+export function parseProjectFilter(value: string | null): string | null {
+  if (!value) return null;
+  const id = value.split(",")[0]?.trim();
+  return id || null;
+}
+
+export function serializeProjectFilter(id: string | null): string | null {
   return id || null;
 }
 
@@ -65,11 +78,13 @@ export function serializeTagFilter(tagIds: string[]): string | null {
 
 export function parseViewFilters(params: {
   assignee: string | null;
+  project: string | null;
   priority: string | null;
   tag: string | null;
 }): ViewFilters {
   return {
     assigneeId: parseAssigneeFilter(params.assignee),
+    projectId: parseProjectFilter(params.project),
     priorities: parsePriorityFilter(params.priority),
     tagIds: parseTagFilter(params.tag),
   };
@@ -78,6 +93,7 @@ export function parseViewFilters(params: {
 export function hasActiveViewFilters(filters: ViewFilters): boolean {
   return (
     filters.assigneeId !== null ||
+    filters.projectId !== null ||
     filters.priorities.length > 0 ||
     filters.tagIds.length > 0
   );
@@ -94,6 +110,19 @@ export function filterByAssignee<T extends Pick<Task, "assigneeId">>(
   }
 
   return tasks.filter((task) => task.assigneeId === selectedId);
+}
+
+export function filterByProject<T extends Pick<Task, "projectId">>(
+  tasks: T[],
+  selectedId: string | null,
+): T[] {
+  if (!selectedId) return tasks;
+
+  if (selectedId === NO_PROJECT_ID) {
+    return tasks.filter((task) => task.projectId == null);
+  }
+
+  return tasks.filter((task) => task.projectId === selectedId);
 }
 
 export function filterByPriority<T extends Pick<Task, "priority">>(
@@ -116,12 +145,18 @@ export function filterByTags<
 }
 
 export function applyTaskFilters<
-  T extends Pick<Task, "assigneeId" | "priority"> & {
+  T extends Pick<Task, "assigneeId" | "priority" | "projectId"> & {
     tags?: Pick<TaskTagSummary, "id">[] | null;
   },
 >(tasks: T[], filters: ViewFilters): T[] {
   return filterByTags(
-    filterByPriority(filterByAssignee(tasks, filters.assigneeId), filters.priorities),
+    filterByPriority(
+      filterByProject(
+        filterByAssignee(tasks, filters.assigneeId),
+        filters.projectId,
+      ),
+      filters.priorities,
+    ),
     filters.tagIds,
   );
 }

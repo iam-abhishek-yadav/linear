@@ -133,6 +133,8 @@ function KanbanBoardContent() {
     isFiltering,
     select,
     clear,
+    selectProject,
+    clearProject,
     togglePriority,
     clearPriorities,
     toggleTag,
@@ -262,6 +264,8 @@ function KanbanBoardContent() {
         isFiltering={isFiltering}
         onSelectAssignee={select}
         onClearAssignee={clear}
+        onSelectProject={selectProject}
+        onClearProject={clearProject}
         onTogglePriority={togglePriority}
         onClearPriorities={clearPriorities}
         onToggleTag={toggleTag}

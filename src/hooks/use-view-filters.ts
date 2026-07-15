@@ -9,6 +9,7 @@ import {
   parseViewFilters,
   serializeAssigneeFilter,
   serializePriorityFilter,
+  serializeProjectFilter,
   serializeTagFilter,
   type ViewFilters,
 } from "@/lib/task-filters";
@@ -22,6 +23,10 @@ function writeViewFiltersToParams(
   const assignee = serializeAssigneeFilter(filters.assigneeId);
   if (assignee) params.set("assignee", assignee);
   else params.delete("assignee");
+
+  const project = serializeProjectFilter(filters.projectId);
+  if (project) params.set("project", project);
+  else params.delete("project");
 
   const priority = serializePriorityFilter(filters.priorities);
   if (priority) params.set("priority", priority);
@@ -45,6 +50,7 @@ export function useViewFilters() {
     () =>
       parseViewFilters({
         assignee: searchParams.get("assignee"),
+        project: searchParams.get("project"),
         priority: searchParams.get("priority"),
         tag: searchParams.get("tag"),
       }),
@@ -88,6 +94,22 @@ export function useViewFilters() {
     setAssigneeId(null);
   }, [setAssigneeId]);
 
+  const setProjectId = useCallback(
+    (projectId: string | null) => {
+      patchFilters({ projectId });
+    },
+    [patchFilters],
+  );
+
+  const selectProject = useCallback(
+    (id: string) => setProjectId(id),
+    [setProjectId],
+  );
+
+  const clearProject = useCallback(() => {
+    setProjectId(null);
+  }, [setProjectId]);
+
   const togglePriority = useCallback(
     (priority: TaskPriority) => {
       const exists = filters.priorities.includes(priority);
@@ -129,6 +151,9 @@ export function useViewFilters() {
     select: selectAssignee,
     clear: clearAssignee,
     setAssigneeId,
+    selectProject,
+    clearProject,
+    setProjectId,
     togglePriority,
     clearPriorities,
     toggleTag,

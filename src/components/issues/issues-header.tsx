@@ -62,6 +62,8 @@ export function IssuesPageChrome({
   isFiltering = false,
   onSelectAssignee,
   onClearAssignee,
+  onSelectProject,
+  onClearProject,
   onTogglePriority,
   onClearPriorities,
   onToggleTag,
@@ -76,6 +78,8 @@ export function IssuesPageChrome({
   isFiltering?: boolean;
   onSelectAssignee?: (id: string) => void;
   onClearAssignee?: () => void;
+  onSelectProject?: (id: string) => void;
+  onClearProject?: () => void;
   onTogglePriority?: (priority: ViewFilters["priorities"][number]) => void;
   onClearPriorities?: () => void;
   onToggleTag?: (tagId: string) => void;
@@ -90,6 +94,8 @@ export function IssuesPageChrome({
     filters &&
     onSelectAssignee &&
     onClearAssignee &&
+    onSelectProject &&
+    onClearProject &&
     onTogglePriority &&
     onClearPriorities &&
     onToggleTag &&
@@ -145,6 +151,8 @@ export function IssuesPageChrome({
             isFiltering={isFiltering}
             onSelectAssignee={onSelectAssignee}
             onClearAssignee={onClearAssignee}
+            onSelectProject={onSelectProject}
+            onClearProject={onClearProject}
             onTogglePriority={onTogglePriority}
             onClearPriorities={onClearPriorities}
             onToggleTag={onToggleTag}

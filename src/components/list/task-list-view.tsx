@@ -234,6 +234,8 @@ function TaskListViewContent({
     isFiltering,
     select,
     clear,
+    selectProject,
+    clearProject,
     togglePriority,
     clearPriorities,
     toggleTag,
@@ -306,6 +308,8 @@ function TaskListViewContent({
           isFiltering={isFiltering}
           onSelectAssignee={select}
           onClearAssignee={clear}
+          onSelectProject={selectProject}
+          onClearProject={clearProject}
           onTogglePriority={togglePriority}
           onClearPriorities={clearPriorities}
           onToggleTag={toggleTag}
@@ -386,6 +390,8 @@ function TaskListViewFallback({
     isFiltering,
     select,
     clear,
+    selectProject,
+    clearProject,
     togglePriority,
     clearPriorities,
     toggleTag,
@@ -406,6 +412,8 @@ function TaskListViewFallback({
         isFiltering={showFilters && isFiltering}
         onSelectAssignee={showFilters ? select : undefined}
         onClearAssignee={showFilters ? clear : undefined}
+        onSelectProject={showFilters ? selectProject : undefined}
+        onClearProject={showFilters ? clearProject : undefined}
         onTogglePriority={showFilters ? togglePriority : undefined}
         onClearPriorities={showFilters ? clearPriorities : undefined}
         onToggleTag={showFilters ? toggleTag : undefined}

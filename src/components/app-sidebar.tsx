@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Building2,
+  FolderKanban,
   Inbox,
   LayoutGrid,
   List,
@@ -32,6 +33,12 @@ const workspaceAdminNav = [
 
 const membersNav = [
   { href: "/settings/members", label: "Members", icon: Users },
+];
+
+const workspaceNav = [
+  { href: "/active", label: "Issues", icon: List },
+  { href: "/board", label: "Board", icon: LayoutGrid },
+  { href: "/projects", label: "Projects", icon: FolderKanban },
 ];
 
 function NavLink({
@@ -110,22 +117,19 @@ export function AppSidebar() {
         />
 
         <SectionLabel>Workspace</SectionLabel>
-        <NavLink
-          href="/active"
-          icon={List}
-          label="Issues"
-          active={
-            pathname === "/active" ||
-            pathname === "/list" ||
-            pathname === "/backlog"
-          }
-        />
-        <NavLink
-          href="/board"
-          icon={LayoutGrid}
-          label="Board"
-          active={pathname === "/board"}
-        />
+        {workspaceNav.map((item) => (
+          <NavLink
+            key={item.href}
+            {...item}
+            active={
+              item.href === "/active"
+                ? pathname === "/active" ||
+                  pathname === "/list" ||
+                  pathname === "/backlog"
+                : pathname === item.href || pathname.startsWith(`${item.href}/`)
+            }
+          />
+        ))}
       </nav>
 
       <div className="border-t border-white/6 px-2 py-3">
@@ -138,7 +142,10 @@ export function AppSidebar() {
                   <NavLink
                     key={item.href}
                     {...item}
-                    active={pathname === item.href}
+                    active={
+                      pathname === item.href ||
+                      pathname.startsWith(`${item.href}/`)
+                    }
                   />
                 ))}
               {canManageMembers(user.role) &&

@@ -354,3 +354,56 @@ export type MemberInvite = typeof memberInvites.$inferSelect;
 export type Tag = typeof tags.$inferSelect;
 export type TaskTag = typeof taskTags.$inferSelect;
 export type PasswordResetOtp = typeof passwordResetOtps.$inferSelect;
+
+export const projects = pgTable(
+  "Project",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organizationId")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    description: text("description"),
+    createdAt: timestamp("createdAt", { precision: 3, mode: "date" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updatedAt", { precision: 3, mode: "date" })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    uniqueIndex("Project_organizationId_name_key").on(
+      table.organizationId,
+      table.name,
+    ),
+    index("Project_organizationId_idx").on(table.organizationId),
+  ],
+);
+
+export const projectMembers = pgTable(
+  "ProjectMember",
+  {
+    projectId: text("projectId")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("createdAt", { precision: 3, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("ProjectMember_projectId_userId_key").on(
+      table.projectId,
+      table.userId,
+    ),
+    index("ProjectMember_projectId_idx").on(table.projectId),
+    index("ProjectMember_userId_idx").on(table.userId),
+  ],
+);
+
+export type Project = typeof projects.$inferSelect;
+export type NewProject = typeof projects.$inferInsert;
+export type ProjectMember = typeof projectMembers.$inferSelect;

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SidebarTrigger } from "@/components/sidebar-provider";
+import { WorkspaceProjectsSection } from "@/components/settings/workspace-projects-section";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,6 +20,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import type { ProjectSummary } from "@/lib/projects";
 import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
 
@@ -30,8 +32,10 @@ type WorkspaceOrg = {
 
 export function WorkspacePage({
   initialOrganization,
+  initialProjects,
 }: {
   initialOrganization: WorkspaceOrg;
+  initialProjects: ProjectSummary[];
 }) {
   const router = useRouter();
   const [organization, setOrganization] = useState(initialOrganization);
@@ -102,12 +106,14 @@ export function WorkspacePage({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center gap-2 border-b border-border/40 px-8 py-6">
+      <div className="flex items-center gap-2 border-b border-border/40 px-4 py-4 md:px-8 md:py-6">
         <SidebarTrigger />
-        <h1 className="text-2xl font-semibold tracking-tight">Workspace</h1>
+        <h1 className="text-xl font-semibold tracking-tight md:text-2xl">
+          Workspace
+        </h1>
       </div>
 
-      <div className="space-y-10 px-8 py-6">
+      <div className="min-h-0 flex-1 space-y-10 overflow-auto px-4 py-6 md:px-8">
         <div className="flex items-center gap-4">
           <span
             className={cn(
@@ -117,13 +123,17 @@ export function WorkspacePage({
           >
             {initials}
           </span>
-          <div>
-            <p className="text-lg font-medium">{name || organization.name}</p>
-            <p className="text-sm text-muted-foreground">{organization.slug}</p>
+          <div className="min-w-0">
+            <p className="truncate text-lg font-medium">
+              {name || organization.name}
+            </p>
+            <p className="truncate text-sm text-muted-foreground">
+              {organization.slug}
+            </p>
           </div>
         </div>
 
-        <section className="max-w-md space-y-4">
+        <section className="space-y-4">
           <div>
             <h2 className="text-sm font-medium">General</h2>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -134,45 +144,69 @@ export function WorkspacePage({
 
           <form onSubmit={handleSave}>
             <FieldGroup>
-              <Field data-invalid={!!errors.name}>
-                <FieldLabel htmlFor="org-name">Name</FieldLabel>
-                <Input
-                  id="org-name"
-                  value={name}
-                  onChange={(event) => {
-                    setName(event.target.value);
-                    setSaved(false);
-                  }}
-                  maxLength={100}
-                  required
-                />
-                <FieldError>{errors.name?.[0]}</FieldError>
-              </Field>
+              <div className="flex max-w-2xl flex-col gap-3 sm:flex-row sm:items-end">
+                <Field
+                  data-invalid={!!errors.name}
+                  className="min-w-0 flex-1"
+                >
+                  <FieldLabel htmlFor="org-name" className="text-xs">
+                    Name
+                  </FieldLabel>
+                  <Input
+                    id="org-name"
+                    value={name}
+                    onChange={(event) => {
+                      setName(event.target.value);
+                      setSaved(false);
+                    }}
+                    maxLength={100}
+                    required
+                    className="h-7 text-[13px]"
+                  />
+                  <FieldError>{errors.name?.[0]}</FieldError>
+                </Field>
 
-              <Field>
-                <FieldLabel htmlFor="org-slug">Slug</FieldLabel>
-                <Input id="org-slug" value={organization.slug} disabled />
-              </Field>
+                <Field className="min-w-0 flex-1">
+                  <FieldLabel htmlFor="org-slug" className="text-xs">
+                    Slug
+                  </FieldLabel>
+                  <Input
+                    id="org-slug"
+                    value={organization.slug}
+                    disabled
+                    className="h-7 text-[13px]"
+                  />
+                </Field>
+
+                <div className="flex shrink-0 items-center gap-2 pb-0.5">
+                  <Button
+                    type="submit"
+                    size="sm"
+                    className="h-7 text-[13px]"
+                    disabled={saving || !nameChanged || !name.trim()}
+                  >
+                    {saving ? "Saving..." : "Save changes"}
+                  </Button>
+                  {saved && (
+                    <span className="text-xs text-emerald-400">Saved</span>
+                  )}
+                </div>
+              </div>
 
               {errors.form?.[0] && (
                 <p className="text-sm text-destructive">{errors.form[0]}</p>
               )}
-
-              <div className="flex items-center gap-3">
-                <Button type="submit" disabled={saving || !nameChanged || !name.trim()}>
-                  {saving ? "Saving..." : "Save changes"}
-                </Button>
-                {saved && (
-                  <span className="text-sm text-emerald-400">Saved</span>
-                )}
-              </div>
             </FieldGroup>
           </form>
         </section>
 
-        <section className="max-w-md space-y-4 border-t border-border/40 pt-8">
+        <WorkspaceProjectsSection initialProjects={initialProjects} />
+
+        <section className="space-y-4 border-t border-border/40 pt-8">
           <div>
-            <h2 className="text-sm font-medium text-destructive">Danger zone</h2>
+            <h2 className="text-sm font-medium text-destructive">
+              Danger zone
+            </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Permanently delete this workspace and all of its data. This cannot
               be undone.

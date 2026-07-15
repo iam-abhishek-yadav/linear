@@ -1,6 +1,7 @@
 import type { IssueDetailData } from "@/lib/issue-detail-data";
 import type { MembersPageData } from "@/lib/members";
 import type { NotificationItem } from "@/lib/notification-types";
+import type { ProjectSummary } from "@/lib/projects";
 import type { TaskTagSummary } from "@/lib/tags";
 import type { Task, TaskWithTags } from "@/lib/types";
 
@@ -27,6 +28,13 @@ export async function fetchNotifications(): Promise<NotificationItem[]> {
 export async function fetchTags(): Promise<TaskTagSummary[]> {
   const { tags } = await fetchJson<{ tags: TaskTagSummary[] }>("/api/tags");
   return tags;
+}
+
+export async function fetchProjects(): Promise<ProjectSummary[]> {
+  const { projects } = await fetchJson<{ projects: ProjectSummary[] }>(
+    "/api/projects",
+  );
+  return projects;
 }
 
 export async function fetchIssueDetail(

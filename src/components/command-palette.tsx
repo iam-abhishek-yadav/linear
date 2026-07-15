@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   Building2,
   CheckCircle2,
+  FolderKanban,
   Inbox,
   LayoutGrid,
   List,
@@ -89,6 +90,13 @@ export function CommandPalette() {
         href: "/board",
         icon: LayoutGrid,
         keywords: "kanban",
+      },
+      {
+        id: "projects",
+        label: "Projects",
+        href: "/projects",
+        icon: FolderKanban,
+        keywords: "create project members",
       },
       {
         id: "completed",

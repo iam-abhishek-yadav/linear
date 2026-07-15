@@ -106,6 +106,16 @@ export async function getOrganizationProject(
   return project ?? null;
 }
 
+/** True when projectId is null/undefined or the project is in organizationId. */
+export async function isProjectInOrganization(
+  projectId: string | null | undefined,
+  organizationId: string,
+) {
+  if (!projectId) return true;
+  const project = await getOrganizationProject(organizationId, projectId);
+  return Boolean(project);
+}
+
 export async function listOrgProjects(
   organizationId: string,
 ): Promise<ProjectSummary[]> {

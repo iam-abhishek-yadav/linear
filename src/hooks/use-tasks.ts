@@ -8,6 +8,7 @@ export type TaskInput = {
   status: import("@/lib/types").Task["status"];
   priority: import("@/lib/types").Task["priority"];
   assigneeId?: string | null;
+  projectId?: string | null;
   dueDate?: string | null;
 };
 

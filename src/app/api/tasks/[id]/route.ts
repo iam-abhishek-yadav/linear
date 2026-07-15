@@ -13,6 +13,7 @@ import {
   recordTaskPriorityChange,
   recordTaskStatusChange,
 } from "@/lib/task-activity";
+import { isProjectInOrganization } from "@/lib/projects";
 import {
   getOrganizationTask,
   isAssigneeInOrganization,
@@ -75,6 +76,19 @@ export const PATCH = withApiRoute(
     if (!assigneeOk) {
       return NextResponse.json(
         { error: "Assignee must be a member of your organization" },
+        { status: 400 },
+      );
+    }
+  }
+
+  if (parsed.data.projectId !== undefined) {
+    const projectOk = await isProjectInOrganization(
+      parsed.data.projectId,
+      organizationId,
+    );
+    if (!projectOk) {
+      return NextResponse.json(
+        { error: "Project must belong to your organization" },
         { status: 400 },
       );
     }

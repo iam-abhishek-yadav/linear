@@ -39,6 +39,9 @@ export const tasks = pgTable(
     assigneeId: text("assigneeId").references(() => users.id, {
       onDelete: "set null",
     }),
+    projectId: text("projectId").references(() => projects.id, {
+      onDelete: "set null",
+    }),
     dueDate: timestamp("dueDate", { precision: 3, mode: "date" }),
     completedAt: timestamp("completedAt", { precision: 3, mode: "date" }),
     createdById: text("createdById").references(() => users.id, {
@@ -60,6 +63,7 @@ export const tasks = pgTable(
     ),
     index("Task_organizationId_idx").on(table.organizationId),
     index("Task_assigneeId_idx").on(table.assigneeId),
+    index("Task_projectId_idx").on(table.projectId),
   ],
 );
 

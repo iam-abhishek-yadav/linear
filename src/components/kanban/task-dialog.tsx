@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { IssueDetailLink } from "@/components/issues/issue-detail-link";
 import { ChevronRight, Loader2, Maximize2, Trash2 } from "lucide-react";
 import {
   AssigneePill,
   DueDatePill,
   PriorityPill,
+  ProjectPill,
   StatusPill,
 } from "@/components/tasks/property-pills";
 import { Button } from "@/components/ui/button";
@@ -21,6 +23,8 @@ import {
 import { useSession } from "@/components/session-provider";
 import { Switch } from "@/components/ui/switch";
 import { useMembersCache } from "@/hooks/use-members-cache";
+import { fetchProjects } from "@/lib/api";
+import { queryKeys, STALE_TIME_MS } from "@/lib/query-keys";
 import { getProjectKey, toDateInputValue } from "@/lib/task-utils";
 import type { Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -31,6 +35,7 @@ type TaskFormData = {
   status: Task["status"];
   priority: Task["priority"];
   assigneeId: string | null;
+  projectId: string | null;
   dueDate: string | null;
 };
 
@@ -57,9 +62,17 @@ export function TaskDialog({
   const [status, setStatus] = useState<Task["status"]>(defaultStatus);
   const [priority, setPriority] = useState<Task["priority"]>("NONE");
   const [assigneeId, setAssigneeId] = useState<string | null>(null);
+  const [projectId, setProjectId] = useState<string | null>(null);
   const [dueDate, setDueDate] = useState<string | null>(null);
   const [createMore, setCreateMore] = useState(false);
   const members = useMembersCache();
+  const projectsQuery = useQuery({
+    queryKey: queryKeys.projects,
+    queryFn: fetchProjects,
+    enabled: open,
+    staleTime: STALE_TIME_MS,
+  });
+  const projects = projectsQuery.data ?? [];
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<
@@ -81,6 +94,7 @@ export function TaskDialog({
     setStatus(task?.status ?? defaultStatus);
     setPriority(task?.priority ?? "NONE");
     setAssigneeId(task?.assigneeId ?? null);
+    setProjectId(task?.projectId ?? null);
     setDueDate(toDateInputValue(task?.dueDate));
     setCreateMore(false);
     requestAnimationFrame(() => titleRef.current?.focus());
@@ -97,6 +111,7 @@ export function TaskDialog({
         status,
         priority,
         assigneeId,
+        projectId,
         dueDate,
       });
 
@@ -106,6 +121,7 @@ export function TaskDialog({
         setTitle("");
         setDescription("");
         setAssigneeId(null);
+        setProjectId(null);
         setDueDate(null);
         titleRef.current?.focus();
       }
@@ -141,7 +157,7 @@ export function TaskDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="gap-0 overflow-hidden p-0 sm:max-w-[560px]"
+        className="gap-0 overflow-hidden p-0 sm:max-w-[720px]"
         showCloseButton
       >
         <DialogTitle className="sr-only">
@@ -172,24 +188,24 @@ export function TaskDialog({
           )}
         </div>
 
-        <div className="px-4 pt-4 pb-3" onKeyDown={handleKeyDown}>
+        <div className="px-5 pt-5 pb-3" onKeyDown={handleKeyDown}>
           <input
             ref={titleRef}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Issue title"
-            className="w-full bg-transparent text-base font-medium outline-none placeholder:text-muted-foreground/70"
+            className="w-full bg-transparent text-lg font-medium outline-none placeholder:text-muted-foreground/70"
           />
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Add description…"
-            rows={2}
-            className="mt-3 w-full resize-none bg-transparent text-sm leading-relaxed outline-none placeholder:text-muted-foreground/70"
+            rows={4}
+            className="mt-3 min-h-[96px] w-full resize-none bg-transparent text-sm leading-relaxed outline-none placeholder:text-muted-foreground/70"
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 px-4 pb-4">
+        <div className="flex flex-wrap items-center gap-1.5 px-5 pb-5">
           <StatusPill value={status} onChange={setStatus} />
           <PriorityPill value={priority} onChange={setPriority} />
           <AssigneePill
@@ -197,10 +213,15 @@ export function TaskDialog({
             members={members}
             onChange={setAssigneeId}
           />
+          <ProjectPill
+            value={projectId}
+            projects={projects}
+            onChange={setProjectId}
+          />
           <DueDatePill value={dueDate} onChange={setDueDate} />
         </div>
 
-        <div className="flex items-center gap-3 border-t border-border/50 px-4 py-3">
+        <div className="flex items-center gap-3 border-t border-border/50 px-5 py-3">
           {isEditing && onDelete ? (
             <Button
               type="button"

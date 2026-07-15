@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { CalendarClock, Check, CircleUser, X } from "lucide-react";
+import { CalendarClock, Check, CircleUser, FolderKanban, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -317,4 +317,81 @@ export function DueDateRow(
   props: Omit<React.ComponentProps<typeof DueDatePill>, "variant">,
 ) {
   return <DueDatePill {...props} variant="row" />;
+}
+
+export type ProjectOption = {
+  id: string;
+  name: string;
+};
+
+export function ProjectPill({
+  value,
+  projects,
+  onChange,
+  variant = "pill",
+}: {
+  value: string | null;
+  projects: ProjectOption[];
+  onChange: (projectId: string | null) => void;
+  variant?: "pill" | "row";
+}) {
+  const project = projects.find((item) => item.id === value) ?? null;
+  const triggerClass = variant === "row" ? rowClass : pillClass;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            type="button"
+            variant={variant === "row" ? "ghost" : "outline"}
+            className={triggerClass}
+          />
+        }
+      >
+        <FolderKanban className="size-3.5 text-muted-foreground" />
+        <span className="flex-1 truncate text-left">
+          {project
+            ? project.name
+            : variant === "row"
+              ? "No project"
+              : "Project"}
+        </span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56">
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="text-xs text-muted-foreground">
+            Set project…
+          </DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => onChange(null)}>
+            <FolderKanban className="size-3.5 text-muted-foreground" />
+            <span className="flex-1">No project</span>
+            {!value && <Check className="size-3.5 text-muted-foreground" />}
+          </DropdownMenuItem>
+          {projects.length === 0 ? (
+            <DropdownMenuItem disabled>No projects yet</DropdownMenuItem>
+          ) : (
+            projects.map((item) => (
+              <DropdownMenuItem
+                key={item.id}
+                onClick={() => onChange(item.id)}
+              >
+                <FolderKanban className="size-3.5 text-muted-foreground" />
+                <span className="flex-1 truncate">{item.name}</span>
+                {value === item.id && (
+                  <Check className="size-3.5 text-muted-foreground" />
+                )}
+              </DropdownMenuItem>
+            ))
+          )}
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+export function ProjectRow(
+  props: Omit<React.ComponentProps<typeof ProjectPill>, "variant">,
+) {
+  return <ProjectPill {...props} variant="row" />;
 }

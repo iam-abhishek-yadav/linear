@@ -52,6 +52,7 @@ export type TaskInput = {
   status: Task["status"];
   priority: Task["priority"];
   assigneeId?: string | null;
+  projectId?: string | null;
   dueDate?: string | null;
 };
 

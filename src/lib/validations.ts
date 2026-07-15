@@ -18,6 +18,7 @@ export const createTaskSchema = z.object({
   status: taskStatusSchema.optional(),
   priority: z.enum(["NONE", "LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
   assigneeId: z.string().min(1).nullish(),
+  projectId: z.string().min(1).nullish(),
   dueDate: z.coerce.date().nullish(),
 });
 
@@ -27,6 +28,7 @@ export const updateTaskSchema = z.object({
   status: taskStatusSchema.optional(),
   priority: z.enum(["NONE", "LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
   assigneeId: z.string().min(1).nullish(),
+  projectId: z.string().min(1).nullish(),
   dueDate: z.coerce.date().nullish(),
 });
 

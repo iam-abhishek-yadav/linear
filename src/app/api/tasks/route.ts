@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { withApiRoute } from "@/lib/logger";
 import { createAssignmentNotification } from "@/lib/notifications";
 import { recordTaskCreated } from "@/lib/task-activity";
+import { isProjectInOrganization } from "@/lib/projects";
 import { isAssigneeInOrganization } from "@/lib/task-access";
 import { getOrgTasks } from "@/lib/tasks";
 import { getTagsForTask } from "@/lib/tags";
@@ -35,6 +36,7 @@ export const POST = withApiRoute("tasks.create", async (request: Request) => {
   const organizationId = session.organization.id;
   const status = parsed.data.status ?? "BACKLOG";
   const assigneeId = parsed.data.assigneeId ?? null;
+  const projectId = parsed.data.projectId ?? null;
 
   const assigneeOk = await isAssigneeInOrganization(
     assigneeId,
@@ -43,6 +45,14 @@ export const POST = withApiRoute("tasks.create", async (request: Request) => {
   if (!assigneeOk) {
     return NextResponse.json(
       { error: "Assignee must be a member of your organization" },
+      { status: 400 },
+    );
+  }
+
+  const projectOk = await isProjectInOrganization(projectId, organizationId);
+  if (!projectOk) {
+    return NextResponse.json(
+      { error: "Project must belong to your organization" },
       { status: 400 },
     );
   }
@@ -69,6 +79,7 @@ export const POST = withApiRoute("tasks.create", async (request: Request) => {
         priority: parsed.data.priority ?? "NONE",
         position: (maxPos?.value ?? -1) + 1,
         assigneeId,
+        projectId,
         dueDate: parsed.data.dueDate ?? null,
         completedAt: status === "DONE" ? now : null,
         createdById: session.user.id,

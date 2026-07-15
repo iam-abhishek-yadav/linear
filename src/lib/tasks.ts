@@ -1,17 +1,28 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, or } from "drizzle-orm";
 import { cache } from "react";
 import { tasks } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { db, withDbRetry } from "@/lib/db";
 import { logServerCall } from "@/lib/logger";
+import { listUserProjectIds, canAccessTaskProject } from "@/lib/project-access";
 import { attachTagsToTasks, getTagsForTask, getTagsForTaskIds } from "@/lib/tags";
 import type { TaskWithTags } from "@/lib/types";
 
-async function queryOrgTasks(organizationId: string): Promise<TaskWithTags[]> {
+async function queryOrgTasks(
+  organizationId: string,
+  userId: string,
+): Promise<TaskWithTags[]> {
+  const memberProjectIds = await listUserProjectIds(userId);
+
+  const visibility =
+    memberProjectIds.length === 0
+      ? isNull(tasks.projectId)
+      : or(isNull(tasks.projectId), inArray(tasks.projectId, memberProjectIds));
+
   const taskRows = await db
     .select()
     .from(tasks)
-    .where(eq(tasks.organizationId, organizationId))
+    .where(and(eq(tasks.organizationId, organizationId), visibility))
     .orderBy(asc(tasks.status), asc(tasks.position));
 
   const tagsByTaskId = await getTagsForTaskIds(taskRows.map((task) => task.id));
@@ -26,7 +37,9 @@ export const getOrgTasks = cache(() =>
     }
 
     return logServerCall("getOrgTasks.query", () =>
-      withDbRetry(() => queryOrgTasks(session.organization.id)),
+      withDbRetry(() =>
+        queryOrgTasks(session.organization.id, session.user.id),
+      ),
     );
   }),
 );
@@ -34,6 +47,7 @@ export const getOrgTasks = cache(() =>
 export async function getOrganizationTaskWithTags(
   organizationId: string,
   taskId: string,
+  viewerUserId: string,
 ): Promise<TaskWithTags | null> {
   const [task] = await db
     .select()
@@ -42,6 +56,11 @@ export async function getOrganizationTaskWithTags(
     .limit(1);
 
   if (!task) {
+    return null;
+  }
+
+  const allowed = await canAccessTaskProject(viewerUserId, task.projectId);
+  if (!allowed) {
     return null;
   }
 

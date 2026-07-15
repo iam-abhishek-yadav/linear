@@ -18,7 +18,7 @@ export const PUT = withApiRoute(
     const { session } = guard;
 
     const { id } = await context.params;
-    const existing = await getOrganizationTask(session.organization.id, id);
+    const existing = await getOrganizationTask(session.organization.id, id, session.user.id);
 
     if (!existing) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });

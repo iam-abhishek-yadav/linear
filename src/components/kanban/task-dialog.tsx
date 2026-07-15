@@ -64,7 +64,8 @@ export function TaskDialog({
   const [dueDate, setDueDate] = useState<string | null>(null);
   const [createMore, setCreateMore] = useState(false);
   const members = useMembersCache();
-  const { projects } = useProjects();
+  const { projects: allProjects } = useProjects();
+  const projects = allProjects.filter((project) => project.isMember);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<

@@ -1,13 +1,15 @@
 import { and, eq } from "drizzle-orm";
 import { tasks, users } from "@/db/schema";
 import { db } from "@/lib/db";
+import { canAccessTaskProject } from "@/lib/project-access";
 
 type DbExecutor = Pick<typeof db, "select">;
 
-/** Load a task only if it belongs to the given organization. */
+/** Load a task only if it belongs to the org and the viewer can access its project. */
 export async function getOrganizationTask(
   organizationId: string,
   taskId: string,
+  viewerUserId: string,
 ) {
   const [task] = await db
     .select()
@@ -17,13 +19,19 @@ export async function getOrganizationTask(
     )
     .limit(1);
 
-  return task ?? null;
+  if (!task) return null;
+
+  const allowed = await canAccessTaskProject(viewerUserId, task.projectId);
+  if (!allowed) return null;
+
+  return task;
 }
 
 export async function getOrganizationTaskForUpdate(
   executor: DbExecutor,
   organizationId: string,
   taskId: string,
+  viewerUserId: string,
 ) {
   const [task] = await executor
     .select()
@@ -34,7 +42,12 @@ export async function getOrganizationTaskForUpdate(
     .for("update")
     .limit(1);
 
-  return task ?? null;
+  if (!task) return null;
+
+  const allowed = await canAccessTaskProject(viewerUserId, task.projectId);
+  if (!allowed) return null;
+
+  return task;
 }
 
 /** True when assigneeId is null/undefined or the user is in organizationId. */

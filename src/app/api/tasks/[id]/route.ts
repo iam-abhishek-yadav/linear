@@ -14,6 +14,7 @@ import {
   recordTaskStatusChange,
 } from "@/lib/task-activity";
 import { isProjectInOrganization } from "@/lib/projects";
+import { canAccessTaskProject } from "@/lib/project-access";
 import {
   getOrganizationTask,
   isAssigneeInOrganization,
@@ -36,7 +37,7 @@ export const GET = withApiRoute(
   const { session } = guard;
 
   const { id } = await context.params;
-  const task = await getOrganizationTaskWithTags(session.organization.id, id);
+  const task = await getOrganizationTaskWithTags(session.organization.id, id, session.user.id);
 
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
@@ -62,7 +63,7 @@ export const PATCH = withApiRoute(
   }
 
   const organizationId = session.organization.id;
-  const existing = await getOrganizationTask(organizationId, id);
+  const existing = await getOrganizationTask(organizationId, id, session.user.id);
 
   if (!existing) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
@@ -90,6 +91,16 @@ export const PATCH = withApiRoute(
       return NextResponse.json(
         { error: "Project must belong to your organization" },
         { status: 400 },
+      );
+    }
+    const projectAccessOk = await canAccessTaskProject(
+      session.user.id,
+      parsed.data.projectId,
+    );
+    if (!projectAccessOk) {
+      return NextResponse.json(
+        { error: "You must be a member of the project" },
+        { status: 403 },
       );
     }
   }
@@ -190,7 +201,7 @@ export const DELETE = withApiRoute(
   const { id } = await context.params;
   const organizationId = session.organization.id;
 
-  const existing = await getOrganizationTask(organizationId, id);
+  const existing = await getOrganizationTask(organizationId, id, session.user.id);
 
   if (!existing) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });

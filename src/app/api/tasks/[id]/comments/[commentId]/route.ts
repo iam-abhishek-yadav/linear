@@ -19,7 +19,7 @@ export const DELETE = withApiRoute(
 
   const { id, commentId } = await context.params;
 
-  const task = await getOrganizationTask(session.organization.id, id);
+  const task = await getOrganizationTask(session.organization.id, id, session.user.id);
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }

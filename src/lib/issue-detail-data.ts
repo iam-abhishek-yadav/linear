@@ -44,10 +44,10 @@ function serializeTask(
 
 /** Full issue detail for cold-load fallback. Nav is built client-side from the tasks store. */
 export const getIssueDetailData = cache(
-  (organizationId: string, taskId: string) =>
+  (organizationId: string, taskId: string, viewerUserId: string) =>
     logServerCall("getIssueDetailData", async () => {
       const [task, timeline] = await Promise.all([
-        getOrganizationTaskWithTags(organizationId, taskId),
+        getOrganizationTaskWithTags(organizationId, taskId, viewerUserId),
         getIssueTimelineData(taskId),
       ]);
 

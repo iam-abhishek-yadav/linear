@@ -70,7 +70,7 @@ export function IssueFiltersMenu({
     staleTime: PROJECTS_STALE_MS,
   });
   const tags = tagsQuery.data ?? [];
-  const projects = projectsQuery.data ?? [];
+  const projects = (projectsQuery.data ?? []).filter((project) => project.isMember);
 
   const sortedMembers = [...members].sort((a, b) => {
     if (a.isCurrentUser) return -1;

@@ -32,7 +32,7 @@ export const POST = withApiRoute("tasks.reorder", async (request: Request) => {
   let taskNotFound = false;
 
   await db.transaction(async (tx) => {
-    const task = await getOrganizationTaskForUpdate(tx, organizationId, taskId);
+    const task = await getOrganizationTaskForUpdate(tx, organizationId, taskId, session.user.id);
 
     if (!task) {
       taskNotFound = true;
@@ -122,7 +122,7 @@ export const POST = withApiRoute("tasks.reorder", async (request: Request) => {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }
 
-  const updated = await getOrganizationTask(organizationId, taskId);
+  const updated = await getOrganizationTask(organizationId, taskId, session.user.id);
 
   return NextResponse.json(updated);
 });

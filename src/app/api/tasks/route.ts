@@ -8,6 +8,7 @@ import { withApiRoute } from "@/lib/logger";
 import { createAssignmentNotification } from "@/lib/notifications";
 import { recordTaskCreated } from "@/lib/task-activity";
 import { isProjectInOrganization } from "@/lib/projects";
+import { canAccessTaskProject } from "@/lib/project-access";
 import { isAssigneeInOrganization } from "@/lib/task-access";
 import { getOrgTasks } from "@/lib/tasks";
 import { getTagsForTask } from "@/lib/tags";
@@ -16,7 +17,6 @@ import { createTaskSchema, zodErrorResponse } from "@/lib/validations";
 export const GET = withApiRoute("tasks.list", async () => {
   const guard = await requireUserOrResponse();
   if (guard.response) return guard.response;
-  const { session } = guard;
 
   return NextResponse.json(await getOrgTasks());
 });
@@ -54,6 +54,17 @@ export const POST = withApiRoute("tasks.create", async (request: Request) => {
     return NextResponse.json(
       { error: "Project must belong to your organization" },
       { status: 400 },
+    );
+  }
+
+  const projectAccessOk = await canAccessTaskProject(
+    session.user.id,
+    projectId,
+  );
+  if (!projectAccessOk) {
+    return NextResponse.json(
+      { error: "You must be a member of the project" },
+      { status: 403 },
     );
   }
 

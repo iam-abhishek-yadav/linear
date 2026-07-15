@@ -17,7 +17,7 @@ export const GET = withApiRoute(
 
   const { id } = await context.params;
   const data = await withDbRetry(() =>
-    getIssueDetailData(session.organization.id, id),
+    getIssueDetailData(session.organization.id, id, session.user.id),
   );
 
   if (!data) {

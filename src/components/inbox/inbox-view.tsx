@@ -167,8 +167,8 @@ export function InboxView() {
                 No notifications
               </p>
               <p className="text-[14px] text-muted-foreground">
-                You&apos;re all caught up. Assignments, comments, and status
-                updates will show up here.
+                You&apos;re all caught up. Assignments, comments, mentions, and
+                status updates will show up here.
               </p>
             </div>
           </div>

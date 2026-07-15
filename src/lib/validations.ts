@@ -34,6 +34,7 @@ export const updateTaskSchema = z.object({
 
 export const createCommentSchema = z.object({
   body: z.string().min(1, "Comment cannot be empty").max(5000),
+  mentionedUserIds: z.array(z.string().min(1)).max(20).optional().default([]),
 });
 
 export const reorderTaskSchema = z.object({

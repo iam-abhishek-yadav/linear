@@ -469,6 +469,7 @@ function IssueDetailView({
                   taskId={task.id}
                   activities={timeline.activities}
                   comments={timeline.comments}
+                  members={members}
                   onAddComment={timeline.addComment}
                   onRemoveComment={timeline.removeComment}
                   onChange={handleIssueChange}

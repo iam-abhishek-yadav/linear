@@ -107,6 +107,33 @@ export async function createStatusChangeNotification(
   });
 }
 
+/**
+ * Notify members who were @mentioned in a comment. Skips the actor and
+ * duplicate recipient ids.
+ */
+export async function createMentionNotifications(
+  executor: DbExecutor,
+  {
+    mentionedUserIds,
+    actorId,
+    taskId,
+  }: {
+    mentionedUserIds: string[];
+    actorId: string;
+    taskId: string;
+  },
+) {
+  const unique = [...new Set(mentionedUserIds)];
+  for (const recipientId of unique) {
+    await createNotification(executor, {
+      recipientId,
+      actorId,
+      taskId,
+      type: "MENTIONED",
+    });
+  }
+}
+
 export async function cleanupExpiredNotifications(userId: string) {
   const cutoff = new Date(Date.now() - NOTIFICATION_RETENTION_MS);
 

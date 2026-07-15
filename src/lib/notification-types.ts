@@ -30,6 +30,8 @@ export function formatNotificationMessage(
       return `${name} commented on this issue`;
     case "STATUS_CHANGED":
       return `${name} changed the status`;
+    case "MENTIONED":
+      return `${name} mentioned you in a comment`;
     default:
       return `${name} updated this issue`;
   }

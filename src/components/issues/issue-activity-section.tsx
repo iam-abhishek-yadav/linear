@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 import { Loader2, Trash2 } from "lucide-react";
+import { CommentBodyWithMentions } from "@/components/issues/comment-body-with-mentions";
+import { CommentMentionInput } from "@/components/issues/comment-mention-input";
 import { TaskActivityFeed } from "@/components/issues/task-activity-feed";
 import type { TaskActivityItem } from "@/components/issues/task-activity-feed";
 import type { TaskCommentItem } from "@/lib/task-comments";
 import { useSession } from "@/components/session-provider";
 import { Button } from "@/components/ui/button";
+import type { Member } from "@/hooks/use-members";
 import { formatActivityTime } from "@/lib/task-activity-format";
 import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
@@ -28,6 +31,7 @@ type IssueActivitySectionProps = {
   taskId: string;
   activities: TaskActivityItem[];
   comments: TaskCommentItem[];
+  members: Member[];
   onAddComment: (comment: TaskCommentItem) => void;
   onRemoveComment: (commentId: string) => void;
   onChange?: () => void | Promise<void>;
@@ -37,12 +41,14 @@ export function IssueActivitySection({
   taskId,
   activities,
   comments,
+  members,
   onAddComment,
   onRemoveComment,
   onChange,
 }: IssueActivitySectionProps) {
   const { user } = useSession();
   const [body, setBody] = useState("");
+  const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -57,12 +63,16 @@ export function IssueActivitySection({
       const response = await fetch(`/api/tasks/${taskId}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body: trimmed }),
+        body: JSON.stringify({
+          body: trimmed,
+          mentionedUserIds,
+        }),
       });
       if (!response.ok) return;
       const comment: TaskCommentItem = await response.json();
       onAddComment(comment);
       setBody("");
+      setMentionedUserIds([]);
       await onChange?.();
     } finally {
       setSubmitting(false);
@@ -126,9 +136,10 @@ export function IssueActivitySection({
                       </button>
                     )}
                   </div>
-                  <p className="mt-1 whitespace-pre-wrap text-[14px] leading-relaxed text-foreground/90">
-                    {comment.body}
-                  </p>
+                  <CommentBodyWithMentions
+                    body={comment.body}
+                    members={members}
+                  />
                 </div>
               </li>
             );
@@ -136,13 +147,16 @@ export function IssueActivitySection({
         </ul>
       )}
 
-      <div className="min-w-0 flex-1" onKeyDown={handleKeyDown}>
-        <textarea
+      <div className="min-w-0 flex-1">
+        <CommentMentionInput
           value={body}
-          onChange={(event) => setBody(event.target.value)}
-          placeholder="Leave a comment…"
-          rows={2}
-          className="min-h-[72px] w-full resize-none rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-[14px] leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-white/[0.14]"
+          mentionedUserIds={mentionedUserIds}
+          members={members}
+          onChange={(next, ids) => {
+            setBody(next);
+            setMentionedUserIds(ids);
+          }}
+          onKeyDown={handleKeyDown}
         />
         {body.trim() && (
           <div className="mt-2 flex items-center justify-end">

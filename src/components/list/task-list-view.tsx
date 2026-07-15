@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Check, Loader2, Plus } from "lucide-react";
 import { TaskDialog } from "@/components/kanban/task-dialog";
 import {
@@ -8,6 +9,7 @@ import {
   type AssignedView,
   type IssuesTabScope,
 } from "@/components/issues/issues-header";
+import { usePrefetchIssueDetail } from "@/components/issues/issue-detail-route";
 import { useSession } from "@/components/session-provider";
 import { PriorityIcon } from "@/components/tasks/priority-icon";
 import { StatusIcon } from "@/components/tasks/status-icon";
@@ -220,8 +222,10 @@ function TaskListViewContent({
   variant = "default",
   onCreate,
   onUpdate,
-  onDelete,
 }: TaskListViewProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const prefetchIssueDetail = usePrefetchIssueDetail();
   const members = useMembersContext();
   const {
     filters,
@@ -235,9 +239,8 @@ function TaskListViewContent({
     clearAll,
   } = useViewFilters();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [defaultStatus, setDefaultStatus] = useState<TaskStatus>("TODO");
+  const selectedTaskId = pathname.match(/^\/issues\/([^/]+)$/)?.[1] ?? null;
 
   const visible = filterStatus
     ? tasks.filter((t) => filterStatus.includes(t.status))
@@ -267,15 +270,13 @@ function TaskListViewContent({
   );
 
   function openCreate(status: TaskStatus = "TODO") {
-    setEditingTask(null);
     setDefaultStatus(status);
     setDialogOpen(true);
   }
 
   function openTask(task: Task) {
-    setSelectedTaskId(task.id);
-    setEditingTask(task);
-    setDialogOpen(true);
+    prefetchIssueDetail(task.id);
+    router.push(`/issues/${task.id}`);
   }
 
   async function handlePriorityChange(task: Task, priority: TaskPriority) {
@@ -363,22 +364,11 @@ function TaskListViewContent({
 
       <TaskDialog
         open={dialogOpen}
-        onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) setEditingTask(null);
-        }}
-        task={editingTask}
+        onOpenChange={setDialogOpen}
         defaultStatus={defaultStatus}
         onSave={async (data) => {
-          if (editingTask) {
-            await onUpdate(editingTask.id, data);
-          } else {
-            await onCreate(data);
-          }
+          await onCreate(data);
         }}
-        onDelete={
-          editingTask ? async () => onDelete(editingTask.id) : undefined
-        }
       />
     </>
   );

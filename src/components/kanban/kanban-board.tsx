@@ -19,10 +19,12 @@ import {
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { KanbanColumn } from "@/components/kanban/kanban-column";
 import { KanbanCardContent } from "@/components/kanban/kanban-card";
 import { TaskDialog } from "@/components/kanban/task-dialog";
 import { BoardPageChrome } from "@/components/issues/board-header";
+import { usePrefetchIssueDetail } from "@/components/issues/issue-detail-route";
 import { useMembersContext } from "@/components/members-provider";
 import { useViewFilters } from "@/hooks/use-view-filters";
 import { useTasks } from "@/hooks/use-tasks";
@@ -124,8 +126,6 @@ function KanbanBoardContent() {
     setTasks,
     fetchTasks,
     createTask,
-    updateTask,
-    deleteTask,
     persistReorder,
   } = useTasks();
   const members = useMembersContext();
@@ -142,9 +142,9 @@ function KanbanBoardContent() {
   } = useViewFilters();
 
   const [activeTask, setActiveTask] = useState<Task | null>(null);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [newDialogOpen, setNewDialogOpen] = useState(false);
+  const router = useRouter();
+  const prefetchIssueDetail = usePrefetchIssueDetail();
   const tasksRef = useRef(tasks);
   const dragSnapshotRef = useRef<Task[] | null>(null);
 
@@ -289,8 +289,8 @@ function KanbanBoardContent() {
                 identifierIndex={identifierIndex}
                 members={members}
                 onTaskClick={(task) => {
-                  setEditingTask(task);
-                  setDialogOpen(true);
+                  prefetchIssueDetail(task.id);
+                  router.push(`/issues/${task.id}`);
                 }}
                 footer={
                   col.id === "DONE" && staleCompletedCount > 0 ? (
@@ -320,25 +320,6 @@ function KanbanBoardContent() {
           ) : null}
         </DragOverlay>
       </DndContext>
-
-      <TaskDialog
-        open={dialogOpen}
-        onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) setEditingTask(null);
-        }}
-        task={editingTask}
-        onSave={async (data) => {
-          if (editingTask) {
-            await updateTask(editingTask.id, data);
-          }
-        }}
-        onDelete={
-          editingTask
-            ? async () => deleteTask(editingTask.id)
-            : undefined
-        }
-      />
 
       <TaskDialog
         open={newDialogOpen}

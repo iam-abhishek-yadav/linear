@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { IssueDetail } from "@/components/issues/issue-detail";
 import { IssueDetailSkeleton } from "@/components/issues/issue-detail-skeleton";
+import { IssueProjectAccessDenied } from "@/components/issues/issue-project-access-denied";
 import { useIssueDetail } from "@/hooks/use-issue-detail";
 
 type IssueDetailRouteProps = {
@@ -10,7 +11,7 @@ type IssueDetailRouteProps = {
 };
 
 export function IssueDetailRoute({ taskId }: IssueDetailRouteProps) {
-  const { data, loading, isLoadingTimeline, error, refetch } =
+  const { data, loading, isLoadingTimeline, error, projectAccess, refetch } =
     useIssueDetail(taskId);
 
   if (data) {
@@ -20,6 +21,10 @@ export function IssueDetailRoute({ taskId }: IssueDetailRouteProps) {
         isLoadingTimeline={isLoadingTimeline}
       />
     );
+  }
+
+  if (projectAccess) {
+    return <IssueProjectAccessDenied access={projectAccess} />;
   }
 
   if (error === "not_found") {
@@ -49,6 +54,14 @@ export function IssueDetailRoute({ taskId }: IssueDetailRouteProps) {
         >
           Try again
         </button>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <IssueDetailSkeleton />
       </div>
     );
   }

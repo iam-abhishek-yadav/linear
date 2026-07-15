@@ -21,6 +21,10 @@ import {
 } from "@/lib/task-access";
 import { getOrganizationTaskWithTags } from "@/lib/tasks";
 import { getTagsForTask } from "@/lib/tags";
+import {
+  projectAccessDeniedResponse,
+  resolveTaskViewerAccess,
+} from "@/lib/task-viewer-access";
 import { resolveCompletedAtUpdate } from "@/lib/task-visibility";
 import { updateTaskSchema, zodErrorResponse } from "@/lib/validations";
 import { withApiRoute } from "@/lib/logger";
@@ -37,7 +41,25 @@ export const GET = withApiRoute(
   const { session } = guard;
 
   const { id } = await context.params;
-  const task = await getOrganizationTaskWithTags(session.organization.id, id, session.user.id);
+  const access = await resolveTaskViewerAccess(
+    session.organization.id,
+    id,
+    session.user.id,
+  );
+
+  if (access.status === "not_found") {
+    return NextResponse.json({ error: "Task not found" }, { status: 404 });
+  }
+
+  if (access.status === "forbidden") {
+    return projectAccessDeniedResponse(access.payload);
+  }
+
+  const task = await getOrganizationTaskWithTags(
+    session.organization.id,
+    id,
+    session.user.id,
+  );
 
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });

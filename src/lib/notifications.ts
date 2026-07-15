@@ -11,7 +11,6 @@ import { getCurrentUser } from "@/lib/auth";
 import { db, withDbRetry } from "@/lib/db";
 import { logServerCall } from "@/lib/logger";
 import type { NotificationItem } from "@/lib/notification-types";
-import { listUserProjectIds } from "@/lib/project-access";
 import { toIsoString } from "@/lib/serialize";
 
 const NOTIFICATION_RETENTION_MS = 24 * 60 * 60 * 1000;
@@ -160,8 +159,6 @@ export async function getNotifications(
   }
 
   const actor = aliasedTable(users, "actor");
-  const memberProjectIds = await listUserProjectIds(userId);
-  const memberSet = new Set(memberProjectIds);
 
   const rows = await db
     .select({
@@ -169,7 +166,6 @@ export async function getNotifications(
       type: notifications.type,
       readAt: notifications.readAt,
       createdAt: notifications.createdAt,
-      taskProjectId: tasks.projectId,
       actor: {
         id: actor.id,
         name: actor.name,
@@ -192,10 +188,7 @@ export async function getNotifications(
     .where(eq(notifications.userId, userId))
     .orderBy(desc(notifications.createdAt));
 
-  return rows.filter(
-    (row) =>
-      row.taskProjectId == null || memberSet.has(row.taskProjectId),
-  );
+  return rows;
 }
 
 export function serializeNotification(

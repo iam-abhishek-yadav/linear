@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import type { ProjectAccessDenied } from "@/lib/api";
 import { fetchTask } from "@/lib/api";
 import { buildIssueDetailFromTask } from "@/lib/issue-detail-prefill";
 import type { IssueDetailData } from "@/lib/issue-detail-data";
@@ -23,7 +24,15 @@ export function useIssueDetail(taskId: string) {
     staleTime: STALE_TIME_MS,
   });
 
-  const task = taskFromStore ?? coldTaskQuery.data ?? null;
+  const coldResult = coldTaskQuery.data;
+  const coldTask =
+    coldResult?.status === "ok" ? coldResult.task : null;
+  const projectAccess: ProjectAccessDenied | null =
+    !taskFromStore && coldResult?.status === "project_access"
+      ? coldResult.access
+      : null;
+
+  const task = taskFromStore ?? coldTask;
   const timelineQuery = useIssueTimeline(taskId, { enabled: Boolean(task) });
 
   const data = useMemo((): IssueDetailData | null => {
@@ -41,14 +50,19 @@ export function useIssueDetail(taskId: string) {
   }, [task, tasks, timelineQuery.data]);
 
   const error =
-    coldTaskQuery.isError || timelineQuery.isError
-      ? ("failed" as const)
-      : coldTaskQuery.isSuccess && coldTaskQuery.data === null
-        ? ("not_found" as const)
-        : null;
+    projectAccess
+      ? null
+      : coldTaskQuery.isError || timelineQuery.isError
+        ? ("failed" as const)
+        : coldTaskQuery.isSuccess && coldResult?.status === "not_found"
+          ? ("not_found" as const)
+          : coldTaskQuery.isSuccess && coldResult?.status === "error"
+            ? ("failed" as const)
+            : null;
 
   const loading =
     !task &&
+    !projectAccess &&
     (coldTaskQuery.isPending || (Boolean(taskId) && !coldTaskQuery.isFetched));
 
   const isLoadingTimeline =
@@ -60,6 +74,7 @@ export function useIssueDetail(taskId: string) {
     isLoadingTimeline,
     isFetching: timelineQuery.isFetching,
     error,
+    projectAccess,
     refetch: async () => {
       await Promise.all([
         coldTaskQuery.refetch(),

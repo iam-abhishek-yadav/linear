@@ -13,7 +13,10 @@ export const GET = withApiRoute("projects.list", async () => {
   if (guard.response) return guard.response;
   const { session } = guard;
 
-  const projects = await listOrgProjects(session.organization.id);
+  const projects = await listOrgProjects(
+    session.organization.id,
+    session.user.id,
+  );
   return NextResponse.json({ projects });
 });
 

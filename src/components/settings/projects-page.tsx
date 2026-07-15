@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { MoreHorizontal, Plus, Search } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Check, MoreHorizontal, Plus, Search, X } from "lucide-react";
 import { ProjectFormDialog } from "@/components/settings/project-form-dialog";
 import { ProjectsEmptyState } from "@/components/settings/projects-empty-state";
 import { SidebarTrigger } from "@/components/sidebar-provider";
@@ -22,8 +22,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { UserAvatar } from "@/components/user-avatar";
+import {
+  fetchProjectAccessRequests,
+  requestProjectAccess,
+  reviewProjectAccessRequest,
+} from "@/lib/api";
+import type { ProjectAccessRequestItem } from "@/lib/project-access-requests";
 import type { ProjectSummary } from "@/lib/projects";
-import { canManageMembers } from "@/lib/roles";
+import { canManageMembers, ROLE_LABELS } from "@/lib/roles";
 import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
 import { useProjectsStore } from "@/stores/projects-store";
@@ -79,6 +86,7 @@ export function ProjectsPage({
   const hydrate = useProjectsStore((state) => state.hydrate);
   const refresh = useProjectsStore((state) => state.refresh);
   const removeProject = useProjectsStore((state) => state.removeProject);
+  const upsertProject = useProjectsStore((state) => state.upsertProject);
 
   hydrate(initialProjects);
 
@@ -87,6 +95,28 @@ export function ProjectsPage({
   const [editTarget, setEditTarget] = useState<ProjectSummary | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ProjectSummary | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [requestingId, setRequestingId] = useState<string | null>(null);
+  const [pendingRequests, setPendingRequests] = useState<
+    ProjectAccessRequestItem[]
+  >([]);
+  const [reviewingId, setReviewingId] = useState<string | null>(null);
+
+  const loadPendingRequests = useCallback(async () => {
+    if (!userCanManage) {
+      setPendingRequests([]);
+      return;
+    }
+    try {
+      const requests = await fetchProjectAccessRequests();
+      setPendingRequests(requests);
+    } catch {
+      setPendingRequests([]);
+    }
+  }, [userCanManage]);
+
+  useEffect(() => {
+    void loadPendingRequests();
+  }, [loadPendingRequests]);
 
   const filteredProjects = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -118,6 +148,42 @@ export function ProjectsPage({
 
     removeProject(deleteTarget.id);
     setDeleteTarget(null);
+    void loadPendingRequests();
+  }
+
+  async function handleRequestAccess(project: ProjectSummary) {
+    setRequestingId(project.id);
+    try {
+      const { request } = await requestProjectAccess(project.id);
+      upsertProject({
+        ...project,
+        myAccessRequest: {
+          id: request.id,
+          status: request.status as "PENDING" | "APPROVED" | "DENIED",
+        },
+      });
+      void loadPendingRequests();
+    } catch {
+      // keep UI unchanged
+    } finally {
+      setRequestingId(null);
+    }
+  }
+
+  async function handleReview(
+    requestId: string,
+    action: "approve" | "deny",
+  ) {
+    setReviewingId(requestId);
+    try {
+      await reviewProjectAccessRequest(requestId, action);
+      await refresh();
+      await loadPendingRequests();
+    } catch {
+      // keep UI unchanged
+    } finally {
+      setReviewingId(null);
+    }
   }
 
   const isEmpty = projects.length === 0;
@@ -169,6 +235,63 @@ export function ProjectsPage({
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto">
+        {userCanManage && pendingRequests.length > 0 && (
+          <div className="space-y-2 border-b border-border/40 px-4 py-4 md:px-8">
+            <h2 className="text-[14px] font-medium text-muted-foreground">
+              Access requests
+            </h2>
+            <ul className="space-y-2">
+              {pendingRequests.map((request) => (
+                <li
+                  key={request.id}
+                  className="flex flex-col gap-3 rounded-lg border border-border/40 px-3 py-3 sm:flex-row sm:items-center sm:justify-between md:px-4"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <UserAvatar name={request.user.name} size="md" />
+                    <div className="min-w-0">
+                      <p className="truncate text-[14px] font-medium">
+                        {request.user.name}
+                        <span className="ml-1.5 text-[12px] font-normal text-muted-foreground">
+                          {ROLE_LABELS[request.user.role]}
+                        </span>
+                      </p>
+                      <p className="truncate text-[13px] text-muted-foreground">
+                        Requested access to{" "}
+                        <span className="text-foreground/80">
+                          {request.projectName}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      disabled={reviewingId === request.id}
+                      onClick={() => void handleReview(request.id, "deny")}
+                      className="h-8 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="size-3.5" />
+                      Deny
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={reviewingId === request.id}
+                      onClick={() => void handleReview(request.id, "approve")}
+                      className="h-8 bg-violet-600 text-white hover:bg-violet-500"
+                    >
+                      <Check className="size-3.5" />
+                      Approve
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {loading && !projects.length ? (
           <p className="px-4 py-4 text-sm text-muted-foreground md:px-8">
             Loading projects...
@@ -191,38 +314,73 @@ export function ProjectsPage({
               {filteredProjects.length}{" "}
               {filteredProjects.length === 1 ? "project" : "projects"}
             </h2>
-            {filteredProjects.map((project) => (
-              <div
-                key={project.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border/40 px-3 py-3 md:px-4"
-              >
-                <p className="min-w-0 flex-1 truncate font-medium">
-                  {project.name}
-                </p>
-                <MemberAvatars members={project.members} />
-                {userCanManage && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-white/6 hover:text-foreground"
-                      aria-label={`Actions for ${project.name}`}
-                    >
-                      <MoreHorizontal className="size-3.5" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-40">
-                      <DropdownMenuItem onClick={() => setEditTarget(project)}>
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onClick={() => setDeleteTarget(project)}
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </div>
-            ))}
+            {filteredProjects.map((project) => {
+              const isMember = project.isMember;
+              const pending =
+                project.myAccessRequest?.status === "PENDING";
+              const denied =
+                project.myAccessRequest?.status === "DENIED";
+
+              return (
+                <div
+                  key={project.id}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-border/40 px-3 py-3 md:px-4"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{project.name}</p>
+                    {isMember && (
+                      <p className="text-[12px] text-muted-foreground">
+                        Member
+                      </p>
+                    )}
+                  </div>
+                  <MemberAvatars members={project.members} />
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    {!isMember && (
+                      pending ? (
+                        <span className="rounded-md px-2 py-1 text-[12px] text-muted-foreground">
+                          Requested
+                        </span>
+                      ) : (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          disabled={requestingId === project.id}
+                          onClick={() => void handleRequestAccess(project)}
+                          className="h-7 text-[12px] text-muted-foreground hover:text-foreground"
+                        >
+                          {denied ? "Request again" : "Request access"}
+                        </Button>
+                      )
+                    )}
+                    {userCanManage && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-white/6 hover:text-foreground"
+                          aria-label={`Actions for ${project.name}`}
+                        >
+                          <MoreHorizontal className="size-3.5" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem
+                            onClick={() => setEditTarget(project)}
+                          >
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => setDeleteTarget(project)}
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -232,14 +390,20 @@ export function ProjectsPage({
           <ProjectFormDialog
             open={createOpen}
             onOpenChange={setCreateOpen}
-            onSaved={() => void refresh()}
+            onSaved={() => {
+              void refresh();
+              void loadPendingRequests();
+            }}
           />
           <ProjectFormDialog
             open={Boolean(editTarget)}
             onOpenChange={(open) => {
               if (!open) setEditTarget(null);
             }}
-            onSaved={() => void refresh()}
+            onSaved={() => {
+              void refresh();
+              void loadPendingRequests();
+            }}
             project={editTarget}
           />
 

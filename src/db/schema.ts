@@ -409,6 +409,46 @@ export const projectMembers = pgTable(
   ],
 );
 
+export const projectAccessRequestStatusEnum = pgEnum(
+  "ProjectAccessRequestStatus",
+  ["PENDING", "APPROVED", "DENIED"],
+);
+
+export const projectAccessRequests = pgTable(
+  "ProjectAccessRequest",
+  {
+    id: text("id").primaryKey(),
+    projectId: text("projectId")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: projectAccessRequestStatusEnum("status").notNull().default("PENDING"),
+    reviewedById: text("reviewedById").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("createdAt", { precision: 3, mode: "date" })
+      .notNull()
+      .defaultNow(),
+    reviewedAt: timestamp("reviewedAt", { precision: 3, mode: "date" }),
+  },
+  (table) => [
+    uniqueIndex("ProjectAccessRequest_projectId_userId_key").on(
+      table.projectId,
+      table.userId,
+    ),
+    index("ProjectAccessRequest_projectId_status_idx").on(
+      table.projectId,
+      table.status,
+    ),
+    index("ProjectAccessRequest_userId_idx").on(table.userId),
+  ],
+);
+
 export type Project = typeof projects.$inferSelect;
 export type NewProject = typeof projects.$inferInsert;
 export type ProjectMember = typeof projectMembers.$inferSelect;
+export type ProjectAccessRequest = typeof projectAccessRequests.$inferSelect;
+export type ProjectAccessRequestStatus =
+  (typeof projectAccessRequestStatusEnum.enumValues)[number];

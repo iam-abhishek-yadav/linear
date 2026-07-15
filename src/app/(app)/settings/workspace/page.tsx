@@ -10,7 +10,10 @@ export default async function WorkspaceSettingsPage() {
     redirect("/settings/profile");
   }
 
-  const projects = await listOrgProjects(session.organization.id);
+  const projects = await listOrgProjects(
+    session.organization.id,
+    session.user.id,
+  );
 
   return (
     <WorkspacePage

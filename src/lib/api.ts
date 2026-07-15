@@ -38,6 +38,34 @@ export async function fetchProjects(): Promise<ProjectSummary[]> {
   return projects;
 }
 
+export async function fetchProjectAccessRequests() {
+  const { requests } = await fetchJson<{
+    requests: import("@/lib/project-access-requests").ProjectAccessRequestItem[];
+  }>("/api/projects/access-requests");
+  return requests;
+}
+
+export async function requestProjectAccess(projectId: string) {
+  return fetchJson<{ request: { id: string; status: string } }>(
+    `/api/projects/${projectId}/access-requests`,
+    { method: "POST" },
+  );
+}
+
+export async function reviewProjectAccessRequest(
+  requestId: string,
+  action: "approve" | "deny",
+) {
+  return fetchJson<{ ok: true; status: string }>(
+    `/api/projects/access-requests/${requestId}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    },
+  );
+}
+
 export async function fetchTask(taskId: string): Promise<TaskWithTags | null> {
   const response = await fetch(`/api/tasks/${taskId}`);
   if (response.status === 404) return null;

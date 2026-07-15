@@ -10,7 +10,10 @@ export default async function ProjectsPageRoute() {
     redirect("/login");
   }
 
-  const projects = await listOrgProjects(session.organization.id);
+  const projects = await listOrgProjects(
+    session.organization.id,
+    session.user.id,
+  );
 
   return <ProjectsPage initialProjects={projects} />;
 }

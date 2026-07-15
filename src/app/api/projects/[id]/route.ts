@@ -22,7 +22,11 @@ export const GET = withApiRoute(
     const { session } = guard;
     const { id } = await context.params;
 
-    const project = await getOrgProject(session.organization.id, id);
+    const project = await getOrgProject(
+      session.organization.id,
+      id,
+      session.user.id,
+    );
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }

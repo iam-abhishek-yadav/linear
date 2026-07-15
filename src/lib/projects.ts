@@ -1,7 +1,16 @@
 import { createId } from "@paralleldrive/cuid2";
 import { and, asc, eq, inArray } from "drizzle-orm";
-import { projectMembers, projects, users } from "@/db/schema";
+import {
+  projectMembers,
+  projects,
+  users,
+  type ProjectAccessRequestStatus,
+} from "@/db/schema";
 import { db, isUniqueViolationError } from "@/lib/db";
+import {
+  getAccessRequestsByProjectIds,
+  getMemberProjectIds,
+} from "@/lib/project-access-requests";
 
 export type ProjectMemberSummary = {
   id: string;
@@ -16,6 +25,11 @@ export type ProjectSummary = {
   createdAt: string;
   updatedAt: string;
   members: ProjectMemberSummary[];
+  isMember: boolean;
+  myAccessRequest: {
+    id: string;
+    status: ProjectAccessRequestStatus;
+  } | null;
 };
 
 function toProjectSummary(
@@ -27,6 +41,10 @@ function toProjectSummary(
     updatedAt: Date;
   },
   members: ProjectMemberSummary[],
+  extras?: {
+    isMember?: boolean;
+    myAccessRequest?: ProjectSummary["myAccessRequest"];
+  },
 ): ProjectSummary {
   return {
     id: project.id,
@@ -35,6 +53,8 @@ function toProjectSummary(
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString(),
     members,
+    isMember: extras?.isMember ?? false,
+    myAccessRequest: extras?.myAccessRequest ?? null,
   };
 }
 
@@ -118,6 +138,7 @@ export async function isProjectInOrganization(
 
 export async function listOrgProjects(
   organizationId: string,
+  currentUserId?: string,
 ): Promise<ProjectSummary[]> {
   const rows = await db
     .select({
@@ -131,16 +152,28 @@ export async function listOrgProjects(
     .where(eq(projects.organizationId, organizationId))
     .orderBy(asc(projects.name));
 
-  const membersByProjectId = await getMembersForProjectIds(rows.map((p) => p.id));
+  const projectIds = rows.map((p) => p.id);
+  const membersByProjectId = await getMembersForProjectIds(projectIds);
+
+  const memberIds = currentUserId
+    ? await getMemberProjectIds(currentUserId, projectIds)
+    : new Set<string>();
+  const requestsByProjectId = currentUserId
+    ? await getAccessRequestsByProjectIds(projectIds, currentUserId)
+    : new Map();
 
   return rows.map((project) =>
-    toProjectSummary(project, membersByProjectId.get(project.id) ?? []),
+    toProjectSummary(project, membersByProjectId.get(project.id) ?? [], {
+      isMember: memberIds.has(project.id),
+      myAccessRequest: requestsByProjectId.get(project.id) ?? null,
+    }),
   );
 }
 
 export async function getOrgProject(
   organizationId: string,
   projectId: string,
+  currentUserId?: string,
 ): Promise<ProjectSummary | null> {
   const project = await getOrganizationProject(organizationId, projectId);
   if (!project) {
@@ -148,10 +181,20 @@ export async function getOrgProject(
   }
 
   const membersByProjectId = await getMembersForProjectIds([project.id]);
+  const memberIds = currentUserId
+    ? await getMemberProjectIds(currentUserId, [project.id])
+    : new Set<string>();
+  const requestsByProjectId = currentUserId
+    ? await getAccessRequestsByProjectIds([project.id], currentUserId)
+    : new Map();
 
   return toProjectSummary(
     project,
     membersByProjectId.get(project.id) ?? [],
+    {
+      isMember: memberIds.has(project.id),
+      myAccessRequest: requestsByProjectId.get(project.id) ?? null,
+    },
   );
 }
 

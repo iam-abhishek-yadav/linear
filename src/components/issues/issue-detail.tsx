@@ -80,7 +80,6 @@ function IssueDetailView({
   const { user, organization } = useSession();
   const members = useMembersCache();
   const titleRef = useRef<HTMLInputElement>(null);
-  const initializedRef = useRef(false);
   const storeTasks = useTasksStore((state) => state.tasks);
 
   const [task, setTask] = useState(data.task);
@@ -154,7 +153,6 @@ function IssueDetailView({
     setAssigneeId(data.task.assigneeId ?? null);
     setDueDate(toDateInputValue(data.task.dueDate));
     setTags(data.task.tags ?? []);
-    initializedRef.current = true;
   }, [data.task.id, data.task.updatedAt]);
 
   type SaveFields = {
@@ -222,25 +220,45 @@ function IssueDetailView({
     [queryClient, task.id],
   );
 
+  const isContentDirty =
+    title.trim() !== task.title ||
+    description.trim() !== (task.description ?? "").trim();
+
+  async function handleSaveContent() {
+    if (!title.trim() || saving || !isContentDirty) return;
+
+    try {
+      await save({
+        title: title.trim(),
+        description: description.trim() || undefined,
+      });
+      setTitle(title.trim());
+      setDescription(description.trim());
+    } catch {
+      // save() handles error propagation for queued saves
+    }
+  }
+
+  function handleDiscardContent() {
+    setTitle(task.title);
+    setDescription(task.description ?? "");
+  }
+
   const handleIssueChange = useCallback(async () => {
     await revalidateIssueCaches(queryClient, task.id);
   }, [queryClient, task.id]);
 
   useEffect(() => {
-    if (!initializedRef.current || !title.trim()) return;
-    if (title === task.title && description === (task.description ?? "")) {
-      return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (!(event.metaKey || event.ctrlKey) || event.key !== "s") return;
+      if (!isContentDirty || !title.trim()) return;
+      event.preventDefault();
+      void handleSaveContent();
     }
 
-    const timer = setTimeout(() => {
-      void save({
-        title: title.trim(),
-        description: description.trim() || undefined,
-      });
-    }, 800);
-
-    return () => clearTimeout(timer);
-  }, [description, save, task.description, task.title, title]);
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [description, isContentDirty, title, task.description, task.title]);
 
   async function handlePropertyChange(
     field: "status" | "priority" | "assigneeId" | "dueDate",
@@ -385,11 +403,14 @@ function IssueDetailView({
           </div>
 
           <div className="flex shrink-0 items-center gap-1">
-            {saving && (
+            {saving && !isContentDirty && (
               <span className="mr-2 flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Loader2 className="size-3 animate-spin" />
                 Saving
               </span>
+            )}
+            {isContentDirty && (
+              <span className="mr-2 text-xs text-amber-300/80">Unsaved changes</span>
             )}
             <div className="flex items-center gap-0.5 text-xs text-muted-foreground">
               <span className="px-1.5">
@@ -449,6 +470,10 @@ function IssueDetailView({
             <IssueDescriptionField
               value={description}
               onChange={setDescription}
+              dirty={isContentDirty}
+              saving={saving}
+              onSave={() => void handleSaveContent()}
+              onDiscard={handleDiscardContent}
             />
 
             <section className="mt-10 border-t border-white/6 pt-6">

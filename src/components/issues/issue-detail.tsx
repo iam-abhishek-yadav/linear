@@ -11,6 +11,7 @@ import {
   Link2,
   Loader2,
   MoreHorizontal,
+  Pencil,
   Trash2,
 } from "lucide-react";
 import { IssueActivitySection } from "@/components/issues/issue-activity-section";
@@ -30,6 +31,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSession } from "@/components/session-provider";
@@ -113,6 +115,7 @@ function IssueDetailView({
     "confirm" | "admin-required" | null
   >(null);
   const [copied, setCopied] = useState(false);
+  const [editingDescription, setEditingDescription] = useState(false);
 
   const timeline = useTaskTimeline(task.id, {
     activities: data.activities,
@@ -153,6 +156,7 @@ function IssueDetailView({
     setAssigneeId(data.task.assigneeId ?? null);
     setDueDate(toDateInputValue(data.task.dueDate));
     setTags(data.task.tags ?? []);
+    setEditingDescription(false);
   }, [data.task.id, data.task.updatedAt]);
 
   type SaveFields = {
@@ -234,8 +238,9 @@ function IssueDetailView({
       });
       setTitle(title.trim());
       setDescription(description.trim());
-    } catch {
-      // save() handles error propagation for queued saves
+      setEditingDescription(false);
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -390,7 +395,12 @@ function IssueDetailView({
               >
                 <MoreHorizontal className="size-4" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-44">
+              <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuItem onClick={() => setEditingDescription(true)}>
+                  <Pencil className="size-3.5" />
+                  Edit description
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleDeleteClick}
                   className="text-destructive focus:text-destructive"
@@ -470,10 +480,12 @@ function IssueDetailView({
             <IssueDescriptionField
               value={description}
               onChange={setDescription}
+              editing={editingDescription}
               dirty={isContentDirty}
               saving={saving}
-              onSave={() => void handleSaveContent()}
+              onSave={handleSaveContent}
               onDiscard={handleDiscardContent}
+              onExitEdit={() => setEditingDescription(false)}
             />
 
             <section className="mt-10 border-t border-white/6 pt-6">

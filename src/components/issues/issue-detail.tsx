@@ -14,6 +14,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { IssueActivitySection } from "@/components/issues/issue-activity-section";
+import { IssueDescriptionField } from "@/components/issues/issue-description-field";
 import { ActivityTimelineSkeleton } from "@/components/issues/issue-detail-skeleton";
 import { IssuePropertiesPanel } from "@/components/issues/issue-properties-panel";
 import { Button } from "@/components/ui/button";
@@ -445,11 +446,9 @@ function IssueDetailView({
               className="w-full bg-transparent text-[30px] font-semibold leading-tight outline-none placeholder:text-muted-foreground/50"
             />
 
-            <textarea
+            <IssueDescriptionField
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add description…"
-              className="mt-4 field-sizing-content min-h-24 w-full resize-none bg-transparent text-[16px] leading-relaxed text-foreground/90 outline-none placeholder:text-muted-foreground/50"
+              onChange={setDescription}
             />
 
             <section className="mt-10 border-t border-white/6 pt-6">

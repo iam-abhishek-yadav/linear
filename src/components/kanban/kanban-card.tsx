@@ -64,11 +64,6 @@ export function KanbanCardContent({
         {task.tags && task.tags.length > 0 && (
           <TagList tags={task.tags} className="mt-2" limit={3} />
         )}
-        {task.description && (
-          <p className="mt-1.5 whitespace-pre-wrap break-words text-xs leading-relaxed text-muted-foreground">
-            {task.description}
-          </p>
-        )}
         <div className="mt-2.5 flex items-center justify-between gap-2">
           {dueLabel ? (
             <span

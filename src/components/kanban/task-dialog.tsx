@@ -150,7 +150,7 @@ export function TaskDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="gap-0 overflow-hidden p-0 sm:max-w-[720px]"
+        className="flex max-h-[min(90vh,800px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[720px]"
         showCloseButton
       >
         <DialogTitle className="sr-only">
@@ -181,37 +181,38 @@ export function TaskDialog({
           )}
         </div>
 
-        <div className="px-5 pt-5 pb-3" onKeyDown={handleKeyDown}>
-          <input
-            ref={titleRef}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Issue title"
-            className="w-full bg-transparent text-lg font-medium outline-none placeholder:text-muted-foreground/70"
-          />
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Add description…"
-            rows={4}
-            className="mt-3 min-h-[96px] w-full resize-none bg-transparent text-sm leading-relaxed outline-none placeholder:text-muted-foreground/70"
-          />
-        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="px-5 pt-5 pb-3" onKeyDown={handleKeyDown}>
+            <input
+              ref={titleRef}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Issue title"
+              className="w-full bg-transparent text-lg font-medium outline-none placeholder:text-muted-foreground/70"
+            />
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Add description…"
+              className="mt-3 field-sizing-content min-h-24 w-full resize-none bg-transparent text-sm leading-relaxed outline-none placeholder:text-muted-foreground/70"
+            />
+          </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 px-5 pb-5">
-          <StatusPill value={status} onChange={setStatus} />
-          <PriorityPill value={priority} onChange={setPriority} />
-          <AssigneePill
-            value={assigneeId}
-            members={members}
-            onChange={setAssigneeId}
-          />
-          <ProjectPill
-            value={projectId}
-            projects={projects}
-            onChange={setProjectId}
-          />
-          <DueDatePill value={dueDate} onChange={setDueDate} />
+          <div className="flex flex-wrap items-center gap-1.5 px-5 pb-5">
+            <StatusPill value={status} onChange={setStatus} />
+            <PriorityPill value={priority} onChange={setPriority} />
+            <AssigneePill
+              value={assigneeId}
+              members={members}
+              onChange={setAssigneeId}
+            />
+            <ProjectPill
+              value={projectId}
+              projects={projects}
+              onChange={setProjectId}
+            />
+            <DueDatePill value={dueDate} onChange={setDueDate} />
+          </div>
         </div>
 
         <div className="flex items-center gap-3 border-t border-border/50 px-5 py-3">

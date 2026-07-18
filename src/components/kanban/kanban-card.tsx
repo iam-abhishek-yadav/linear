@@ -65,7 +65,7 @@ export function KanbanCardContent({
           <TagList tags={task.tags} className="mt-2" limit={3} />
         )}
         {task.description && (
-          <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+          <p className="mt-1.5 whitespace-pre-wrap break-words text-xs leading-relaxed text-muted-foreground">
             {task.description}
           </p>
         )}

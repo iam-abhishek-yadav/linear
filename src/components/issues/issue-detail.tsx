@@ -449,8 +449,7 @@ function IssueDetailView({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add description…"
-              rows={6}
-              className="mt-4 w-full resize-none bg-transparent text-[16px] leading-relaxed text-foreground/90 outline-none placeholder:text-muted-foreground/50"
+              className="mt-4 field-sizing-content min-h-24 w-full resize-none bg-transparent text-[16px] leading-relaxed text-foreground/90 outline-none placeholder:text-muted-foreground/50"
             />
 
             <section className="mt-10 border-t border-white/6 pt-6">

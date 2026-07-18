@@ -14,7 +14,7 @@ const taskStatusSchema = z.enum(TASK_STATUSES);
 
 export const createTaskSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
-  description: z.string().max(5000).optional(),
+  description: z.string().optional(),
   status: taskStatusSchema.optional(),
   priority: z.enum(["NONE", "LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
   assigneeId: z.string().min(1).nullish(),
@@ -24,7 +24,7 @@ export const createTaskSchema = z.object({
 
 export const updateTaskSchema = z.object({
   title: z.string().min(1).max(200).optional(),
-  description: z.string().max(5000).nullable().optional(),
+  description: z.string().nullable().optional(),
   status: taskStatusSchema.optional(),
   priority: z.enum(["NONE", "LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
   assigneeId: z.string().min(1).nullish(),

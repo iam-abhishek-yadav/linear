@@ -250,111 +250,115 @@ export function IssueDescriptionField({
   const [mode, setMode] = useState<"edit" | "preview">("edit");
 
   return (
-    <div className="mt-4">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-0.5 rounded-md border border-white/8 bg-white/2 p-0.5">
-            <button
-              type="button"
-              onClick={() => setMode("edit")}
-              className={cn(
-                "inline-flex items-center gap-1 rounded px-2 py-1 text-[12px] transition-colors",
-                mode === "edit"
-                  ? "bg-white/8 text-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <Pencil className="size-3" />
-              Write
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("preview")}
-              className={cn(
-                "inline-flex items-center gap-1 rounded px-2 py-1 text-[12px] transition-colors",
-                mode === "preview"
-                  ? "bg-white/8 text-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <Eye className="size-3" />
-              Preview
-            </button>
+    <div className="mt-4 min-w-0 max-w-full">
+      <div className="overflow-hidden rounded-lg border border-white/8 bg-[#121214]">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/8 px-2 py-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-0.5 rounded-md bg-white/4 p-0.5">
+              <button
+                type="button"
+                onClick={() => setMode("edit")}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded px-2 py-1 text-[12px] transition-colors",
+                  mode === "edit"
+                    ? "bg-white/10 text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Pencil className="size-3" />
+                Write
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("preview")}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded px-2 py-1 text-[12px] transition-colors",
+                  mode === "preview"
+                    ? "bg-white/10 text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Eye className="size-3" />
+                Preview
+              </button>
+            </div>
+
+            {dirty && (
+              <div className="flex items-center gap-1.5">
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={saving}
+                  onClick={onSave}
+                  className="h-7 gap-1.5 rounded-md bg-violet-600 px-2.5 text-xs text-white hover:bg-violet-600/90"
+                >
+                  {saving ? (
+                    <span className="size-3 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  ) : (
+                    <Save className="size-3" />
+                  )}
+                  Save
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  disabled={saving}
+                  onClick={onDiscard}
+                  className="h-7 gap-1.5 px-2.5 text-xs text-muted-foreground"
+                >
+                  <RotateCcw className="size-3" />
+                  Discard
+                </Button>
+              </div>
+            )}
           </div>
 
-          {dirty && (
-            <div className="flex items-center gap-1.5">
-              <Button
-                type="button"
-                size="sm"
-                disabled={saving}
-                onClick={onSave}
-                className="h-7 gap-1.5 rounded-md bg-violet-600 px-2.5 text-xs text-white hover:bg-violet-600/90"
-              >
-                {saving ? (
-                  <span className="size-3 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                ) : (
-                  <Save className="size-3" />
-                )}
-                Save
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                disabled={saving}
-                onClick={onDiscard}
-                className="h-7 gap-1.5 px-2.5 text-xs text-muted-foreground"
-              >
-                <RotateCcw className="size-3" />
-                Discard
-              </Button>
+          {mode === "edit" && (
+            <div className="flex flex-wrap items-center gap-0.5">
+              {FORMAT_ACTIONS.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <button
+                    key={action.label}
+                    type="button"
+                    aria-label={action.label}
+                    title={action.label}
+                    onClick={() => {
+                      const textarea = textareaRef.current;
+                      if (!textarea) return;
+                      applyFormat(textarea, action, value, onChange);
+                    }}
+                    className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-white/6 hover:text-foreground"
+                  >
+                    <Icon className="size-3.5" />
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
 
-        {mode === "edit" && (
-          <div className="flex flex-wrap items-center gap-0.5">
-            {FORMAT_ACTIONS.map((action) => {
-              const Icon = action.icon;
-              return (
-                <button
-                  key={action.label}
-                  type="button"
-                  aria-label={action.label}
-                  title={action.label}
-                  onClick={() => {
-                    const textarea = textareaRef.current;
-                    if (!textarea) return;
-                    applyFormat(textarea, action, value, onChange);
-                  }}
-                  className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-white/4 hover:text-foreground"
-                >
-                  <Icon className="size-3.5" />
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {mode === "edit" ? (
-        <textarea
-          ref={textareaRef}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          onKeyDown={(event) =>
-            handleEditorKeyDown(event, value, onChange, onSave)
-          }
-          placeholder={placeholder}
-          spellCheck={false}
-          className="field-sizing-content min-h-32 w-full resize-y rounded-lg border border-white/8 bg-[#141416]/40 px-4 py-3 text-[15px] leading-relaxed text-foreground/90 outline-none placeholder:text-muted-foreground/50 focus:border-white/14"
-        />
-      ) : (
-        <div className="min-h-32 rounded-lg border border-white/8 bg-[#141416]/20 px-4 py-3">
-          <MarkdownPreview content={value} />
+        <div className="min-w-0 px-4 py-3">
+          {mode === "edit" ? (
+            <textarea
+              ref={textareaRef}
+              value={value}
+              onChange={(event) => onChange(event.target.value)}
+              onKeyDown={(event) =>
+                handleEditorKeyDown(event, value, onChange, onSave)
+              }
+              placeholder={placeholder}
+              spellCheck={false}
+              className="field-sizing-content min-h-40 w-full resize-y bg-transparent text-[15px] leading-relaxed text-foreground/90 outline-none placeholder:text-muted-foreground/50"
+            />
+          ) : (
+            <div className="min-h-40 min-w-0 max-w-full">
+              <MarkdownPreview content={value} />
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {mode === "edit" && (
         <p className="mt-2 text-[12px] text-muted-foreground/70">

@@ -20,14 +20,16 @@ const markdownComponents: Components = {
     <h3 className="text-lg font-medium text-foreground">{children}</h3>
   ),
   p: ({ children }) => (
-    <p className="leading-relaxed text-foreground/90">{children}</p>
+    <p className="wrap-break-word leading-relaxed text-foreground/90">
+      {children}
+    </p>
   ),
   a: ({ href, children }) => (
     <a
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="text-violet-300 underline underline-offset-2 hover:text-violet-200"
+      className="break-all text-violet-300 underline underline-offset-2 hover:text-violet-200"
     >
       {children}
     </a>
@@ -40,7 +42,9 @@ const markdownComponents: Components = {
       {children}
     </ol>
   ),
-  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+  li: ({ children }) => (
+    <li className="wrap-break-word leading-relaxed">{children}</li>
+  ),
   blockquote: ({ children }) => (
     <blockquote className="border-l-2 border-white/12 pl-4 text-muted-foreground">
       {children}
@@ -48,7 +52,7 @@ const markdownComponents: Components = {
   ),
   hr: () => <hr className="border-white/8" />,
   pre: ({ children }) => (
-    <pre className="overflow-x-auto rounded-lg border border-white/8 bg-[#141416] p-4">
+    <pre className="my-3 max-w-full wrap-break-word whitespace-pre-wrap rounded-md bg-black/35 px-3 py-3 font-mono text-[13px] leading-6 text-foreground/90">
       {children}
     </pre>
   ),
@@ -59,7 +63,7 @@ const markdownComponents: Components = {
       return (
         <code
           className={cn(
-            "block font-mono text-[13px] leading-6 whitespace-pre text-foreground/90",
+            "block wrap-break-word whitespace-pre-wrap",
             className,
           )}
           {...props}
@@ -71,7 +75,7 @@ const markdownComponents: Components = {
 
     return (
       <code
-        className="rounded bg-white/6 px-1 py-0.5 font-mono text-[0.9em] text-foreground/90"
+        className="wrap-break-word rounded bg-white/6 px-1 py-0.5 font-mono text-[0.9em] text-foreground/90"
         {...props}
       >
         {children}
@@ -79,7 +83,7 @@ const markdownComponents: Components = {
     );
   },
   table: ({ children }) => (
-    <div className="overflow-x-auto">
+    <div className="my-3 max-w-full overflow-x-auto">
       <table className="w-full border-collapse text-sm">{children}</table>
     </div>
   ),
@@ -96,14 +100,14 @@ const markdownComponents: Components = {
 export function MarkdownPreview({ content }: { content: string }) {
   if (!content.trim()) {
     return (
-      <p className="text-[16px] leading-relaxed text-muted-foreground/50">
+      <p className="text-[15px] leading-relaxed text-muted-foreground/50">
         Nothing to preview yet.
       </p>
     );
   }
 
   return (
-    <div className="markdown-preview space-y-4 text-[16px]">
+    <div className="markdown-preview min-w-0 max-w-full space-y-3 text-[15px]">
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
         {content}
       </ReactMarkdown>

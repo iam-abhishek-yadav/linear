@@ -15,6 +15,7 @@ import {
   Save,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MarkdownPreview } from "@/components/issues/markdown-preview";
 import { cn } from "@/lib/utils";
 
 type IssueDescriptionFieldProps = {
@@ -236,134 +237,6 @@ function handleEditorKeyDown(
   }
 }
 
-function renderInlineMarkdown(text: string) {
-  const pattern =
-    /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`\n]+`|\[[^\]]+\]\([^)]+\))/g;
-  const parts = text.split(pattern).filter(Boolean);
-
-  return parts.map((part, index) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return (
-        <strong key={index} className="font-semibold text-foreground">
-          {part.slice(2, -2)}
-        </strong>
-      );
-    }
-    if (part.startsWith("*") && part.endsWith("*")) {
-      return (
-        <em key={index} className="italic">
-          {part.slice(1, -1)}
-        </em>
-      );
-    }
-    if (part.startsWith("`") && part.endsWith("`")) {
-      return (
-        <code
-          key={index}
-          className="rounded bg-white/6 px-1 py-0.5 font-mono text-[0.9em] text-foreground/90"
-        >
-          {part.slice(1, -1)}
-        </code>
-      );
-    }
-    const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-    if (linkMatch) {
-      return (
-        <a
-          key={index}
-          href={linkMatch[2]}
-          target="_blank"
-          rel="noreferrer"
-          className="text-violet-300 underline underline-offset-2 hover:text-violet-200"
-        >
-          {linkMatch[1]}
-        </a>
-      );
-    }
-    return <span key={index}>{part}</span>;
-  });
-}
-
-function renderMarkdownBlock(block: string, index: number) {
-  const trimmed = block.trim();
-  if (trimmed.startsWith("```") && trimmed.endsWith("```")) {
-    const inner = trimmed.slice(3, -3);
-    const newlineIndex = inner.indexOf("\n");
-    const body =
-      newlineIndex === -1
-        ? ""
-        : inner.slice(newlineIndex + 1).replace(/\n$/, "");
-
-    return (
-      <pre
-        key={index}
-        className="overflow-x-auto rounded-lg border border-white/8 bg-[#141416] p-4 font-mono text-[13px] leading-6 text-foreground/90"
-      >
-        <code>{body}</code>
-      </pre>
-    );
-  }
-
-  const lines = block.split("\n");
-  const isBulletList =
-    lines.length > 0 && lines.every((line) => /^-\s+/.test(line.trim()));
-  const isNumberedList =
-    lines.length > 0 && lines.every((line) => /^\d+\.\s+/.test(line.trim()));
-
-  if (isBulletList) {
-    return (
-      <ul key={index} className="list-disc space-y-1 pl-5">
-        {lines.map((line, lineIndex) => (
-          <li key={lineIndex}>
-            {renderInlineMarkdown(line.replace(/^-\s+/, ""))}
-          </li>
-        ))}
-      </ul>
-    );
-  }
-
-  if (isNumberedList) {
-    return (
-      <ol key={index} className="list-decimal space-y-1 pl-5">
-        {lines.map((line, lineIndex) => (
-          <li key={lineIndex}>
-            {renderInlineMarkdown(line.replace(/^\d+\.\s+/, ""))}
-          </li>
-        ))}
-      </ol>
-    );
-  }
-
-  return (
-    <p key={index} className="whitespace-pre-wrap wrap-break-word">
-      {lines.map((line, lineIndex) => (
-        <span key={lineIndex}>
-          {lineIndex > 0 ? <br /> : null}
-          {renderInlineMarkdown(line)}
-        </span>
-      ))}
-    </p>
-  );
-}
-
-function MarkdownPreview({ content }: { content: string }) {
-  if (!content.trim()) {
-    return (
-      <p className="text-[16px] leading-relaxed text-muted-foreground/50">
-        Nothing to preview yet.
-      </p>
-    );
-  }
-
-  const blocks = content.split(/(```[\s\S]*?```)/g).filter((block) => block.length > 0);
-
-  return (
-    <div className="space-y-4 text-[16px] leading-relaxed text-foreground/90">
-      {blocks.map((block, index) => renderMarkdownBlock(block, index))}
-    </div>
-  );
-}
-
 export function IssueDescriptionField({
   value,
   onChange,
@@ -475,7 +348,7 @@ export function IssueDescriptionField({
           }
           placeholder={placeholder}
           spellCheck={false}
-          className="field-sizing-content min-h-32 w-full resize-y rounded-lg border border-white/8 bg-[#141416]/40 px-4 py-3 font-mono text-[14px] leading-6 text-foreground/90 outline-none placeholder:text-muted-foreground/50 focus:border-white/14"
+          className="field-sizing-content min-h-32 w-full resize-y rounded-lg border border-white/8 bg-[#141416]/40 px-4 py-3 text-[15px] leading-relaxed text-foreground/90 outline-none placeholder:text-muted-foreground/50 focus:border-white/14"
         />
       ) : (
         <div className="min-h-32 rounded-lg border border-white/8 bg-[#141416]/20 px-4 py-3">
@@ -485,8 +358,8 @@ export function IssueDescriptionField({
 
       {mode === "edit" && (
         <p className="mt-2 text-[12px] text-muted-foreground/70">
-          Tab indents, Shift+Tab outdents, Enter keeps indentation. Use ``` for
-          code blocks. Cmd/Ctrl+S to save.
+          Markdown supported. Use fenced ``` blocks for code. Tab indents in the
+          editor. Cmd/Ctrl+S to save.
         </p>
       )}
     </div>

@@ -1,3 +1,5 @@
+import { spawnSync } from "node:child_process";
+import { lookup } from "node:dns/promises";
 import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "@/db/schema";
@@ -7,31 +9,138 @@ type Database = NodePgDatabase<typeof schema>;
 
 const globalForDb = globalThis as unknown as {
   pool: Pool | undefined;
+  poolPromise: Promise<Pool> | undefined;
   db: Database | undefined;
 };
 
-function getPool(): Pool {
-  if (!globalForDb.pool) {
-    const pool = new Pool({
-      connectionString: getEnv().DATABASE_URL,
-      // Keep TCP connections alive so idle sockets aren't silently dropped
-      // by the server/NAT, which otherwise surfaces as ETIMEDOUT on reuse.
-      keepAlive: true,
-      // Fail fast instead of hanging when a new connection can't be established.
-      connectionTimeoutMillis: 10_000,
-      // Recycle idle connections before a remote host is likely to drop them.
-      idleTimeoutMillis: 30_000,
-      max: 10,
-    });
+function parsePostgresUrl(connectionString: string) {
+  const url = new URL(connectionString.replace(/^postgresql:/, "http:"));
+  return {
+    hostname: url.hostname,
+    port: url.port || "5432",
+    username: decodeURIComponent(url.username),
+    password: decodeURIComponent(url.password),
+    database: url.pathname.replace(/^\//, ""),
+  };
+}
 
-    // Idle clients can emit errors (e.g. dropped connection) outside of a
-    // query; handle them so a background failure doesn't crash the process.
-    // The pool removes the broken client automatically.
+const POOL_COMMON = {
+  // Keep TCP connections alive so idle sockets aren't silently dropped
+  // by the server/NAT, which otherwise surfaces as ETIMEDOUT on reuse.
+  keepAlive: true,
+  // Fail fast instead of hanging when a new connection can't be established.
+  connectionTimeoutMillis: 10_000,
+  // Recycle idle connections before a remote host is likely to drop them.
+  idleTimeoutMillis: 30_000,
+  max: 10,
+} as const;
+
+/**
+ * Neon hostnames resolve to both IPv4 and IPv6. On many local networks IPv6
+ * is unreachable, and node-postgres fails with ETIMEDOUT even though IPv4
+ * works (Vercel usually does not hit this). Connect via IPv4 and keep SNI.
+ */
+function resolveIpv4Sync(hostname: string): string {
+  const getent = spawnSync("getent", ["ahostsv4", hostname], {
+    encoding: "utf8",
+    timeout: 10_000,
+  });
+  if (getent.status === 0 && getent.stdout) {
+    const match = getent.stdout.match(/\b(\d{1,3}(?:\.\d{1,3}){3})\b/);
+    if (match) return match[1];
+  }
+
+  const node = spawnSync(
+    process.execPath,
+    [
+      "-e",
+      `require("node:dns").resolve4(${JSON.stringify(hostname)},(e,a)=>{if(e||!a?.[0]){process.stderr.write(String(e||"no addresses"));process.exit(1)}process.stdout.write(a[0])})`,
+    ],
+    { encoding: "utf8", timeout: 10_000 },
+  );
+  const address = node.stdout?.trim();
+  if (node.status !== 0 || !address) {
+    throw new Error(
+      `Failed to resolve ${hostname} to IPv4: ${node.stderr || getent.stderr || "unknown error"}`,
+    );
+  }
+  return address;
+}
+
+function createPoolWithHost(address: string, hostname: string, connectionString: string) {
+  const parsed = parsePostgresUrl(connectionString);
+  const pool = new Pool({
+    host: address,
+    port: Number(parsed.port),
+    user: parsed.username,
+    password: parsed.password,
+    database: parsed.database,
+    ssl: {
+      rejectUnauthorized: true,
+      servername: hostname,
+    },
+    ...POOL_COMMON,
+  });
+
+  pool.on("error", (err) => {
+    console.error("Unexpected error on idle database client", err);
+  });
+
+  return pool;
+}
+
+function createPoolSync(): Pool {
+  const connectionString = getEnv().DATABASE_URL;
+  const isNeon = connectionString.includes("neon.tech");
+
+  if (!isNeon) {
+    const pool = new Pool({
+      connectionString,
+      ...POOL_COMMON,
+    });
     pool.on("error", (err) => {
       console.error("Unexpected error on idle database client", err);
     });
+    return pool;
+  }
 
-    globalForDb.pool = pool;
+  const { hostname } = parsePostgresUrl(connectionString);
+  return createPoolWithHost(resolveIpv4Sync(hostname), hostname, connectionString);
+}
+
+async function createPoolAsync(): Promise<Pool> {
+  const connectionString = getEnv().DATABASE_URL;
+  const isNeon = connectionString.includes("neon.tech");
+
+  if (!isNeon) {
+    return createPoolSync();
+  }
+
+  const { hostname } = parsePostgresUrl(connectionString);
+  const { address } = await lookup(hostname, { family: 4 });
+  return createPoolWithHost(address, hostname, connectionString);
+}
+
+/** Prefer calling this from instrumentation so the first request doesn't block on DNS. */
+export async function initDbPool(): Promise<Pool> {
+  if (globalForDb.pool) return globalForDb.pool;
+  if (!globalForDb.poolPromise) {
+    globalForDb.poolPromise = createPoolAsync()
+      .then((pool) => {
+        globalForDb.pool = pool;
+        return pool;
+      })
+      .catch((error) => {
+        globalForDb.poolPromise = undefined;
+        throw error;
+      });
+  }
+  return globalForDb.poolPromise;
+}
+
+function getPool(): Pool {
+  if (!globalForDb.pool) {
+    globalForDb.pool = createPoolSync();
   }
   return globalForDb.pool;
 }

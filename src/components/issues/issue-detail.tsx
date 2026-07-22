@@ -111,9 +111,7 @@ function IssueDetailView({
   const [tags, setTags] = useState<TaskTagSummary[]>(task.tags ?? []);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [deleteDialog, setDeleteDialog] = useState<
-    "confirm" | "admin-required" | null
-  >(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
 
@@ -123,7 +121,6 @@ function IssueDetailView({
   });
 
   const projectKey = getProjectKey(organization.name);
-  const isAdmin = user.role === "ADMIN";
   const identifier = formatTaskIdentifier(task, taskNav, projectKey);
 
   const sortedTasks = useMemo(
@@ -331,7 +328,7 @@ function IssueDetailView({
   }
 
   function handleDeleteClick() {
-    setDeleteDialog(isAdmin ? "confirm" : "admin-required");
+    setDeleteDialogOpen(true);
   }
 
   async function handleConfirmDelete() {
@@ -530,10 +527,8 @@ function IssueDetailView({
       </div>
 
       <Dialog
-        open={deleteDialog === "confirm"}
-        onOpenChange={(open) => {
-          if (!open) setDeleteDialog(null);
-        }}
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
       >
         <DialogContent className="sm:max-w-md" showCloseButton>
           <DialogHeader>
@@ -547,7 +542,7 @@ function IssueDetailView({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialog(null)}>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
               Cancel
             </Button>
             <Button
@@ -557,26 +552,6 @@ function IssueDetailView({
             >
               {deleting ? "Deleting..." : "Delete issue"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={deleteDialog === "admin-required"}
-        onOpenChange={(open) => {
-          if (!open) setDeleteDialog(null);
-        }}
-      >
-        <DialogContent className="sm:max-w-md" showCloseButton>
-          <DialogHeader>
-            <DialogTitle>Admin required</DialogTitle>
-            <DialogDescription>
-              Only workspace admins can delete issues. Ask an admin to delete
-              this issue for you.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => setDeleteDialog(null)}>Got it</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

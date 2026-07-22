@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { tasks } from "@/db/schema";
-import { requireAdminOrResponse, requireUserOrResponse } from "@/lib/auth";
+import { requireUserOrResponse } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
   createAssignmentNotification,
@@ -216,7 +216,7 @@ export const PATCH = withApiRoute(
 export const DELETE = withApiRoute(
   "tasks.delete",
   async (_request: Request, context: RouteContext) => {
-  const guard = await requireAdminOrResponse();
+  const guard = await requireUserOrResponse();
   if (guard.response) return guard.response;
   const { session } = guard;
 

@@ -68,18 +68,15 @@ export function TaskDialog({
   const projects = allProjects.filter((project) => project.isMember);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [deleteDialog, setDeleteDialog] = useState<
-    "confirm" | "admin-required" | null
-  >(null);
-  const { user, organization } = useSession();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const { organization } = useSession();
   const projectKey = getProjectKey(organization.name);
 
   const isEditing = Boolean(task);
-  const isAdmin = user.role === "ADMIN";
 
   useEffect(() => {
     if (!open) {
-      setDeleteDialog(null);
+      setDeleteDialogOpen(false);
       return;
     }
     setTitle(task?.title ?? "");
@@ -125,7 +122,7 @@ export function TaskDialog({
 
   function handleDeleteClick() {
     if (!onDelete) return;
-    setDeleteDialog(isAdmin ? "confirm" : "admin-required");
+    setDeleteDialogOpen(true);
   }
 
   async function handleConfirmDelete() {
@@ -133,7 +130,7 @@ export function TaskDialog({
     setDeleting(true);
     try {
       await onDelete();
-      setDeleteDialog(null);
+      setDeleteDialogOpen(false);
       onOpenChange(false);
     } finally {
       setDeleting(false);
@@ -258,10 +255,8 @@ export function TaskDialog({
       </DialogContent>
 
       <Dialog
-        open={deleteDialog === "confirm"}
-        onOpenChange={(open) => {
-          if (!open) setDeleteDialog(null);
-        }}
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
       >
         <DialogContent className="sm:max-w-md" showCloseButton>
           <DialogHeader>
@@ -275,7 +270,7 @@ export function TaskDialog({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialog(null)}>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
               Cancel
             </Button>
             <Button
@@ -285,26 +280,6 @@ export function TaskDialog({
             >
               {deleting ? "Deleting..." : "Delete issue"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={deleteDialog === "admin-required"}
-        onOpenChange={(open) => {
-          if (!open) setDeleteDialog(null);
-        }}
-      >
-        <DialogContent className="sm:max-w-md" showCloseButton>
-          <DialogHeader>
-            <DialogTitle>Admin required</DialogTitle>
-            <DialogDescription>
-              Only workspace admins can delete issues. Ask an admin to delete
-              this issue for you.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => setDeleteDialog(null)}>Got it</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

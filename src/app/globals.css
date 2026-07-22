@@ -154,3 +154,40 @@
     letter-spacing: -0.02em;
   }
 }
+/* Share code viewer — Shiki + IDE-style line numbers */
+.snippet-shiki pre {
+  margin: 0;
+  padding: 1rem 0;
+  background: transparent !important;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 12.5px;
+  line-height: 1.5rem;
+  overflow-x: auto;
+}
+
+.snippet-shiki code {
+  display: grid;
+  counter-reset: line;
+}
+
+.snippet-shiki .line {
+  display: inline-block;
+  width: 100%;
+  padding-right: 1rem;
+  padding-left: 3.25rem;
+  position: relative;
+  min-height: 1.5rem;
+}
+
+.snippet-shiki .line::before {
+  counter-increment: line;
+  content: counter(line);
+  position: absolute;
+  left: 0;
+  width: 2.5rem;
+  padding-right: 0.75rem;
+  text-align: right;
+  color: color-mix(in oklch, var(--muted-foreground) 45%, transparent);
+  user-select: none;
+  border-right: 1px solid rgb(255 255 255 / 6%);
+}

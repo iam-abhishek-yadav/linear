@@ -3,6 +3,8 @@ import type { IssueTimelineData } from "@/lib/issue-timeline-data";
 import type { MembersPageData } from "@/lib/members";
 import type { NotificationItem } from "@/lib/notification-types";
 import type { ProjectSummary } from "@/lib/projects";
+import type { CodeSnippetLanguage } from "@/db/schema";
+import type { SnippetItem } from "@/lib/snippets";
 import type { TaskTagSummary } from "@/lib/tags";
 import type { Task, TaskWithTags } from "@/lib/types";
 
@@ -174,4 +176,35 @@ export async function markNotificationRead(id: string): Promise<void> {
 
 export async function markAllNotificationsRead(): Promise<void> {
   await fetchJson("/api/notifications/read-all", { method: "POST" });
+}
+
+export async function fetchSnippets(): Promise<{
+  snippets: SnippetItem[];
+  unreadCount: number;
+}> {
+  return fetchJson<{ snippets: SnippetItem[]; unreadCount: number }>(
+    "/api/snippets",
+  );
+}
+
+export async function createSnippet(input: {
+  title: string;
+  language: CodeSnippetLanguage;
+  body: string;
+  recipientId: string;
+}): Promise<SnippetItem> {
+  const { snippet } = await fetchJson<{ snippet: SnippetItem }>("/api/snippets", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  return snippet;
+}
+
+export async function markSnippetRead(id: string): Promise<SnippetItem> {
+  const { snippet } = await fetchJson<{ snippet: SnippetItem }>(
+    `/api/snippets/${id}/read`,
+    { method: "PATCH" },
+  );
+  return snippet;
 }

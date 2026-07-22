@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Building2,
+  Code2,
   FolderKanban,
   Inbox,
   LayoutGrid,
@@ -23,6 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useSnippetUnreadCount } from "@/hooks/use-snippets";
 import { canManageMembers, isAdmin, ROLE_LABELS } from "@/lib/roles";
 import { getAvatarColor, getInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
@@ -87,6 +89,7 @@ export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { unreadCount } = useNotifications();
+  const snippetUnreadCount = useSnippetUnreadCount();
   const { user } = useSession();
   const initials = getInitials(user.name);
   const avatarColor = getAvatarColor(user.name);
@@ -114,6 +117,13 @@ export function AppSidebar() {
           icon={User}
           label="My issues"
           active={pathname === "/my-issues"}
+        />
+        <NavLink
+          href="/share"
+          icon={Code2}
+          label="Share"
+          active={pathname === "/share" || pathname.startsWith("/share/")}
+          badge={snippetUnreadCount}
         />
 
         <SectionLabel>Workspace</SectionLabel>

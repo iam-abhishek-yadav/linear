@@ -452,3 +452,55 @@ export type ProjectMember = typeof projectMembers.$inferSelect;
 export type ProjectAccessRequest = typeof projectAccessRequests.$inferSelect;
 export type ProjectAccessRequestStatus =
   (typeof projectAccessRequestStatusEnum.enumValues)[number];
+
+export const codeSnippetLanguageEnum = pgEnum("CodeSnippetLanguage", [
+  "typescript",
+  "javascript",
+  "python",
+  "html",
+  "css",
+]);
+
+/** One-to-one code share within an organization. */
+export const codeSnippets = pgTable(
+  "CodeSnippet",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organizationId")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    authorId: text("authorId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    recipientId: text("recipientId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: text("title"),
+    language: codeSnippetLanguageEnum("language").notNull(),
+    body: text("body").notNull(),
+    readAt: timestamp("readAt", { precision: 3, mode: "date" }),
+    createdAt: timestamp("createdAt", { precision: 3, mode: "date" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updatedAt", { precision: 3, mode: "date" })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index("CodeSnippet_organizationId_createdAt_idx").on(
+      table.organizationId,
+      table.createdAt,
+    ),
+    index("CodeSnippet_recipientId_readAt_idx").on(
+      table.recipientId,
+      table.readAt,
+    ),
+    index("CodeSnippet_authorId_idx").on(table.authorId),
+  ],
+);
+
+export type CodeSnippet = typeof codeSnippets.$inferSelect;
+export type NewCodeSnippet = typeof codeSnippets.$inferInsert;
+export type CodeSnippetLanguage =
+  (typeof codeSnippetLanguageEnum.enumValues)[number];

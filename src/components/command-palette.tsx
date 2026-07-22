@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   Building2,
   CheckCircle2,
+  Code2,
   FolderKanban,
   Inbox,
   LayoutGrid,
@@ -76,6 +77,13 @@ export function CommandPalette() {
         href: "/my-issues",
         icon: User,
         keywords: "assigned me",
+      },
+      {
+        id: "share",
+        label: "Share",
+        href: "/share",
+        icon: Code2,
+        keywords: "code file send handoff",
       },
       {
         id: "issues",

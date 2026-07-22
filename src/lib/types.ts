@@ -5,6 +5,7 @@ export type {
   TaskActivityType,
   NotificationType,
   Tag,
+  CodeSnippetLanguage,
 } from "@/db/schema";
 
 export type { TaskTagSummary } from "@/lib/tags";
